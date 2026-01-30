@@ -1,19 +1,22 @@
 namespace PatternMatching.Patterns;
 
-using Dunet;
+using PatternMatching.Matchers;
 
-[Union]
-public partial record ValuePattern<T> : IPattern
+public readonly struct ValuePattern<T>
 {
-    public partial record Exact(
-        T Value);
-}
+    public ValuePattern(
+        ValueMatcher<T>? value)
+    {
+        this.Value = value;
+        this.IsSet = true;
+    }
 
-public static class ValuePattern
-{
-    public static ValuePattern<T>.Exact Exact<T>(
+    public ValueMatcher<T>? Value { get; }
+    public bool IsSet { get; }
+
+    public static implicit operator ValuePattern<T>(
         T value)
     {
-        return new ValuePattern<T>.Exact(value);
+        return new(new ValueMatcher<T>.Exact(value));
     }
 }

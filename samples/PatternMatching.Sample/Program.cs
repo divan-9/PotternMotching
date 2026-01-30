@@ -1,7 +1,7 @@
 
 using PatternMatching;
-using PatternMatching.PatternBuilders;
 using PatternMatching.Patterns;
+using PatternMatching.Matchers;
 
 var result = new ResultExample(
     Name: "Alice",
@@ -22,8 +22,8 @@ var result = new ResultExample(
 var anotherPattern = new PatternExample(
     Name: "Alice",
     Age: 30,
-    Nicknames: CollectionPattern.MatchAll(["Lice"]),
-    Addresses: CollectionPattern.EndsWith([
+    Nicknames: CollectionMatcher.MatchAll(["Lice"]),
+    Addresses: CollectionMatcher.EndsWith([
         new AddressPatternExample(
             City: "Looking Glass"
         ),
@@ -32,23 +32,23 @@ var anotherPattern = new PatternExample(
         ),
     ]));
 
-var rawPattern = DictionaryPattern.MatchAll<string, IPattern>(new()
+var rawPattern = DictionaryMatcher.MatchAll<string, IPattern>(new()
 {
-    ["Name"] = ValuePattern.Exact("Alice"),
-    ["Age"] = ValuePattern.Exact(30),
-    ["Nicknames"] = CollectionPattern.MatchAll([
-        ValuePattern.Exact("Lice"),
+    ["Name"] = ValueMatcher.Exact("Alice"),
+    ["Age"] = ValueMatcher.Exact(30),
+    ["Nicknames"] = CollectionMatcher.MatchAll([
+        ValueMatcher.Exact("Lice"),
     ]),
-    ["Addresses"] = CollectionPattern.EndsWith([
-        DictionaryPattern.MatchAll<string, IPattern>(new()
+    ["Addresses"] = CollectionMatcher.EndsWith([
+        DictionaryMatcher.MatchAll<string, IPattern>(new()
         {
-            ["City"] = ValuePattern.Exact("Wonderland"),
-            ["Zip"] = ValuePattern.Exact("12345")
+            ["City"] = ValueMatcher.Exact("Wonderland"),
+            ["Zip"] = ValueMatcher.Exact("12345")
         }),
-        DictionaryPattern.MatchAll<string, IPattern>(new()
+        DictionaryMatcher.MatchAll<string, IPattern>(new()
         {
-            ["City"] = ValuePattern.Exact("Looking Glass"),
-            ["Zip"] = ValuePattern.Exact("67890")
+            ["City"] = ValueMatcher.Exact("Looking Glass"),
+            ["Zip"] = ValueMatcher.Exact("67890")
         }),
     ])
 });
@@ -66,11 +66,11 @@ public record AddressExample(
 );
 
 public record PatternExample(
-    ValuePatternBuilder<string> Name = default,
-    ValuePatternBuilder<int> Age = default,
-    SetPatternBuilder<string> Nicknames = default,
-    SequencePatternBuilder<AddressPatternExample> Addresses = default);
+    ValuePattern<string> Name = default,
+    ValuePattern<int> Age = default,
+    SetPattern<string> Nicknames = default,
+    SequencePattern<AddressPatternExample> Addresses = default);
 
 public record AddressPatternExample(
-    ValuePatternBuilder<string> City = default,
-    ValuePatternBuilder<string> Zip = default);
+    ValuePattern<string> City = default,
+    ValuePattern<string> Zip = default);

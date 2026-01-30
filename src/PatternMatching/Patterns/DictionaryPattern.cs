@@ -1,21 +1,23 @@
 namespace PatternMatching.Patterns;
 
-using Dunet;
+using PatternMatching.Matchers;
 
-[Union]
-public partial record DictionaryPattern<TKey, TValue> : IPattern
+public readonly struct DictionaryPattern<TKey, TValue>
     where TKey : notnull
 {
-    public partial record MatchAll(
-        Dictionary<TKey, TValue> items);
-}
-
-public static class DictionaryPattern
-{
-    public static DictionaryPattern<TKey, TValue>.MatchAll MatchAll<TKey, TValue>(
-        Dictionary<TKey, TValue> patterns)
-        where TKey : notnull
+    public DictionaryPattern(
+        DictionaryMatcher<TKey, TValue> values)
     {
-        return new DictionaryPattern<TKey, TValue>.MatchAll(patterns);
+        this.Values = values;
+        this.IsSet = true;
+    }
+
+    public DictionaryMatcher<TKey, TValue> Values { get; }
+    public bool IsSet { get; }
+
+    public static implicit operator DictionaryPattern<TKey, TValue>(
+        Dictionary<TKey, TValue> values)
+    {
+        return new(DictionaryMatcher.MatchAll(values));
     }
 }
