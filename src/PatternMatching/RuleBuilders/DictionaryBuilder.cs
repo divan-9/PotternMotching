@@ -1,5 +1,7 @@
 namespace PatternMatching.RuleBuilders;
 
+using PatternMatching.Rules;
+
 public readonly struct DictionaryBuilder<TKey, TValue>
     where TKey : notnull
 {

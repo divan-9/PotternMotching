@@ -1,8 +1,6 @@
-namespace PatternMatching;
+namespace PatternMatching.Rules;
 
 using Dunet;
-
-public interface IRule;
 
 [Union]
 public partial record DictionaryRule<TKey, TValue> : IRule
@@ -10,22 +8,6 @@ public partial record DictionaryRule<TKey, TValue> : IRule
 {
     public partial record MatchAll(
         Dictionary<TKey, TValue> items);
-}
-
-[Union]
-public partial record ValueRule<T> : IRule
-{
-    public partial record Exact(
-        T Value);
-}
-
-public static class ValueRule
-{
-    public static ValueRule<T>.Exact Exact<T>(
-        T value)
-    {
-        return new ValueRule<T>.Exact(value);
-    }
 }
 
 public static class DictionaryRule

@@ -1,4 +1,4 @@
-namespace PatternMatching;
+namespace PatternMatching.Rules;
 
 using Dunet;
 

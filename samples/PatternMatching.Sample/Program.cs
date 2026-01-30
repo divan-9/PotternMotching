@@ -1,6 +1,7 @@
 
 using PatternMatching;
 using PatternMatching.RuleBuilders;
+using PatternMatching.Rules;
 
 var result = new ResultExample(
     Name: "Alice",

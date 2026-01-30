@@ -1,5 +1,7 @@
 namespace PatternMatching.RuleBuilders;
 
+using PatternMatching.Rules;
+
 public readonly struct ValueRuleBuilder<T>
 {
     public ValueRuleBuilder(

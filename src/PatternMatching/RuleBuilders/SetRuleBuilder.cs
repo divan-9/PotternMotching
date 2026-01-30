@@ -2,7 +2,7 @@ namespace PatternMatching.RuleBuilders;
 
 using System.Collections;
 using System.Runtime.CompilerServices;
-using PatternMatching;
+using PatternMatching.Rules;
 
 [CollectionBuilder(typeof(SetRuleBuilder), "Create")]
 public readonly struct SetRuleBuilder<T> : IReadOnlyCollection<T>
