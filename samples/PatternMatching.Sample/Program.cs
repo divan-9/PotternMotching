@@ -19,39 +19,35 @@ var result = new ResultExample(
     ]
 );
 
+var examplePattern = new PatternExample(
+    Name: "Alice",
+    Age: 30,
+    Nicknames: ["Lice"],
+    Addresses: [
+        new(
+            City: "Looking Glass"
+        ),
+        new(
+            City: "Wonderland"
+        ),
+    ]);
+
 var anotherPattern = new PatternExample(
     Name: "Alice",
     Age: 30,
-    Nicknames: CollectionMatcher.MatchAll(["Lice"]),
+    Nicknames: CollectionMatcher.MatchAll([
+        ValueMatcher.Exact("Lice")
+    ]),
     Addresses: CollectionMatcher.EndsWith([
-        new AddressPatternExample(
-            City: "Looking Glass"
+        new AddressExample(
+            City: "Looking Glass",
+            Zip: "67890"
         ),
-        new AddressPatternExample(
-            City: "Wonderland"
+        new AddressExample(
+            City: "Wonderland",
+            Zip: "12345"
         ),
     ]));
-
-var rawPattern = DictionaryMatcher.MatchAll<string, IPattern>(new()
-{
-    ["Name"] = ValueMatcher.Exact("Alice"),
-    ["Age"] = ValueMatcher.Exact(30),
-    ["Nicknames"] = CollectionMatcher.MatchAll([
-        ValueMatcher.Exact("Lice"),
-    ]),
-    ["Addresses"] = CollectionMatcher.EndsWith([
-        DictionaryMatcher.MatchAll<string, IPattern>(new()
-        {
-            ["City"] = ValueMatcher.Exact("Wonderland"),
-            ["Zip"] = ValueMatcher.Exact("12345")
-        }),
-        DictionaryMatcher.MatchAll<string, IPattern>(new()
-        {
-            ["City"] = ValueMatcher.Exact("Looking Glass"),
-            ["Zip"] = ValueMatcher.Exact("67890")
-        }),
-    ])
-});
 
 public record ResultExample(
     string Name,
@@ -69,8 +65,32 @@ public record PatternExample(
     ValuePattern<string> Name = default,
     ValuePattern<int> Age = default,
     SetPattern<string> Nicknames = default,
-    SequencePattern<AddressPatternExample> Addresses = default);
+    SequencePattern<AddressExample, AddressPatternExample> Addresses = default) : IMatcher<ResultExample>
+{
+    public MatchResult Match(
+        ResultExample value,
+        string path = "")
+    {
+        return MatchResult.Combine([
+           this.Name.Value?.Match(value.Name, $"{path}.Name") ?? new MatchResult.Success(),
+           this.Age.Value?.Match(value.Age, $"{path}.Age") ?? new MatchResult.Success(),
+           this.Nicknames.Values?.Match(value.Nicknames, $"{path}.Nicknames") ?? new MatchResult.Success(),
+           this.Addresses.Values?.Match(value.Addresses, $"{path}.Addresses") ?? new MatchResult.Success(),
+        ]);
+    }
+}
 
 public record AddressPatternExample(
     ValuePattern<string> City = default,
-    ValuePattern<string> Zip = default);
+    ValuePattern<string> Zip = default) : IMatcher<AddressExample>
+{
+    public MatchResult Match(
+        AddressExample value,
+        string path = "")
+    {
+        return MatchResult.Combine([
+           this.City.Value?.Match(value.City, $"{path}.City") ?? new MatchResult.Success(),
+           this.Zip.Value?.Match(value.Zip, $"{path}.Zip") ?? new MatchResult.Success(),
+        ]);
+    }
+}

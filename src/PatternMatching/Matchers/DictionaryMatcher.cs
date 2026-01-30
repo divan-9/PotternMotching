@@ -3,17 +3,23 @@ namespace PatternMatching.Matchers;
 using Dunet;
 
 [Union]
-public partial record DictionaryMatcher<TKey, TValue> : IPattern
+public partial record DictionaryMatcher<TKey, TValue> : IMatcher<IDictionary<TKey, TValue>>
     where TKey : notnull
 {
+    public MatchResult Match(
+        IDictionary<TKey, TValue> value)
+    {
+        throw new NotImplementedException();
+    }
+
     public partial record MatchAll(
-        Dictionary<TKey, TValue> items);
+        Dictionary<TKey, IMatcher<TValue>> items);
 }
 
 public static class DictionaryMatcher
 {
     public static DictionaryMatcher<TKey, TValue>.MatchAll MatchAll<TKey, TValue>(
-        Dictionary<TKey, TValue> patterns)
+        Dictionary<TKey, IMatcher<TValue>> patterns)
         where TKey : notnull
     {
         return new DictionaryMatcher<TKey, TValue>.MatchAll(patterns);

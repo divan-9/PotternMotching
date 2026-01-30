@@ -31,9 +31,12 @@ public readonly struct SetPattern<T> : IReadOnlyCollection<T>
     }
 
     public static implicit operator SetPattern<T>(
-        HashSet<T> values)
+        T[] values)
     {
-        return new(new CollectionMatcher<T>.MatchAll(values));
+        var matchers = values
+            .Select(v => ValueMatcher.Exact(v));
+
+        return new(new CollectionMatcher<T>.MatchAll([.. matchers]));
     }
 
     public static implicit operator SetPattern<T>(
@@ -43,12 +46,11 @@ public readonly struct SetPattern<T> : IReadOnlyCollection<T>
     }
 }
 
-internal static class SetPattern
+public static class SetPattern
 {
     public static SetPattern<T> Create<T>(
         ReadOnlySpan<T> values)
     {
-        return new SetPattern<T>(
-            new CollectionMatcher<T>.MatchAll([.. values]));
+        return values.ToArray();
     }
 }

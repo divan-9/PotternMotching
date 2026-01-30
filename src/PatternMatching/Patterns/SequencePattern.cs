@@ -5,16 +5,22 @@ using System.Runtime.CompilerServices;
 using PatternMatching.Matchers;
 
 [CollectionBuilder(typeof(SequencePattern), "Create")]
-public readonly struct SequencePattern<T> : IReadOnlyCollection<T>
+public readonly struct SequencePattern<TItem, TPattern> : IReadOnlyCollection<TPattern>
+    where TPattern : IMatcher<TItem>
 {
     public SequencePattern(
-        CollectionMatcher<T> values)
+        CollectionMatcher<TItem> values)
     {
         this.Values = values;
         this.IsSet = true;
     }
 
-    public IEnumerator<T> GetEnumerator()
+    public CollectionMatcher<TItem> Values { get; }
+    public bool IsSet { get; }
+
+    public int Count => throw new NotImplementedException();
+
+    public IEnumerator<TPattern> GetEnumerator()
     {
         throw new NotImplementedException();
     }
@@ -23,32 +29,25 @@ public readonly struct SequencePattern<T> : IReadOnlyCollection<T>
     {
         return this.GetEnumerator();
     }
-
-    public CollectionMatcher<T> Values { get; }
-    public bool IsSet { get; }
-
-    public int Count => throw new NotImplementedException();
-
-    public static implicit operator SequencePattern<T>(
-        T[] values)
+    public static implicit operator SequencePattern<TItem, TPattern>(
+        TPattern[] matchers)
     {
-        return new(new CollectionMatcher<T>.Sequence(values));
+        return new(new CollectionMatcher<TItem>.Sequence([.. matchers]));
     }
 
-    public static implicit operator SequencePattern<T>(
-        CollectionMatcher<T> pattern)
+    public static implicit operator SequencePattern<TItem, TPattern>(
+        CollectionMatcher<TItem> pattern)
     {
         return new(pattern);
     }
 }
 
-internal class SequencePattern
+public class SequencePattern
 {
-    public static SequencePattern<T> Create<T>(
-        ReadOnlySpan<T> values)
+    public static SequencePattern<TItem, TPattern> Create<TItem, TPattern>(
+        ReadOnlySpan<TPattern> values)
+        where TPattern : IMatcher<TItem>
     {
-        return new SequencePattern<T>(
-            new CollectionMatcher<T>.Sequence(
-                values.ToArray()));
+        return values.ToArray();
     }
 }

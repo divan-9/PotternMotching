@@ -18,6 +18,10 @@ public readonly struct DictionaryPattern<TKey, TValue>
     public static implicit operator DictionaryPattern<TKey, TValue>(
         Dictionary<TKey, TValue> values)
     {
-        return new(DictionaryMatcher.MatchAll(values));
+        var matchers = values.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (IMatcher<TValue>)ValueMatcher.Exact(kvp.Value));
+
+        return new(DictionaryMatcher.MatchAll(matchers));
     }
 }
