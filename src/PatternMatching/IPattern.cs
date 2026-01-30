@@ -1,3 +1,3 @@
 namespace PatternMatching;
 
-public interface IRule;
+public interface IPattern;

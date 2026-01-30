@@ -1,7 +1,7 @@
 
 using PatternMatching;
-using PatternMatching.RuleBuilders;
-using PatternMatching.Rules;
+using PatternMatching.PatternBuilders;
+using PatternMatching.Patterns;
 
 var result = new ResultExample(
     Name: "Alice",
@@ -22,8 +22,8 @@ var result = new ResultExample(
 var anotherPattern = new PatternExample(
     Name: "Alice",
     Age: 30,
-    Nicknames: CollectionRule.MatchAll(["Lice"]),
-    Addresses: CollectionRule.EndsWith([
+    Nicknames: CollectionPattern.MatchAll(["Lice"]),
+    Addresses: CollectionPattern.EndsWith([
         new AddressPatternExample(
             City: "Looking Glass"
         ),
@@ -32,23 +32,23 @@ var anotherPattern = new PatternExample(
         ),
     ]));
 
-var rawPattern = DictionaryRule.MatchAll<string, IRule>(new()
+var rawPattern = DictionaryPattern.MatchAll<string, IPattern>(new()
 {
-    ["Name"] = ValueRule.Exact("Alice"),
-    ["Age"] = ValueRule.Exact(30),
-    ["Nicknames"] = CollectionRule.MatchAll([
-        ValueRule.Exact("Lice"),
+    ["Name"] = ValuePattern.Exact("Alice"),
+    ["Age"] = ValuePattern.Exact(30),
+    ["Nicknames"] = CollectionPattern.MatchAll([
+        ValuePattern.Exact("Lice"),
     ]),
-    ["Addresses"] = CollectionRule.EndsWith([
-        DictionaryRule.MatchAll<string, IRule>(new()
+    ["Addresses"] = CollectionPattern.EndsWith([
+        DictionaryPattern.MatchAll<string, IPattern>(new()
         {
-            ["City"] = ValueRule.Exact("Wonderland"),
-            ["Zip"] = ValueRule.Exact("12345")
+            ["City"] = ValuePattern.Exact("Wonderland"),
+            ["Zip"] = ValuePattern.Exact("12345")
         }),
-        DictionaryRule.MatchAll<string, IRule>(new()
+        DictionaryPattern.MatchAll<string, IPattern>(new()
         {
-            ["City"] = ValueRule.Exact("Looking Glass"),
-            ["Zip"] = ValueRule.Exact("67890")
+            ["City"] = ValuePattern.Exact("Looking Glass"),
+            ["Zip"] = ValuePattern.Exact("67890")
         }),
     ])
 });
@@ -66,11 +66,11 @@ public record AddressExample(
 );
 
 public record PatternExample(
-    ValueRuleBuilder<string> Name = default,
-    ValueRuleBuilder<int> Age = default,
-    SetRuleBuilder<string> Nicknames = default,
-    SequenceBuilder<AddressPatternExample> Addresses = default);
+    ValuePatternBuilder<string> Name = default,
+    ValuePatternBuilder<int> Age = default,
+    SetPatternBuilder<string> Nicknames = default,
+    SequencePatternBuilder<AddressPatternExample> Addresses = default);
 
 public record AddressPatternExample(
-    ValueRuleBuilder<string> City = default,
-    ValueRuleBuilder<string> Zip = default);
+    ValuePatternBuilder<string> City = default,
+    ValuePatternBuilder<string> Zip = default);
