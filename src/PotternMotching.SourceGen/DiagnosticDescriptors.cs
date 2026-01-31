@@ -37,4 +37,20 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor UnionMustBePartial = new(
+        id: "PM0005",
+        title: "Union type must be partial",
+        messageFormat: "Union type '{0}' must be declared as partial to use [AutoPattern]",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor UnionMustHaveVariants = new(
+        id: "PM0006",
+        title: "Union type must have variant types",
+        messageFormat: "Union type '{0}' must have at least one nested record variant",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 }

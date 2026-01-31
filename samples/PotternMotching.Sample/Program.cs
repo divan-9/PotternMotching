@@ -1,4 +1,5 @@
 
+using Dunet;
 using PotternMotching;
 using PotternMotching.Matchers;
 
@@ -94,6 +95,31 @@ var strictPattern = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<
 });
 Console.WriteLine($"Dictionary ExactKeys (missing bufferSize): {strictPattern.Evaluate(config)}");
 
+var unionSequencePattern = CollectionMatcher.Sequence<TestUnion>([
+    new TestUnionPattern.A(
+        X: 10),
+    new TestUnionPattern.B(
+        Y: "hello")
+]);
+
+var unionResult = unionSequencePattern.Evaluate([
+    new TestUnion.A(10),
+    new TestUnion.B("hello", 100)
+]);
+
+Console.WriteLine($"\n=== Union Pattern Tests ===");
+Console.WriteLine($"Union Sequence Match: {unionResult}");
+
+// Test variant mismatch - using IMatcher<TestUnion> interface
+IMatcher<TestUnion> mismatchPattern = new TestUnionPattern.A(X: 10);
+var mismatchResult = mismatchPattern.Evaluate(new TestUnion.B("test", 5));
+Console.WriteLine($"Union Variant Mismatch: {mismatchResult}");
+
+// Test partial matching (Z is wildcard)
+var partialPattern = new TestUnionPattern.B(Y: "hello");
+var partialResult = partialPattern.Evaluate(new TestUnion.B("hello", 999));
+Console.WriteLine($"Union Partial Match: {partialResult}");
+
 [AutoPattern]
 public record ResultExample(
     string Name,
@@ -125,3 +151,13 @@ public record TestCompany(
     TestAddress HeadOffice,
     TestAddress[] Branches,
     HashSet<string> Tags);
+
+
+[Union]
+[AutoPattern]
+public partial record TestUnion
+{
+    public partial record A(int X);
+    public partial record B(string Y, int Z);
+
+}

@@ -8,10 +8,19 @@ using PotternMotching.SourceGen.Models;
 internal static class TypeAnalyzer
 {
     private const string AutoPatternAttributeName = "PotternMotching.AutoPatternAttribute";
+    private const string UnionAttributeName = "Dunet.UnionAttribute";
 
     public static TypeAnalysisResult Analyze(INamedTypeSymbol typeSymbol, Compilation compilation)
     {
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
+
+        // Check if it's a union type
+        var isUnion = IsUnionType(typeSymbol);
+
+        if (isUnion)
+        {
+            return AnalyzeUnion(typeSymbol, compilation, diagnostics);
+        }
 
         // Validate it's a record
         if (!typeSymbol.IsRecord)
@@ -212,5 +221,97 @@ internal static class TypeAnalyzer
                 .Contains(AutoPatternAttributeName) ?? false);
 
         return (hasAttribute, hasAttribute ? namedType : null);
+    }
+
+    private static bool IsUnionType(INamedTypeSymbol typeSymbol)
+    {
+        return typeSymbol.GetAttributes()
+            .Any(a => a.AttributeClass?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                .Contains(UnionAttributeName) ?? false);
+    }
+
+    private static TypeAnalysisResult AnalyzeUnion(
+        INamedTypeSymbol typeSymbol,
+        Compilation compilation,
+        ImmutableArray<Diagnostic>.Builder diagnostics)
+    {
+        // Validate it's partial (required for Dunet)
+        if (!typeSymbol.DeclaringSyntaxReferences.Any(r => r.GetSyntax().ToString().Contains("partial")))
+        {
+            diagnostics.Add(Diagnostic.Create(
+                DiagnosticDescriptors.UnionMustBePartial,
+                typeSymbol.Locations.FirstOrDefault(),
+                typeSymbol.Name));
+
+            return new TypeAnalysisResult(
+                typeSymbol,
+                false,
+                ImmutableArray<PropertyAnalysisResult>.Empty,
+                diagnostics.ToImmutable());
+        }
+
+        // Get nested type members (variants)
+        var variantTypes = typeSymbol.GetTypeMembers()
+            .Where(t => t.IsRecord)
+            .ToList();
+
+        // Validate at least one variant exists
+        if (!variantTypes.Any())
+        {
+            diagnostics.Add(Diagnostic.Create(
+                DiagnosticDescriptors.UnionMustHaveVariants,
+                typeSymbol.Locations.FirstOrDefault(),
+                typeSymbol.Name));
+
+            return new TypeAnalysisResult(
+                typeSymbol,
+                false,
+                ImmutableArray<PropertyAnalysisResult>.Empty,
+                diagnostics.ToImmutable());
+        }
+
+        // Analyze each variant
+        var variants = ImmutableArray.CreateBuilder<VariantAnalysisResult>();
+        foreach (var variantType in variantTypes)
+        {
+            var variant = AnalyzeVariant(variantType, compilation, diagnostics);
+            variants.Add(variant);
+        }
+
+        return new TypeAnalysisResult(
+            typeSymbol,
+            true,
+            ImmutableArray<PropertyAnalysisResult>.Empty,
+            diagnostics.ToImmutable(),
+            isUnion: true,
+            variants: variants.ToImmutable());
+    }
+
+    private static VariantAnalysisResult AnalyzeVariant(
+        INamedTypeSymbol variantSymbol,
+        Compilation compilation,
+        ImmutableArray<Diagnostic>.Builder diagnostics)
+    {
+        // Get primary constructor
+        var primaryConstructor = variantSymbol.Constructors
+            .FirstOrDefault(c => c.Parameters.Length > 0 && !c.IsImplicitlyDeclared);
+
+        if (primaryConstructor is null)
+        {
+            // Empty variant is valid, just has no properties
+            return new VariantAnalysisResult(
+                variantSymbol,
+                ImmutableArray<PropertyAnalysisResult>.Empty);
+        }
+
+        // Analyze each parameter using existing logic
+        var properties = ImmutableArray.CreateBuilder<PropertyAnalysisResult>();
+        foreach (var parameter in primaryConstructor.Parameters)
+        {
+            var property = AnalyzeProperty(parameter, compilation);
+            properties.Add(property);
+        }
+
+        return new VariantAnalysisResult(variantSymbol, properties.ToImmutable());
     }
 }
