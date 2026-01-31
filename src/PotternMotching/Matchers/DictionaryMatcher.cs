@@ -1,4 +1,4 @@
-namespace PatternMatching.Matchers;
+namespace PotternMotching.Matchers;
 
 using Dunet;
 
@@ -6,8 +6,9 @@ using Dunet;
 public partial record DictionaryMatcher<TKey, TValue> : IMatcher<IDictionary<TKey, TValue>>
     where TKey : notnull
 {
-    public MatchResult Match(
-        IDictionary<TKey, TValue> value)
+    public MatchResult Evaluate(
+        IDictionary<TKey, TValue> value,
+        string path = "")
     {
         throw new NotImplementedException();
     }

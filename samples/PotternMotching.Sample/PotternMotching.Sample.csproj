@@ -7,6 +7,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\PatternMatching\PatternMatching.csproj"/>
+    <ProjectReference Include="..\..\src\PotternMotching\PotternMotching.csproj"/>
   </ItemGroup>
 </Project>

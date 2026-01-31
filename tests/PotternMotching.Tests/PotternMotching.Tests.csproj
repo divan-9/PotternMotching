@@ -13,6 +13,6 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2"/>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\PatternMatching\PatternMatching.csproj"/>
+    <ProjectReference Include="..\..\src\PotternMotching\PotternMotching.csproj"/>
   </ItemGroup>
 </Project>

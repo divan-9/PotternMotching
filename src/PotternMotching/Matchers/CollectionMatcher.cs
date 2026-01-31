@@ -1,4 +1,4 @@
-namespace PatternMatching.Matchers;
+namespace PotternMotching.Matchers;
 
 using System.Runtime.CompilerServices;
 using Dunet;
@@ -6,11 +6,16 @@ using Dunet;
 [Union]
 public partial record CollectionMatcher<T> : IMatcher<IEnumerable<T>>
 {
-    public MatchResult Match(
+    public MatchResult Evaluate(
         IEnumerable<T> value,
         string path = "")
     {
-        throw new NotImplementedException();
+        return this.Match(
+            matchAll => matchAll.EvaluateMatchAll(value, path),
+            sequence => sequence.EvaluateSequence(value, path),
+            endsWith => endsWith.EvaluateEndsWith(value, path),
+            startsWith => startsWith.EvaluateStartsWith(value, path)
+        );
     }
 
     public partial record MatchAll(

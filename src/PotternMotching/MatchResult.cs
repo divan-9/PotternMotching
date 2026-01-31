@@ -1,13 +1,6 @@
-namespace PatternMatching;
+namespace PotternMotching;
 
 using Dunet;
-
-public interface IMatcher<in T>
-{
-    MatchResult Match(
-         T value,
-         string path = "");
-}
 
 [Union]
 public abstract partial record MatchResult
@@ -15,8 +8,7 @@ public abstract partial record MatchResult
     public partial record Success();
 
     public partial record Failure(
-        string Reason);
-
+        string[] Reasons);
 
     public static MatchResult Combine(
         IEnumerable<MatchResult> results)
@@ -24,8 +16,8 @@ public abstract partial record MatchResult
         var failures = results.OfType<Failure>().ToList();
         if (failures.Any())
         {
-            var combinedReason = string.Join("; ", failures.Select(f => f.Reason));
-            return new Failure(combinedReason);
+            var combinedReasons = failures.SelectMany(f => f.Reasons).ToArray();
+            return new Failure(combinedReasons);
         }
 
         return new Success();

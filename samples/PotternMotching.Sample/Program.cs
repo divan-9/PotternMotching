@@ -1,7 +1,7 @@
 
-using PatternMatching;
-using PatternMatching.Patterns;
-using PatternMatching.Matchers;
+using PotternMotching;
+using PotternMotching.Patterns;
+using PotternMotching.Matchers;
 
 var result = new ResultExample(
     Name: "Alice",
@@ -49,6 +49,9 @@ var anotherPattern = new PatternExample(
         ),
     ]));
 
+Console.WriteLine(examplePattern.Evaluate(result));
+Console.WriteLine(anotherPattern.Evaluate(result));
+
 public record ResultExample(
     string Name,
     int Age,
@@ -67,15 +70,15 @@ public record PatternExample(
     SetPattern<string> Nicknames = default,
     SequencePattern<AddressExample, AddressPatternExample> Addresses = default) : IMatcher<ResultExample>
 {
-    public MatchResult Match(
+    public MatchResult Evaluate(
         ResultExample value,
         string path = "")
     {
         return MatchResult.Combine([
-           this.Name.Value?.Match(value.Name, $"{path}.Name") ?? new MatchResult.Success(),
-           this.Age.Value?.Match(value.Age, $"{path}.Age") ?? new MatchResult.Success(),
-           this.Nicknames.Values?.Match(value.Nicknames, $"{path}.Nicknames") ?? new MatchResult.Success(),
-           this.Addresses.Values?.Match(value.Addresses, $"{path}.Addresses") ?? new MatchResult.Success(),
+           this.Name.Value?.Evaluate(value.Name, $"{path}.Name") ?? new MatchResult.Success(),
+           this.Age.Value?.Evaluate(value.Age, $"{path}.Age") ?? new MatchResult.Success(),
+           this.Nicknames.Values?.Evaluate(value.Nicknames, $"{path}.Nicknames") ?? new MatchResult.Success(),
+           this.Addresses.Values?.Evaluate(value.Addresses, $"{path}.Addresses") ?? new MatchResult.Success(),
         ]);
     }
 }
@@ -84,13 +87,13 @@ public record AddressPatternExample(
     ValuePattern<string> City = default,
     ValuePattern<string> Zip = default) : IMatcher<AddressExample>
 {
-    public MatchResult Match(
+    public MatchResult Evaluate(
         AddressExample value,
         string path = "")
     {
         return MatchResult.Combine([
-           this.City.Value?.Match(value.City, $"{path}.City") ?? new MatchResult.Success(),
-           this.Zip.Value?.Match(value.Zip, $"{path}.Zip") ?? new MatchResult.Success(),
+           this.City.Value?.Evaluate(value.City, $"{path}.City") ?? new MatchResult.Success(),
+           this.Zip.Value?.Evaluate(value.Zip, $"{path}.Zip") ?? new MatchResult.Success(),
         ]);
     }
 }

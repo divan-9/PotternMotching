@@ -1,6 +1,6 @@
-namespace PatternMatching.Patterns;
+namespace PotternMotching.Patterns;
 
-using PatternMatching.Matchers;
+using PotternMotching.Matchers;
 
 public readonly struct DictionaryPattern<TKey, TValue>
     where TKey : notnull

@@ -1,8 +1,8 @@
-namespace PatternMatching.Patterns;
+namespace PotternMotching.Patterns;
 
 using System.Collections;
 using System.Runtime.CompilerServices;
-using PatternMatching.Matchers;
+using PotternMotching.Matchers;
 
 [CollectionBuilder(typeof(SetPattern), "Create")]
 public readonly struct SetPattern<T> : IReadOnlyCollection<T>
