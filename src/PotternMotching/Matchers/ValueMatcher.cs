@@ -37,6 +37,6 @@ public static class ValueMatcherExtensions
             return new MatchResult.Success();
         }
 
-        return new MatchResult.Failure([$"{path}: Expected {exact.Value}, got {value}"]);
+        return new MatchResult.Failure([$"{path}: [ValueMatcher.Exact] Expected {exact.Value}, got {value}"]);
     }
 }

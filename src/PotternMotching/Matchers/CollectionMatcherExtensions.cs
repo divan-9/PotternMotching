@@ -22,7 +22,7 @@ internal static class CollectionMatcherExtensions
         if (buffer.Count < patternLength)
         {
             return new MatchResult.Failure([
-                $"{path}: Expected collection to end with {patternLength} items, but collection has only {buffer.Count} items"
+                $"{path}: [CollectionMatcher.EndsWith] Expected collection to end with {patternLength} items, but collection has only {buffer.Count} items"
             ]);
         }
 
@@ -45,13 +45,17 @@ internal static class CollectionMatcherExtensions
         IEnumerable<T> value,
         string path)
     {
-        var remainingPatterns = new List<IMatcher<T>>(matchAll.items);
+        var remainingPatterns = new List<(int Index, IMatcher<T> Matcher)>();
+        for (var i = 0; i < matchAll.items.Length; i++)
+        {
+            remainingPatterns.Add((i, matchAll.items[i]));
+        }
 
         foreach (var item in value)
         {
             for (var i = remainingPatterns.Count - 1; i >= 0; i--)
             {
-                var result = remainingPatterns[i].Evaluate(item, $"{path}[?]");
+                var result = remainingPatterns[i].Matcher.Evaluate(item, $"{path}[?]");
                 if (result is MatchResult.Success)
                 {
                     remainingPatterns.RemoveAt(i);
@@ -63,8 +67,9 @@ internal static class CollectionMatcherExtensions
             }
         }
 
+        var failedPatterns = string.Join(", ", remainingPatterns.Select(p => $"pattern[{p.Index}]: {p.Matcher}"));
         return new MatchResult.Failure([
-            $"{path}: Expected to find matches for {remainingPatterns.Count} pattern(s)"
+            $"{path}: [CollectionMatcher.MatchAll] Expected to find matches for {remainingPatterns.Count} pattern(s): {failedPatterns}"
         ]);
     }
 
@@ -91,14 +96,14 @@ internal static class CollectionMatcherExtensions
             if (!hasValue)
             {
                 return new MatchResult.Failure([
-                    $"{path}: Expected sequence of length at least {index + 1}, got {index}"
+                    $"{path}: [CollectionMatcher.Sequence] Expected sequence of length at least {index + 1}, got {index}"
                 ]);
             }
 
             if (!hasPattern)
             {
                 return new MatchResult.Failure([
-                    $"{path}: Expected sequence of length {sequence.items.Length}, got more than {index}"
+                    $"{path}: [CollectionMatcher.Sequence] Expected sequence of length {sequence.items.Length}, got more than {index}"
                 ]);
             }
 
@@ -126,7 +131,7 @@ internal static class CollectionMatcherExtensions
             if (!valueEnumerator.MoveNext())
             {
                 return new MatchResult.Failure([
-                    $"{path}: Expected collection to start with {startsWith.items.Length} items, but collection has only {patternIndex} items"
+                    $"{path}: [CollectionMatcher.StartsWith] Expected collection to start with {startsWith.items.Length} items, but collection has only {patternIndex} items"
                 ]);
             }
 

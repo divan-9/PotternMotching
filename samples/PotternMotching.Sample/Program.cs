@@ -25,10 +25,10 @@ var examplePattern = new PatternExample(
     Nicknames: ["Lice"],
     Addresses: [
         new(
-            City: "Looking Glass"
+            City: "Wonderland"
         ),
         new(
-            City: "Wonderland"
+            City: "Looking Glass"
         ),
     ]);
 
@@ -36,7 +36,7 @@ var anotherPattern = new PatternExample(
     Name: "Alice",
     Age: 30,
     Nicknames: CollectionMatcher.MatchAll([
-        ValueMatcher.Exact("Lice")
+        ValueMatcher.Exact("Lice1")
     ]),
     Addresses: CollectionMatcher.EndsWith([
         new AddressExample(
