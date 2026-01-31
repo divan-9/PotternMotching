@@ -140,16 +140,16 @@ internal static class PatternCodeGenerator
         return property.WrapperKind switch
         {
             PatternWrapperKind.Value =>
-                $"this.{propertyName}.Value?.Evaluate(value.{propertyName}, {pathExpression}) ?? new MatchResult.Success()",
+                $"this.{propertyName}.Matcher?.Evaluate(value.{propertyName}, {pathExpression}) ?? new MatchResult.Success()",
 
             PatternWrapperKind.Set =>
-                $"this.{propertyName}.Values?.Evaluate(value.{propertyName}, {pathExpression}) ?? new MatchResult.Success()",
+                $"this.{propertyName}.Matcher?.Evaluate(value.{propertyName}, {pathExpression}) ?? new MatchResult.Success()",
 
             PatternWrapperKind.Sequence =>
-                $"this.{propertyName}.Values?.Evaluate(value.{propertyName}, {pathExpression}) ?? new MatchResult.Success()",
+                $"this.{propertyName}.Matcher?.Evaluate(value.{propertyName}, {pathExpression}) ?? new MatchResult.Success()",
 
             PatternWrapperKind.Dictionary =>
-                $"this.{propertyName}.Values?.Evaluate(value.{propertyName}, {pathExpression}) ?? new MatchResult.Success()",
+                $"this.{propertyName}.Matcher?.Evaluate(value.{propertyName}, {pathExpression}) ?? new MatchResult.Success()",
 
             PatternWrapperKind.Nested =>
                 $"this.{propertyName}?.Evaluate(value.{propertyName}, {pathExpression}) ?? new MatchResult.Success()",

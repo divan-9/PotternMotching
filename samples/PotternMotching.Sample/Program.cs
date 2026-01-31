@@ -59,6 +59,41 @@ var testCompanyPattern = new TestCompanyPattern(
 
 Console.WriteLine($"Test Company Match: {testCompanyPattern.Evaluate(testCompany)}");
 
+// Test 3: Dictionary matching
+Console.WriteLine("\n=== Dictionary Matcher Tests ===");
+
+var config = new Dictionary<string, int>
+{
+    ["timeout"] = 30,
+    ["maxRetries"] = 3,
+    ["bufferSize"] = 1024
+};
+
+// MatchAll - allows extra keys
+var matchAllPattern = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<int>>
+{
+    ["timeout"] = ValueMatcher.Exact(30),
+    ["maxRetries"] = ValueMatcher.Exact(3)
+});
+Console.WriteLine($"Dictionary MatchAll (allows extra keys): {matchAllPattern.Evaluate(config)}");
+
+// ExactKeys - requires exact key set
+var exactKeysPattern = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
+{
+    ["timeout"] = ValueMatcher.Exact(30),
+    ["maxRetries"] = ValueMatcher.Exact(3),
+    ["bufferSize"] = ValueMatcher.Exact(1024)
+});
+Console.WriteLine($"Dictionary ExactKeys (exact match): {exactKeysPattern.Evaluate(config)}");
+
+// ExactKeys with mismatch
+var strictPattern = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
+{
+    ["timeout"] = ValueMatcher.Exact(30),
+    ["maxRetries"] = ValueMatcher.Exact(3)
+});
+Console.WriteLine($"Dictionary ExactKeys (missing bufferSize): {strictPattern.Evaluate(config)}");
+
 [AutoPattern]
 public record ResultExample(
     string Name,
