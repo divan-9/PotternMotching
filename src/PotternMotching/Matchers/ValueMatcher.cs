@@ -24,19 +24,3 @@ public static class ValueMatcher
         return new ValueMatcher<T>.Exact(value);
     }
 }
-
-public static class ValueMatcherExtensions
-{
-    public static MatchResult EvaluateExact<T>(
-        this ValueMatcher<T>.Exact exact,
-        T value,
-        string path)
-    {
-        if (EqualityComparer<T>.Default.Equals(exact.Value, value))
-        {
-            return new MatchResult.Success();
-        }
-
-        return new MatchResult.Failure([$"{path}: [ValueMatcher.Exact] Expected {exact.Value}, got {value}"]);
-    }
-}

@@ -8,6 +8,12 @@ internal static class CollectionMatcherExtensions
         string path)
     {
         var patternLength = endsWith.items.Length;
+
+        if (patternLength == 0)
+        {
+            return new MatchResult.Success();
+        }
+
         var buffer = new Queue<T>(patternLength);
 
         foreach (var item in value)
@@ -49,6 +55,11 @@ internal static class CollectionMatcherExtensions
         for (var i = 0; i < matchAll.items.Length; i++)
         {
             remainingPatterns.Add((i, matchAll.items[i]));
+        }
+
+        if (remainingPatterns.Count == 0)
+        {
+            return new MatchResult.Success();
         }
 
         foreach (var item in value)
