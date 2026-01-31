@@ -4,13 +4,26 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>PotternMotching</PackageId>
+    <Title>PotternMotching - Pattern Matching for .NET</Title>
+    <Description>A fluent pattern matching library for .NET that provides powerful matchers for values, collections, and dictionaries. Includes automatic pattern generation via source generators for record types.</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Dunet" Version="1.15.0"/>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../PotternMotching.SourceGen/PotternMotching.SourceGen.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../PotternMotching.SourceGen/PotternMotching.SourceGen.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- Package the source generator as an analyzer -->
+  <ItemGroup>
+    <None Include="$(MSBuildProjectDirectory)/../PotternMotching.SourceGen/bin/$(Configuration)/netstandard2.0/PotternMotching.SourceGen.dll"
+          Pack="true"
+          PackagePath="analyzers/dotnet/cs"
+          Visible="false" />
   </ItemGroup>
 </Project>
