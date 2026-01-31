@@ -61,7 +61,7 @@ public class StartsWithTests
             ValueMatcher.Exact("b")
         ]);
 
-        var result = matcher.Evaluate(new[] { "a", "b", "c", "d", "e" });
+        var result = matcher.Evaluate(["a", "b", "c", "d", "e"]);
 
         Assert.IsType<MatchResult.Success>(result);
     }

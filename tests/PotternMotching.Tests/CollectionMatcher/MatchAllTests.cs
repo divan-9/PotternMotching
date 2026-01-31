@@ -121,7 +121,7 @@ public class MatchAllTests
     {
         var matcher = CollectionMatcher.MatchAll([ValueMatcher.Exact("missing")]);
 
-        var result = matcher.Evaluate(new[] { "a", "b", "c" }, ".Items");
+        var result = matcher.Evaluate(["a", "b", "c"], ".Items");
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);

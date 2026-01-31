@@ -6,7 +6,7 @@ using Xunit;
 public class ValueMatcherTests
 {
     // Test record types for object matching
-    record Person(string Name, int Age);
+    private record Person(string Name, int Age);
 
     [Fact]
     public void EvaluateExact_MatchingIntegers_ReturnsSuccess()

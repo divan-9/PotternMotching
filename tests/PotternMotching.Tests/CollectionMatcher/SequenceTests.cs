@@ -48,7 +48,7 @@ public class SequenceTests
             ValueMatcher.Exact("c")
         ]);
 
-        var result = matcher.Evaluate(new[] { "a", "b", "c" });
+        var result = matcher.Evaluate(["a", "b", "c"]);
 
         Assert.IsType<MatchResult.Success>(result);
     }

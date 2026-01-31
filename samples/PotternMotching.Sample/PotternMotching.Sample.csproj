@@ -5,8 +5,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Uncomment to view generated source files -->
+    <!-- <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles> -->
+    <!-- <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)Generated</CompilerGeneratedFilesOutputPath> -->
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\PotternMotching\PotternMotching.csproj"/>
+    <ProjectReference Include="..\..\src\PotternMotching.SourceGen\PotternMotching.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>
