@@ -53,4 +53,12 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor DebugPropertyType = new(
+        id: "PM9999",
+        title: "Debug: Property type detected",
+        messageFormat: "Property '{0}': Type='{1}', NullableAnnotation={2}, PropertyType='{3}'",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
 }

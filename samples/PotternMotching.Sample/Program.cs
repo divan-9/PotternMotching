@@ -122,7 +122,7 @@ Console.WriteLine($"Union Partial Match: {partialResult}");
 
 [AutoPattern]
 public record ResultExample(
-    string Name,
+    string? Name,
     int Age,
     HashSet<string> Nicknames,
     AddressExample[] Addresses
@@ -138,7 +138,7 @@ public record AddressExample(
 [AutoPattern]
 public record TestPerson(
     string Name,
-    int Age);
+    int? Age);
 
 [AutoPattern]
 public record TestAddress(

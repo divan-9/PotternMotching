@@ -3,6 +3,8 @@ namespace PotternMotching.SourceGen;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using PotternMotching.SourceGen.Models;
 
 internal static class TypeAnalyzer
@@ -10,9 +12,75 @@ internal static class TypeAnalyzer
     private const string AutoPatternAttributeName = "PotternMotching.AutoPatternAttribute";
     private const string UnionAttributeName = "Dunet.UnionAttribute";
 
+    // Custom format that includes nullable annotations
+    private static readonly SymbolDisplayFormat FullyQualifiedFormatWithNullability = new SymbolDisplayFormat(
+        globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
+        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+        miscellaneousOptions:
+            SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+            SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
+            SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+
+    private static NullableAnnotation GetNullableAnnotationFromSyntax(IParameterSymbol parameter)
+    {
+        // Get the syntax node for this parameter
+        var syntaxRef = parameter.DeclaringSyntaxReferences.FirstOrDefault();
+        if (syntaxRef == null)
+            return NullableAnnotation.None;
+
+        var syntax = syntaxRef.GetSyntax();
+        if (syntax is not ParameterSyntax paramSyntax)
+            return NullableAnnotation.None;
+
+        // Check if the type syntax has a nullable annotation (?)
+        if (paramSyntax.Type is NullableTypeSyntax)
+        {
+            return NullableAnnotation.Annotated;
+        }
+
+        return NullableAnnotation.None;
+    }
+
+    private static string GetTypeDisplayString(ITypeSymbol typeSymbol, NullableAnnotation nullableAnnotation)
+    {
+        // Use a custom format that includes nullable reference type modifiers
+        var format = new SymbolDisplayFormat(
+            globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
+            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+            miscellaneousOptions:
+                SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+                SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
+                SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+
+        var baseType = typeSymbol.ToDisplayString(format);
+
+        // For reference types with nullable annotation, add the ? suffix if not already present
+        // This handles cases where the format doesn't include it
+        if (typeSymbol.IsReferenceType &&
+            nullableAnnotation == NullableAnnotation.Annotated &&
+            !baseType.EndsWith("?"))
+        {
+            return baseType + "?";
+        }
+
+        // For nullable value types (Nullable<T>), the format should already include it
+        // but let's make sure
+        if (typeSymbol is INamedTypeSymbol namedType &&
+            namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
+        {
+            // This is already Nullable<T>, which ToDisplayString represents as T?
+            return baseType;
+        }
+
+        return baseType;
+    }
+
     public static TypeAnalysisResult Analyze(INamedTypeSymbol typeSymbol, Compilation compilation)
     {
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
+        var enableDebug = false; // Set to true to enable debug output
 
         // Check if it's a union type
         var isUnion = IsUnionType(typeSymbol);
@@ -71,7 +139,7 @@ internal static class TypeAnalyzer
         var properties = ImmutableArray.CreateBuilder<PropertyAnalysisResult>();
         foreach (var parameter in primaryConstructor.Parameters)
         {
-            var property = AnalyzeProperty(parameter, compilation);
+            var property = AnalyzeProperty(parameter, compilation, diagnostics, enableDebug);
             properties.Add(property);
         }
 
@@ -82,9 +150,39 @@ internal static class TypeAnalyzer
             diagnostics.ToImmutable());
     }
 
-    private static PropertyAnalysisResult AnalyzeProperty(IParameterSymbol parameter, Compilation compilation)
+    private static PropertyAnalysisResult AnalyzeProperty(
+        IParameterSymbol parameter,
+        Compilation compilation,
+        ImmutableArray<Diagnostic>.Builder diagnostics,
+        bool enableDebug)
     {
         var propertyType = parameter.Type;
+
+        // Check if the parameter has a nullable annotation by examining the syntax
+        var nullableAnnotation = GetNullableAnnotationFromSyntax(parameter);
+
+        if (nullableAnnotation == NullableAnnotation.None)
+        {
+            // Fallback to semantic model
+            nullableAnnotation = parameter.NullableAnnotation != NullableAnnotation.None
+                ? parameter.NullableAnnotation
+                : propertyType.NullableAnnotation;
+        }
+
+        // Get the type display string with nullable annotation
+        var propertyTypeString = GetTypeDisplayString(propertyType, nullableAnnotation);
+
+        // Debug output
+        if (enableDebug)
+        {
+            diagnostics.Add(Diagnostic.Create(
+                DiagnosticDescriptors.DebugPropertyType,
+                parameter.Locations.FirstOrDefault(),
+                parameter.Name,
+                propertyType.ToDisplayString(),
+                nullableAnnotation.ToString(),
+                propertyTypeString));
+        }
 
         // Check for arrays
         if (propertyType is IArrayTypeSymbol arrayType)
@@ -94,9 +192,9 @@ internal static class TypeAnalyzer
 
             return new PropertyAnalysisResult(
                 parameter.Name,
-                propertyType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                propertyTypeString,
                 PatternWrapperKind.Sequence,
-                elementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                elementType.ToDisplayString(FullyQualifiedFormatWithNullability),
                 null,
                 null,
                 requiresPattern,
@@ -114,9 +212,9 @@ internal static class TypeAnalyzer
                 var elementType = namedType.TypeArguments[0];
                 return new PropertyAnalysisResult(
                     parameter.Name,
-                    propertyType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    propertyTypeString,
                     PatternWrapperKind.Set,
-                    elementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                    elementType.ToDisplayString(FullyQualifiedFormatWithNullability));
             }
 
             // Check for ISet<T>
@@ -125,9 +223,9 @@ internal static class TypeAnalyzer
                 var elementType = namedType.TypeArguments[0];
                 return new PropertyAnalysisResult(
                     parameter.Name,
-                    propertyType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    propertyTypeString,
                     PatternWrapperKind.Set,
-                    elementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                    elementType.ToDisplayString(FullyQualifiedFormatWithNullability));
             }
 
             // Check for IDictionary<TKey, TValue> or Dictionary<TKey, TValue>
@@ -140,11 +238,11 @@ internal static class TypeAnalyzer
                     var valueType = namedType.TypeArguments[1];
                     return new PropertyAnalysisResult(
                         parameter.Name,
-                        propertyType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        propertyTypeString,
                         PatternWrapperKind.Dictionary,
                         null,
-                        keyType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        valueType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                        keyType.ToDisplayString(FullyQualifiedFormatWithNullability),
+                        valueType.ToDisplayString(FullyQualifiedFormatWithNullability));
                 }
             }
 
@@ -156,9 +254,9 @@ internal static class TypeAnalyzer
 
                 return new PropertyAnalysisResult(
                     parameter.Name,
-                    propertyType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    propertyTypeString,
                     PatternWrapperKind.Sequence,
-                    elementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    elementType.ToDisplayString(FullyQualifiedFormatWithNullability),
                     null,
                     null,
                     requiresPattern,
@@ -175,7 +273,7 @@ internal static class TypeAnalyzer
             {
                 return new PropertyAnalysisResult(
                     parameter.Name,
-                    propertyType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    propertyTypeString,
                     PatternWrapperKind.Nested,
                     null,
                     null,
@@ -188,7 +286,7 @@ internal static class TypeAnalyzer
         // Default: ValuePattern
         return new PropertyAnalysisResult(
             parameter.Name,
-            propertyType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            propertyTypeString,
             PatternWrapperKind.Value);
     }
 
@@ -292,6 +390,8 @@ internal static class TypeAnalyzer
         Compilation compilation,
         ImmutableArray<Diagnostic>.Builder diagnostics)
     {
+        var enableDebug = false; // Match the debug setting from Analyze method
+
         // Get primary constructor
         var primaryConstructor = variantSymbol.Constructors
             .FirstOrDefault(c => c.Parameters.Length > 0 && !c.IsImplicitlyDeclared);
@@ -308,7 +408,7 @@ internal static class TypeAnalyzer
         var properties = ImmutableArray.CreateBuilder<PropertyAnalysisResult>();
         foreach (var parameter in primaryConstructor.Parameters)
         {
-            var property = AnalyzeProperty(parameter, compilation);
+            var property = AnalyzeProperty(parameter, compilation, diagnostics, enableDebug);
             properties.Add(property);
         }
 
