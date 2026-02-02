@@ -30,26 +30,16 @@ public partial record ValueMatcher<T> : IMatcher<T>
     /// </remarks>
     public partial record Exact(
         T Value) : IMatcher<T>;
+
+    public static implicit operator DefaultMatcher<T>(
+        ValueMatcher<T> matcher)
+    {
+        return new DefaultMatcher<T>(matcher);
+    }
 }
 
-/// <summary>
-/// Provides factory methods for creating value matchers.
-/// </summary>
 public static class ValueMatcher
 {
-    /// <summary>
-    /// Creates a matcher that matches values using exact equality.
-    /// </summary>
-    /// <typeparam name="T">The type of value to match.</typeparam>
-    /// <param name="value">The expected value.</param>
-    /// <returns>An exact value matcher.</returns>
-    /// <example>
-    /// <code>
-    /// var matcher = ValueMatcher.Exact(42);
-    /// matcher.Evaluate(42); // Success
-    /// matcher.Evaluate(43); // Failure
-    /// </code>
-    /// </example>
     public static ValueMatcher<T>.Exact Exact<T>(
         T value)
     {

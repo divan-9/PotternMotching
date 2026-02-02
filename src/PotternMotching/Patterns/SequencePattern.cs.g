@@ -8,14 +8,14 @@ using PotternMotching.Matchers;
 /// Represents a pattern for matching ordered sequences (arrays, lists, etc.).
 /// </summary>
 /// <typeparam name="TItem">The type of items in the sequence.</typeparam>
-/// <typeparam name="TPattern">The type of pattern used to match individual items.</typeparam>
+/// <typeparam name="TItemPattern">The type of pattern used to match individual items.</typeparam>
 /// <remarks>
 /// This struct wraps a <see cref="CollectionMatcher{T}"/> and supports collection initializer syntax.
 /// Used in auto-generated pattern classes for array and list properties.
 /// </remarks>
 [CollectionBuilder(typeof(SequencePattern), "Create")]
-public readonly struct SequencePattern<TItem, TPattern> : IReadOnlyCollection<TPattern>
-    where TPattern : IMatcher<TItem>
+public readonly struct SequencePattern<TItem, TItemPattern> : IEnumerable
+    where TItemPattern : IMatcher<TItem>
 {
     /// <summary>
     /// Initializes a new instance of <see cref="SequencePattern{TItem, TPattern}"/>.
@@ -43,20 +43,9 @@ public readonly struct SequencePattern<TItem, TPattern> : IReadOnlyCollection<TP
     public bool IsSet { get; }
 
     /// <inheritdoc/>
-    /// <exception cref="NotImplementedException">This property is not implemented.</exception>
-    public int Count => throw new NotImplementedException();
-
-    /// <inheritdoc/>
-    /// <exception cref="NotImplementedException">This method is not implemented.</exception>
-    public IEnumerator<TPattern> GetEnumerator()
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc/>
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return this.GetEnumerator();
+        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -72,8 +61,8 @@ public readonly struct SequencePattern<TItem, TPattern> : IReadOnlyCollection<TP
     /// ];
     /// </code>
     /// </example>
-    public static implicit operator SequencePattern<TItem, TPattern>(
-        TPattern[] matchers)
+    public static implicit operator SequencePattern<TItem, TItemPattern>(
+        TItemPattern[] matchers)
     {
         return new(new CollectionMatcher<TItem>.Sequence([.. matchers]));
     }
@@ -83,7 +72,7 @@ public readonly struct SequencePattern<TItem, TPattern> : IReadOnlyCollection<TP
     /// </summary>
     /// <param name="pattern">The collection matcher.</param>
     /// <returns>A sequence pattern wrapping the collection matcher.</returns>
-    public static implicit operator SequencePattern<TItem, TPattern>(
+    public static implicit operator SequencePattern<TItem, TItemPattern>(
         CollectionMatcher<TItem> pattern)
     {
         return new(pattern);
@@ -99,12 +88,12 @@ public class SequencePattern
     /// Creates a sequence pattern from a span of matchers (used by collection initializer syntax).
     /// </summary>
     /// <typeparam name="TItem">The type of items in the sequence.</typeparam>
-    /// <typeparam name="TPattern">The type of pattern used to match individual items.</typeparam>
+    /// <typeparam name="TItemPattern">The type of pattern used to match individual items.</typeparam>
     /// <param name="values">The matchers for the sequence.</param>
     /// <returns>A sequence pattern.</returns>
-    public static SequencePattern<TItem, TPattern> Create<TItem, TPattern>(
-        ReadOnlySpan<TPattern> values)
-        where TPattern : IMatcher<TItem>
+    public static SequencePattern<TItem, TItemPattern> Create<TItem, TItemPattern>(
+        ReadOnlySpan<TItemPattern> values)
+        where TItemPattern : IMatcher<TItem>
     {
         return values.ToArray();
     }

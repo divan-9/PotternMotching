@@ -123,7 +123,7 @@ internal static class PatternCodeGenerator
                 $"SetPattern<{property.ElementType}>",
 
             PatternWrapperKind.Sequence when property.RequiresNestedPattern =>
-                $"SequencePattern<{property.ElementType}, {property.NestedType!.Name}Pattern>",
+                $"SequencePattern<{property.ElementType}, {property.NestedType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}Pattern>",
 
             PatternWrapperKind.Sequence =>
                 $"SequencePattern<{property.ElementType}, IMatcher<{property.ElementType}>>",
@@ -132,7 +132,7 @@ internal static class PatternCodeGenerator
                 $"DictionaryPattern<{property.KeyType}, {property.ValueType}>",
 
             PatternWrapperKind.Nested =>
-                $"{property.NestedType!.Name}Pattern?",
+                $"{property.NestedType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}Pattern?",
 
             _ => throw new InvalidOperationException($"Unknown wrapper kind: {property.WrapperKind}")
         };
@@ -198,17 +198,19 @@ internal static class PatternCodeGenerator
             sb.AppendLine();
         }
 
-        // Union pattern class declaration
-        // Note: We generate [Union] for potential future use, but currently only the variant patterns are usable
-        sb.AppendLine("[Union]");
-        sb.Append($"public partial record {patternName}");
-        sb.AppendLine();
-        sb.AppendLine("{");
+        // Union pattern class declaration - abstract base with no parameters
+        var unionFullType = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        // Note: We don't generate an Evaluate method for the union pattern itself because:
-        // 1. Dunet's Match method is generated based on nested types, which are the variant patterns
-        // 2. The variant patterns already implement IMatcher<UnionType> for direct usage
-        // 3. Users can use variant patterns directly in collections: new TestUnionPattern.A(...)
+        sb.AppendLine($"public abstract partial record {patternName} : IMatcher<{unionFullType}>");
+        sb.AppendLine("{");
+        sb.AppendLine($"    private {patternName}() {{ }}");
+        sb.AppendLine();
+
+        // Generate the abstract Evaluate method for the union pattern
+        sb.AppendLine("    public abstract MatchResult Evaluate(");
+        sb.AppendLine($"        {unionFullType} value,");
+        sb.AppendLine("        string path = \"\");");
+        sb.AppendLine();
 
         // Generate each variant pattern
         foreach (var variant in analysis.Variants)
@@ -285,9 +287,10 @@ internal static class PatternCodeGenerator
         var variantName = variant.VariantName;
         var variantFullType = $"{unionSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.{variantName}";
         var unionFullType = unionSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var patternName = $"{unionSymbol.Name}Pattern";
 
-        // Variant pattern class declaration - implements BOTH IMatcher<Variant> AND IMatcher<Union>
-        sb.Append($"    public partial record {variantName}(");
+        // Variant pattern class declaration - sealed, inherits from parent, implements IMatcher<Variant>
+        sb.Append($"    public sealed partial record {variantName}(");
 
         // Parameters
         if (variant.Properties.Length > 0)
@@ -317,7 +320,7 @@ internal static class PatternCodeGenerator
             sb.Append(")");
         }
 
-        sb.AppendLine($" : IMatcher<{variantFullType}>, IMatcher<{unionFullType}>");
+        sb.AppendLine($" : {patternName}, IMatcher<{variantFullType}>");
         sb.AppendLine("    {");
 
         // Evaluate method for specific variant type
@@ -358,12 +361,11 @@ internal static class PatternCodeGenerator
         sb.AppendLine("        }");
         sb.AppendLine();
 
-        // Evaluate method for union type - checks variant and delegates
-        // This method is added to each variant pattern so they can be used directly in collections
+        // Override Evaluate method for union type - checks variant and delegates
         var variantNameLower = char.ToLower(variantName[0]) + variantName.Substring(1);
-        sb.AppendLine($"        MatchResult IMatcher<{unionFullType}>.Evaluate(");
+        sb.AppendLine($"        public override MatchResult Evaluate(");
         sb.AppendLine($"            {unionFullType} value,");
-        sb.AppendLine("            string path)"); // No default value for explicit interface implementation
+        sb.AppendLine("            string path = \"\")");
         sb.AppendLine("        {");
         sb.AppendLine($"            return value is {variantFullType} {variantNameLower}");
         sb.AppendLine($"                ? this.Evaluate({variantNameLower}, path)");

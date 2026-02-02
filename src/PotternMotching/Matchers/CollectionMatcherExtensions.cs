@@ -2,85 +2,55 @@ namespace PotternMotching.Matchers;
 
 internal static class CollectionMatcherExtensions
 {
-    internal static MatchResult EvaluateEndsWith<T>(
-        this CollectionMatcher<T>.EndsWith endsWith,
-        IEnumerable<T> value,
+    internal static MatchResult EvaluateAnyOrder<T>(
+        this CollectionMatcher<T>.AnyOrder anyOrder,
+        IEnumerable<T> values,
         string path)
     {
-        var patternLength = endsWith.items.Length;
+        // TODO: implement extra items detection
+        var unmatchedItems = new List<T>(values);
 
-        if (patternLength == 0)
+        foreach (var pattern in anyOrder.Patterns)
         {
-            return new MatchResult.Success();
-        }
+            var matched = false;
 
-        var buffer = new Queue<T>(patternLength);
-
-        foreach (var item in value)
-        {
-            if (buffer.Count == patternLength)
+            for (var i = 0; i < unmatchedItems.Count; i++)
             {
-                buffer.Dequeue();
+                var item = unmatchedItems[i];
+                if (pattern.Evaluate(item, $"{path}[?]") is MatchResult.Success)
+                {
+                    unmatchedItems.RemoveAt(i);
+                    matched = true;
+                    break;
+                }
             }
-            buffer.Enqueue(item);
-        }
 
-        if (buffer.Count < patternLength)
-        {
-            return new MatchResult.Failure([
-                $"{path}: [CollectionMatcher.EndsWith] Expected collection to end with {patternLength} items, but collection has only {buffer.Count} items"
-            ]);
-        }
-
-        var index = 0;
-        foreach (var item in buffer)
-        {
-            var result = endsWith.items[index].Evaluate(item, $"{path}[^{patternLength - index}]");
-            if (result is MatchResult.Failure)
+            if (!matched)
             {
-                return result;
+                return new MatchResult.Failure([
+                    $"{path}: [CollectionMatcher.AnyOrder] Expected to find an element matching pattern {pattern}, but none was found."
+                ]);
             }
-            index++;
         }
 
         return new MatchResult.Success();
     }
 
-    internal static MatchResult EvaluateMatchAll<T>(
-        this CollectionMatcher<T>.MatchAll matchAll,
+    internal static MatchResult EvaluateAnyElement<T>(
+        this CollectionMatcher<T>.AnyElement anyElement,
         IEnumerable<T> value,
         string path)
     {
-        var remainingPatterns = new List<(int Index, IMatcher<T> Matcher)>();
-        for (var i = 0; i < matchAll.items.Length; i++)
-        {
-            remainingPatterns.Add((i, matchAll.items[i]));
-        }
-
-        if (remainingPatterns.Count == 0)
-        {
-            return new MatchResult.Success();
-        }
-
         foreach (var item in value)
         {
-            for (var i = remainingPatterns.Count - 1; i >= 0; i--)
+            if (anyElement.Pattern.Evaluate(item, $"{path}[?]") is MatchResult.Success)
             {
-                var result = remainingPatterns[i].Matcher.Evaluate(item, $"{path}[?]");
-                if (result is MatchResult.Success)
-                {
-                    remainingPatterns.RemoveAt(i);
-                    if (remainingPatterns.Count == 0)
-                    {
-                        return new MatchResult.Success();
-                    }
-                }
+                return new MatchResult.Success();
             }
         }
 
-        var failedPatterns = string.Join(", ", remainingPatterns.Select(p => $"pattern[{p.Index}]: {p.Matcher}"));
         return new MatchResult.Failure([
-            $"{path}: [CollectionMatcher.MatchAll] Expected to find matches for {remainingPatterns.Count} pattern(s): {failedPatterns}"
+            $"{path}: [CollectionMatcher.AnyElement] Expected to find matches for pattern {anyElement.Pattern}, but no elements matched."
         ]);
     }
 
@@ -92,7 +62,7 @@ internal static class CollectionMatcherExtensions
         var index = 0;
 
         using var valueEnumerator = value.GetEnumerator();
-        using var patternEnumerator = ((IEnumerable<IMatcher<T>>)sequence.items).GetEnumerator();
+        using var patternEnumerator = ((IEnumerable<IMatcher<T>>)sequence.Patterns).GetEnumerator();
 
         while (true)
         {
@@ -114,7 +84,7 @@ internal static class CollectionMatcherExtensions
             if (!hasPattern)
             {
                 return new MatchResult.Failure([
-                    $"{path}: [CollectionMatcher.Sequence] Expected sequence of length {sequence.items.Length}, got more than {index}"
+                    $"{path}: [CollectionMatcher.Sequence] Expected sequence of length {sequence.Patterns.Length}, got more than {index}"
                 ]);
             }
 
@@ -126,35 +96,5 @@ internal static class CollectionMatcherExtensions
 
             index++;
         }
-    }
-
-    internal static MatchResult EvaluateStartsWith<T>(
-        this CollectionMatcher<T>.StartsWith startsWith,
-        IEnumerable<T> value,
-        string path)
-    {
-        var patternIndex = 0;
-
-        using var valueEnumerator = value.GetEnumerator();
-
-        while (patternIndex < startsWith.items.Length)
-        {
-            if (!valueEnumerator.MoveNext())
-            {
-                return new MatchResult.Failure([
-                    $"{path}: [CollectionMatcher.StartsWith] Expected collection to start with {startsWith.items.Length} items, but collection has only {patternIndex} items"
-                ]);
-            }
-
-            var result = startsWith.items[patternIndex].Evaluate(valueEnumerator.Current, $"{path}[{patternIndex}]");
-            if (result is MatchResult.Failure)
-            {
-                return result;
-            }
-
-            patternIndex++;
-        }
-
-        return new MatchResult.Success();
     }
 }

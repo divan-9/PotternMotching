@@ -3,10 +3,14 @@ using Dunet;
 using PotternMotching;
 using PotternMotching.Matchers;
 
-var result = new ResultExample(
+var result = new Person(
     Name: "Alice",
     Age: 30,
     Nicknames: ["Ally", "Lice"],
+    Job: new Job.Employed(
+        Company: "Tech Corp",
+        Position: "Developer"
+    ),
     Addresses: [
         new(
             City: "Wonderland",
@@ -18,146 +22,82 @@ var result = new ResultExample(
         ),
     ]
 );
-// Test auto-generated patterns
-var autoPattern = new ResultExamplePattern(
+
+var pattern = new PersonPattern(
     Name: "Alice",
     Age: 30,
-    Nicknames: ["Lice1"],
-    Addresses: CollectionMatcher.MatchAll([
-        new AddressExamplePattern(City: "Wonderland"),
-        new AddressExamplePattern(City: "Looking Glass")
+    Job: new JobPattern.Employed(
+        Company: "Tech Corp"),
+    Nicknames: CollectionMatcher.AnyOrder([
+        "Ally",
+        "Lice"
+    ]),
+    Addresses: CollectionMatcher.Sequence([
+        new AddressPattern(
+            City: "Wonderland"),
+        new AddressPattern(
+            City: "Looking Glass",
+            Zip: "67890"),
     ]));
 
-Console.WriteLine("\nAuto-generated pattern:");
-Console.WriteLine(autoPattern.Evaluate(result));
-
-// Additional comprehensive test
-Console.WriteLine("\n=== Comprehensive Auto-Generated Pattern Tests ===");
-
-// Test 1: Simple value matching
-var testPerson = new TestPerson("Bob", 25);
-var testPersonPattern = new TestPersonPattern(Name: "Bob", Age: 25);
-Console.WriteLine($"Test Person Match: {testPersonPattern.Evaluate(testPerson)}");
-
-// Test 2: Nested pattern matching
-var testCompany = new TestCompany(
-    "Acme Corp",
-    new TestAddress("New York", "10001"),
-    [
-        new TestAddress("San Francisco", "94102"),
-        new TestAddress("Seattle", "98101")
-    ],
-    ["tech", "software"]);
-
-var testCompanyPattern = new TestCompanyPattern(
-    Name: "Acme Corp",
-    HeadOffice: new TestAddressPattern(City: "New York"),
-    Branches: [
-        new TestAddressPattern(City: "San Francisco"),
-        new TestAddressPattern(City: "Seattle")
-    ],
-    Tags: ["tech", "software"]);
-
-Console.WriteLine($"Test Company Match: {testCompanyPattern.Evaluate(testCompany)}");
-
-// Test 3: Dictionary matching
-Console.WriteLine("\n=== Dictionary Matcher Tests ===");
-
-var config = new Dictionary<string, int>
-{
-    ["timeout"] = 30,
-    ["maxRetries"] = 3,
-    ["bufferSize"] = 1024
-};
-
-// MatchAll - allows extra keys
-var matchAllPattern = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<int>>
-{
-    ["timeout"] = ValueMatcher.Exact(30),
-    ["maxRetries"] = ValueMatcher.Exact(3)
-});
-Console.WriteLine($"Dictionary MatchAll (allows extra keys): {matchAllPattern.Evaluate(config)}");
-
-// ExactKeys - requires exact key set
-var exactKeysPattern = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
-{
-    ["timeout"] = ValueMatcher.Exact(30),
-    ["maxRetries"] = ValueMatcher.Exact(3),
-    ["bufferSize"] = ValueMatcher.Exact(1024)
-});
-Console.WriteLine($"Dictionary ExactKeys (exact match): {exactKeysPattern.Evaluate(config)}");
-
-// ExactKeys with mismatch
-var strictPattern = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
-{
-    ["timeout"] = ValueMatcher.Exact(30),
-    ["maxRetries"] = ValueMatcher.Exact(3)
-});
-Console.WriteLine($"Dictionary ExactKeys (missing bufferSize): {strictPattern.Evaluate(config)}");
-
-var unionSequencePattern = CollectionMatcher.Sequence<TestUnion>([
-    new TestUnionPattern.A(
-        X: 10),
-    new TestUnionPattern.B(
-        Y: "hello")
-]);
-
-var unionResult = unionSequencePattern.Evaluate([
-    new TestUnion.A(10),
-    new TestUnion.B("hello", 100)
-]);
-
-Console.WriteLine($"\n=== Union Pattern Tests ===");
-Console.WriteLine($"Union Sequence Match: {unionResult}");
-
-// Test variant mismatch - using IMatcher<TestUnion> interface
-IMatcher<TestUnion> mismatchPattern = new TestUnionPattern.A(X: 10);
-var mismatchResult = mismatchPattern.Evaluate(new TestUnion.B("test", 5));
-Console.WriteLine($"Union Variant Mismatch: {mismatchResult}");
-
-// Test partial matching (Z is wildcard)
-var partialPattern = new TestUnionPattern.B(Y: "hello");
-var partialResult = partialPattern.Evaluate(new TestUnion.B("hello", 999));
-Console.WriteLine($"Union Partial Match: {partialResult}");
-
-[AutoPattern]
-public record ResultExample(
+public record Person(
     string? Name,
     int Age,
+    Job Job,
     HashSet<string> Nicknames,
-    AddressExample[] Addresses
+    Address[] Addresses
 );
 
 [AutoPattern]
-public record AddressExample(
+public record Address(
     string City,
     string Zip
 );
 
-// Test types for auto-generated patterns
-[AutoPattern]
-public record TestPerson(
-    string Name,
-    int? Age);
-
-[AutoPattern]
-public record TestAddress(
-    string City,
-    string Zip);
-
-[AutoPattern]
-public record TestCompany(
-    string Name,
-    TestAddress HeadOffice,
-    TestAddress[] Branches,
-    HashSet<string> Tags);
-
-
 [Union]
-[AutoPattern]
-public partial record TestUnion
+public partial record Job
 {
-    public partial record A(int X);
-    public partial record B(string Y, int Z);
+    public partial record Employed(string Company, string Position);
+    public partial record Unemployed;
+}
 
+public abstract record JobPattern : IMatcher<Job>
+{
+    public MatchResult Evaluate(
+        Job value,
+        string path = "")
+    {
+        throw new NotImplementedException();
+    }
+
+    public static implicit operator DefaultMatcher<Job>(
+        JobPattern matcher)
+    {
+        return new DefaultMatcher<Job>(matcher);
+    }
+
+    public record Employed(
+        DefaultMatcher<string> Company = default,
+        DefaultMatcher<string> Position = default) : JobPattern;
+
+    public record Unemployed() : JobPattern;
+};
+
+public record PersonPattern(
+    DefaultMatcher<string?> Name = default,
+    DefaultMatcher<int> Age = default,
+    DefaultMatcher<Job> Job = default,
+    DefaultMatcher<IEnumerable<string>> Nicknames = default,
+    DefaultMatcher<IEnumerable<Address>> Addresses = default);
+
+public record AddressPattern(
+    DefaultMatcher<string> City = default,
+    DefaultMatcher<string> Zip = default) : IMatcher<Address>
+{
+    public MatchResult Evaluate(
+        Address value,
+        string path = "")
+    {
+
+    }
 }
