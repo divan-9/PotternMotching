@@ -266,6 +266,37 @@ internal static class PatternCodeGenerator
         return char.ToUpper(str[0]) + str.Substring(1);
     }
 
+    private static readonly HashSet<string> CSharpKeywords = new HashSet<string>
+    {
+        "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked",
+        "class", "const", "continue", "decimal", "default", "delegate", "do", "double", "else",
+        "enum", "event", "explicit", "extern", "false", "finally", "fixed", "float", "for",
+        "foreach", "goto", "if", "implicit", "in", "int", "interface", "internal", "is", "lock",
+        "long", "namespace", "new", "null", "object", "operator", "out", "override", "params",
+        "private", "protected", "public", "readonly", "ref", "return", "sbyte", "sealed", "short",
+        "sizeof", "stackalloc", "static", "string", "struct", "switch", "this", "throw", "true",
+        "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual",
+        "void", "volatile", "while"
+    };
+
+    private static string EscapeIdentifierIfNeeded(string identifier)
+    {
+        if (CSharpKeywords.Contains(identifier))
+        {
+            return "@" + identifier;
+        }
+        return identifier;
+    }
+
+    private static string LowercaseFirstLetter(string str)
+    {
+        if (string.IsNullOrEmpty(str))
+            return str;
+
+        var lowercased = char.ToLower(str[0]) + str.Substring(1);
+        return EscapeIdentifierIfNeeded(lowercased);
+    }
+
     private static void GenerateImplicitConversion(
         StringBuilder sb,
         INamedTypeSymbol typeSymbol,
@@ -362,7 +393,7 @@ internal static class PatternCodeGenerator
             var matchCases = string.Join(", ", variantTypes.Select(v =>
             {
                 var variantName = v.Name;
-                var variantNameLower = char.ToLower(variantName[0]) + variantName.Substring(1);
+                var variantNameLower = LowercaseFirstLetter(variantName);
                 // Use implicit conversion from variant to variant pattern, then cast to base pattern
                 return $"{variantNameLower} => ({unionFullName}Pattern)({unionFullName}Pattern.{variantName}){variantNameLower}";
             }));
@@ -489,7 +520,7 @@ internal static class PatternCodeGenerator
         for (int i = 0; i < analysis.Variants.Length; i++)
         {
             var variant = analysis.Variants[i];
-            var variantNameLower = char.ToLower(variant.VariantName[0]) + variant.VariantName.Substring(1);
+            var variantNameLower = LowercaseFirstLetter(variant.VariantName);
 
             sb.Append($"            {variantNameLower} => ({patternName})({patternName}.{variant.VariantName}){variantNameLower}");
 
@@ -531,7 +562,7 @@ internal static class PatternCodeGenerator
         foreach (var variant in analysis.Variants)
         {
             sb.AppendLine();
-            GenerateVariantPattern(sb, variant, typeSymbol);
+            GenerateVariantPattern(sb, variant, typeSymbol, analysis.Variants);
         }
 
         sb.AppendLine("}");
@@ -552,7 +583,7 @@ internal static class PatternCodeGenerator
         for (int i = 0; i < analysis.Variants.Length; i++)
         {
             var variant = analysis.Variants[i];
-            var variantNameLower = char.ToLower(variant.VariantName[0]) + variant.VariantName.Substring(1);
+            var variantNameLower = LowercaseFirstLetter(variant.VariantName);
             var variantValueName = "value" + variant.VariantName;
 
             sb.Append($"            {variantNameLower} => value.Match(");
@@ -561,7 +592,7 @@ internal static class PatternCodeGenerator
             for (int j = 0; j < analysis.Variants.Length; j++)
             {
                 var otherVariant = analysis.Variants[j];
-                var otherVariantNameLower = char.ToLower(otherVariant.VariantName[0]) + otherVariant.VariantName.Substring(1);
+                var otherVariantNameLower = LowercaseFirstLetter(otherVariant.VariantName);
 
                 if (j > 0)
                     sb.Append(", ");
@@ -597,7 +628,8 @@ internal static class PatternCodeGenerator
     private static void GenerateVariantPattern(
         StringBuilder sb,
         VariantAnalysisResult variant,
-        INamedTypeSymbol unionSymbol)
+        INamedTypeSymbol unionSymbol,
+        ImmutableArray<VariantAnalysisResult> allVariants)
     {
         var variantName = variant.VariantName;
         var variantFullType = $"{unionSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.{variantName}";
@@ -677,14 +709,32 @@ internal static class PatternCodeGenerator
         sb.AppendLine();
 
         // Override Evaluate method for union type - checks variant and delegates
-        var variantNameLower = char.ToLower(variantName[0]) + variantName.Substring(1);
+        var variantNameLower = LowercaseFirstLetter(variantName);
         sb.AppendLine($"        public override MatchResult Evaluate(");
         sb.AppendLine($"            {unionFullType} value,");
         sb.AppendLine("            string path = \"\")");
         sb.AppendLine("        {");
         sb.AppendLine($"            return value is {variantFullType} {variantNameLower}");
         sb.AppendLine($"                ? this.Evaluate({variantNameLower}, path)");
-        sb.AppendLine($"                : new MatchResult.Failure([$\"{{path}}: Expected variant {variantName}\"]);");
+
+        // Generate error message with actual variant using Match
+        sb.Append($"                : new MatchResult.Failure([$\"{{path}}: Expected variant {variantName}, got {{value.Match(");
+
+        // Generate Match expression that returns the actual variant name
+        for (int i = 0; i < allVariants.Length; i++)
+        {
+            var v = allVariants[i];
+            var vNameLower = LowercaseFirstLetter(v.VariantName);
+
+            sb.Append($"{vNameLower} => \"{v.VariantName}\"");
+
+            if (i < allVariants.Length - 1)
+            {
+                sb.Append(", ");
+            }
+        }
+
+        sb.AppendLine(")}\"]);");
         sb.AppendLine("        }");
 
         // Add static From method for variant

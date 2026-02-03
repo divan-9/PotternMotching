@@ -156,6 +156,60 @@ if (evalResult is MatchResult.Success)
 PatternDefault<Job, JobPattern> wrappedPattern = new Job.Employed("Tech", "Dev");
 Console.WriteLine("✓ Test 6: PatternDefault wrapper works!");
 
+Console.WriteLine("\n=== Testing Union Error Messages ===");
+
+var employedJob = new Job.Employed("Tech Corp", "Developer");
+var unemployedJob = new Job.Unemployed();
+
+// Test 1: Expect Employed, get Unemployed
+var employedPattern = new JobPattern.Employed(Company: "Tech Corp", Position: "Developer");
+var result1 = employedPattern.Evaluate(unemployedJob, ".Job");
+if (result1 is MatchResult.Failure f1)
+{
+    Console.WriteLine($"Error: {f1.Reasons[0]}");
+    // Should print: ".Job: Expected variant Employed, got Unemployed"
+}
+
+// Test 2: Expect Unemployed, get Employed
+var unemployedPattern = new JobPattern.Unemployed();
+var result2 = unemployedPattern.Evaluate(employedJob, ".Job");
+if (result2 is MatchResult.Failure f2)
+{
+    Console.WriteLine($"Error: {f2.Reasons[0]}");
+    // Should print: ".Job: Expected variant Unemployed, got Employed"
+}
+
+Console.WriteLine("\n=== Testing Keyword Variant Names ===");
+var stringContent = new ImpressionContent.String("test");
+var compositeContent = new ImpressionContent.Composite();
+
+// Test: Expect String, get Composite
+var stringPattern = new ImpressionContentPattern.String(Value: "test");
+var keywordResult1 = stringPattern.Evaluate(compositeContent, ".Content");
+if (keywordResult1 is MatchResult.Failure fk1)
+{
+    Console.WriteLine($"Error: {fk1.Reasons[0]}");
+    // Should print: ".Content: Expected variant String, got Composite"
+}
+
+// Test: Expect Composite, get String
+var compositePattern = new ImpressionContentPattern.Composite();
+var keywordResult2 = compositePattern.Evaluate(stringContent, ".Content");
+if (keywordResult2 is MatchResult.Failure fk2)
+{
+    Console.WriteLine($"Error: {fk2.Reasons[0]}");
+    // Should print: ".Content: Expected variant Composite, got String"
+}
+
+// Test: Expect Object, get String
+var objectPattern = new ImpressionContentPattern.Object(Id: "123");
+var keywordResult3 = objectPattern.Evaluate(stringContent, ".Content");
+if (keywordResult3 is MatchResult.Failure fk3)
+{
+    Console.WriteLine($"Error: {fk3.Reasons[0]}");
+    // Should print: ".Content: Expected variant Object, got String"
+}
+
 [AutoPattern]
 public record Person(
     string? Name,
@@ -191,3 +245,13 @@ public record Company(
     string Name,
     List<Job.Employed> Employees
 );
+
+// Test union with keyword variant names
+[Union]
+[AutoPattern]
+public partial record ImpressionContent
+{
+    public partial record String(string Value);
+    public partial record Composite();
+    public partial record Object(string Id);
+}
