@@ -28,7 +28,20 @@ public interface IPattern<in T>
          string path = "");
 }
 
+/// <summary>
+/// Defines a static interface for types that can construct patterns from values.
+/// </summary>
+/// <typeparam name="T">The type of value to create patterns for.</typeparam>
+/// <remarks>
+/// This interface is used by the default pattern wrapper types to enable implicit conversions
+/// from values to patterns. Implementations provide a static factory method to create patterns.
+/// </remarks>
 public interface IPatternConstructor<in T>
 {
+    /// <summary>
+    /// Creates a pattern from a value.
+    /// </summary>
+    /// <param name="value">The value to create a pattern from.</param>
+    /// <returns>A pattern that matches the specified value.</returns>
     static abstract IPattern<T> Create(T value);
 }

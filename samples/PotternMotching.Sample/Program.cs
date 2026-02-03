@@ -73,7 +73,7 @@ var pattern = new PersonPattern(
     Job: new JobPattern.Employed(
         Company: "Tech Corp"),
     Nicknames: CollectionPattern.AnyElement("Ally"),
-    Addresses: CollectionPattern.AnyOrder([
+    Addresses: CollectionPattern.Subset([
         new Address(City: "Looking Glass", Zip: "67890"),  // Value type - implicitly converted!
         new Address(City: "Wonderland", Zip: "12345")      // Value type - implicitly converted!,
     ]));

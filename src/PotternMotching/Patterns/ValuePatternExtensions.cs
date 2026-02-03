@@ -1,7 +1,16 @@
 namespace PotternMotching.Patterns;
 
+/// <summary>
+/// Internal extension methods for evaluating value patterns.
+/// </summary>
 internal static class ValuePatternExtensions
 {
+    /// <summary>
+    /// Evaluates an exact value pattern.
+    /// </summary>
+    /// <remarks>
+    /// Uses <see cref="EqualityComparer{T}.Default"/> to compare the expected and actual values.
+    /// </remarks>
     internal static MatchResult EvaluateExact<T>(
         this ValuePattern<T>.Exact exact,
         T value,

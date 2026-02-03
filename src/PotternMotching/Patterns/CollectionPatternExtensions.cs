@@ -1,9 +1,19 @@
 namespace PotternMotching.Patterns;
 
+/// <summary>
+/// Internal extension methods for evaluating collection patterns.
+/// </summary>
 internal static class CollectionPatternExtensions
 {
-    internal static MatchResult EvaluateAnyOrder<T>(
-        this CollectionPattern<T>.AnyOrder anyOrder,
+    /// <summary>
+    /// Evaluates a subset pattern against a collection.
+    /// </summary>
+    /// <remarks>
+    /// All patterns must be found in the collection, but order doesn't matter.
+    /// Each pattern must match at least one element that hasn't been matched by another pattern.
+    /// </remarks>
+    internal static MatchResult EvaluateSubset<T>(
+        this CollectionPattern<T>.Subset anyOrder,
         IEnumerable<T> values,
         string path)
     {
@@ -42,13 +52,19 @@ internal static class CollectionPatternExtensions
             var patternList = string.Join(", ", unmatchedIndices.Select(i => $"pattern[{i}] ({patterns[i]})"));
 
             return new MatchResult.Failure([
-                $"{path}: [CollectionPattern.AnyOrder] Could not match {unmatchedIndices.Count} pattern(s): {patternList}"
+                $"{path}: [CollectionPattern.Subset] Could not match {unmatchedIndices.Count} pattern(s): {patternList}"
             ]);
         }
 
         return new MatchResult.Success();
     }
 
+    /// <summary>
+    /// Evaluates an any-element pattern against a collection.
+    /// </summary>
+    /// <remarks>
+    /// At least one element in the collection must match the pattern.
+    /// </remarks>
     internal static MatchResult EvaluateAnyElement<T>(
         this CollectionPattern<T>.AnyElement anyElement,
         IEnumerable<T> value,
@@ -67,6 +83,13 @@ internal static class CollectionPatternExtensions
         ]);
     }
 
+    /// <summary>
+    /// Evaluates a sequence pattern against a collection.
+    /// </summary>
+    /// <remarks>
+    /// The collection must have exactly the same length as the pattern array,
+    /// and each element must match the corresponding pattern in order.
+    /// </remarks>
     internal static MatchResult EvaluateSequence<T>(
         this CollectionPattern<T>.Sequence sequence,
         IEnumerable<T> value,
@@ -104,6 +127,13 @@ internal static class CollectionPatternExtensions
         return new MatchResult.Success();
     }
 
+    /// <summary>
+    /// Evaluates a starts-with pattern against a collection.
+    /// </summary>
+    /// <remarks>
+    /// The first N elements of the collection must match the patterns in order,
+    /// where N is the number of patterns. Additional elements are allowed.
+    /// </remarks>
     internal static MatchResult EvaluateStartsWith<T>(
         this CollectionPattern<T>.StartsWith pattern,
         IEnumerable<T> value,
@@ -137,6 +167,13 @@ internal static class CollectionPatternExtensions
         return new MatchResult.Success();
     }
 
+    /// <summary>
+    /// Evaluates an ends-with pattern against a collection.
+    /// </summary>
+    /// <remarks>
+    /// The last N elements of the collection must match the patterns in order,
+    /// where N is the number of patterns. Additional elements at the beginning are allowed.
+    /// </remarks>
     internal static MatchResult EvaluateEndsWith<T>(
         this CollectionPattern<T>.EndsWith pattern,
         IEnumerable<T> value,

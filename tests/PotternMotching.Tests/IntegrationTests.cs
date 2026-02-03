@@ -1,6 +1,5 @@
 namespace PotternMotching.Tests;
 
-using PotternMotching.Patterns;
 using Xunit;
 using CM = PotternMotching.Patterns.CollectionPattern;
 using VM = PotternMotching.Patterns.ValuePattern;
@@ -38,7 +37,7 @@ public class IntegrationTests
             VM.Exact(4)
         ]);
 
-        var outerMatcher = CM.Sequence<IEnumerable<int>>([
+        var outerMatcher = CM.Sequence([
             innerMatcher1,
             innerMatcher2
         ]);
@@ -56,7 +55,7 @@ public class IntegrationTests
     {
         var person = new Person("Alice", 30, ["Reading", "Coding"]);
 
-        var hobbyMatcher = CM.AnyOrder([
+        var hobbyMatcher = CM.Subset([
             VM.Exact("Reading"),
             VM.Exact("Coding")
         ]);
@@ -163,7 +162,7 @@ public class IntegrationTests
             ]
         );
 
-        var officeMatcher = CM.AnyOrder([
+        var officeMatcher = CM.Subset([
             VM.Exact(new Address("123 Main St", "San Francisco", 94102)),
             VM.Exact(new Address("456 Oak Ave", "New York", 10001))
         ]);
@@ -226,7 +225,7 @@ public class IntegrationTests
 
         var nameMatcher = VM.Exact("Alice");
         var ageMatcher = VM.Exact(30);
-        var hobbyMatcher = CM.AnyOrder([
+        var hobbyMatcher = CM.Subset([
             VM.Exact("Reading"),
             VM.Exact("Coding")
         ]);
@@ -247,7 +246,7 @@ public class IntegrationTests
 
         var nameMatcher = VM.Exact("Bob"); // Will fail
         var ageMatcher = VM.Exact(25); // Will fail
-        var hobbyMatcher = CM.AnyOrder([
+        var hobbyMatcher = CM.Subset([
             VM.Exact("Swimming") // Will fail
         ]);
 

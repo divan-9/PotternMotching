@@ -1,7 +1,17 @@
 namespace PotternMotching.Patterns;
 
+/// <summary>
+/// Internal extension methods for evaluating dictionary patterns.
+/// </summary>
 internal static class DictionaryPatternExtensions
 {
+    /// <summary>
+    /// Evaluates an Items pattern against a dictionary.
+    /// </summary>
+    /// <remarks>
+    /// All required keys must be present with matching values.
+    /// The dictionary can contain additional keys not specified in the pattern.
+    /// </remarks>
     internal static MatchResult EvaluateItems<TKey, TValue>(
         this DictionaryPattern<TKey, TValue>.Items pattern,
         IDictionary<TKey, TValue> value,
@@ -26,6 +36,13 @@ internal static class DictionaryPatternExtensions
         return MatchResult.Combine(results);
     }
 
+    /// <summary>
+    /// Evaluates an ExactItems pattern against a dictionary.
+    /// </summary>
+    /// <remarks>
+    /// The dictionary must have exactly the keys specified in the pattern (no more, no less),
+    /// and all values must match their corresponding patterns.
+    /// </remarks>
     internal static MatchResult EvaluateExactItems<TKey, TValue>(
         this DictionaryPattern<TKey, TValue>.ExactItems pattern,
         IDictionary<TKey, TValue> value,

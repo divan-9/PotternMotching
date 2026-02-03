@@ -210,7 +210,7 @@ public class MatchAllTests
     {
         var matcher = DictionaryPattern.Items(new Dictionary<string, IPattern<string[]>>
         {
-            ["tags"] = CollectionPattern.AnyOrder([
+            ["tags"] = CollectionPattern.Subset([
                 ValuePattern.Exact("tag1"),
                 ValuePattern.Exact("tag2")
             ])

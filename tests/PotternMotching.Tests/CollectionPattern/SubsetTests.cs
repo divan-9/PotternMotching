@@ -3,12 +3,12 @@ namespace PotternMotching.Tests.CollectionPattern;
 using PotternMotching.Patterns;
 using Xunit;
 
-public class AnyOrderTests
+public class SubsetTests
 {
     [Fact]
     public void EvaluateAnyOrder_EmptyPatternsMatchAnyCollection_ReturnsSuccess()
     {
-        var matcher = CollectionPattern.AnyOrder<int>([]);
+        var matcher = CollectionPattern.Subset<int>([]);
 
         var result = matcher.Evaluate([1, 2, 3]);
 
@@ -18,7 +18,7 @@ public class AnyOrderTests
     [Fact]
     public void EvaluateAnyOrder_SinglePatternFoundInCollection_ReturnsSuccess()
     {
-        var matcher = CollectionPattern.AnyOrder([ValuePattern.Exact(2)]);
+        var matcher = CollectionPattern.Subset([ValuePattern.Exact(2)]);
 
         var result = matcher.Evaluate([1, 2, 3]);
 
@@ -28,7 +28,7 @@ public class AnyOrderTests
     [Fact]
     public void EvaluateAnyOrder_MultiplePatternsAllFound_ReturnsSuccess()
     {
-        var matcher = CollectionPattern.AnyOrder([
+        var matcher = CollectionPattern.Subset([
             ValuePattern.Exact(1),
             ValuePattern.Exact(3),
             ValuePattern.Exact(2)
@@ -42,7 +42,7 @@ public class AnyOrderTests
     [Fact]
     public void EvaluateAnyOrder_SamePatternMatchesMultipleItems_ReturnsSuccessAfterFindingFirst()
     {
-        var matcher = CollectionPattern.AnyOrder([ValuePattern.Exact(2)]);
+        var matcher = CollectionPattern.Subset([ValuePattern.Exact(2)]);
 
         var result = matcher.Evaluate([2, 2, 2]);
 
@@ -52,7 +52,7 @@ public class AnyOrderTests
     [Fact]
     public void EvaluateAnyOrder_OrderDoesNotMatter_ReturnsSuccess()
     {
-        var matcher = CollectionPattern.AnyOrder([
+        var matcher = CollectionPattern.Subset([
             ValuePattern.Exact(3),
             ValuePattern.Exact(1),
             ValuePattern.Exact(2)
@@ -66,14 +66,14 @@ public class AnyOrderTests
     [Fact]
     public void EvaluateAnyOrder_PatternNotFound_ReturnsFailureWithPatternDetails()
     {
-        var matcher = CollectionPattern.AnyOrder([ValuePattern.Exact(99)]);
+        var matcher = CollectionPattern.Subset([ValuePattern.Exact(99)]);
 
         var result = matcher.Evaluate([1, 2, 3], ".Items");
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items", failure.Reasons[0]);
-        Assert.Contains("[CollectionPattern.AnyOrder]", failure.Reasons[0]);
+        Assert.Contains("[CollectionPattern.Subset]", failure.Reasons[0]);
         Assert.Contains("pattern[0]", failure.Reasons[0]);
         Assert.Contains("1 pattern(s)", failure.Reasons[0]);
     }
@@ -81,7 +81,7 @@ public class AnyOrderTests
     [Fact]
     public void EvaluateAnyOrder_MultiplePatternsMissing_ReturnsFailureWithAllMissingPatterns()
     {
-        var matcher = CollectionPattern.AnyOrder([
+        var matcher = CollectionPattern.Subset([
             ValuePattern.Exact(1),
             ValuePattern.Exact(99),
             ValuePattern.Exact(3),
@@ -93,7 +93,7 @@ public class AnyOrderTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items", failure.Reasons[0]);
-        Assert.Contains("[CollectionPattern.AnyOrder]", failure.Reasons[0]);
+        Assert.Contains("[CollectionPattern.Subset]", failure.Reasons[0]);
         Assert.Contains("2 pattern(s)", failure.Reasons[0]);
         Assert.Contains("pattern[1]", failure.Reasons[0]);
         Assert.Contains("pattern[3]", failure.Reasons[0]);
@@ -102,7 +102,7 @@ public class AnyOrderTests
     [Fact]
     public void EvaluateAnyOrder_EmptyCollectionWithNonEmptyPatterns_ReturnsFailure()
     {
-        var matcher = CollectionPattern.AnyOrder([
+        var matcher = CollectionPattern.Subset([
             ValuePattern.Exact(1),
             ValuePattern.Exact(2)
         ]);
@@ -119,7 +119,7 @@ public class AnyOrderTests
     [Fact]
     public void EvaluateAnyOrder_FailedPatternShowsMatcherInMessage_VerifyFormat()
     {
-        var matcher = CollectionPattern.AnyOrder([ValuePattern.Exact("missing")]);
+        var matcher = CollectionPattern.Subset([ValuePattern.Exact("missing")]);
 
         var result = matcher.Evaluate(["a", "b", "c"], ".Items");
 
@@ -144,7 +144,7 @@ public class AnyOrderTests
             yield return 3;
         }
 
-        var matcher = CollectionPattern.AnyOrder([
+        var matcher = CollectionPattern.Subset([
             ValuePattern.Exact(1),
             ValuePattern.Exact(2),
             ValuePattern.Exact(3)
@@ -174,7 +174,7 @@ public class AnyOrderTests
             yield return 5;
         }
 
-        var matcher = CollectionPattern.AnyOrder([
+        var matcher = CollectionPattern.Subset([
             ValuePattern.Exact(1),
             ValuePattern.Exact(2)
         ]);
