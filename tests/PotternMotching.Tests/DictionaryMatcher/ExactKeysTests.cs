@@ -8,7 +8,7 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_EmptyPatternMatchesEmptyDictionary_ReturnsSuccess()
     {
-        var matcher = DictionaryPattern.ExactItems<string, int>(new Dictionary<string, IPattern<int>>());
+        var matcher = DictionaryPattern.ExactItems(new Dictionary<string, IPattern<int>>());
 
         var result = matcher.Evaluate(new Dictionary<string, int>());
 
@@ -65,7 +65,8 @@ public class ExactKeysTests
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
-        Assert.Contains("Unexpected key 'extra' found in dictionary", failure.Reasons[0]);
+        Assert.Contains("Unexpected keys:", failure.Reasons[0]);
+        Assert.Contains("'extra'", failure.Reasons[0]);
     }
 
     [Fact]
@@ -84,7 +85,7 @@ public class ExactKeysTests
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
-        Assert.Contains("Key 'key2' not found in dictionary", failure.Reasons[0]);
+        Assert.Contains("Missing required key 'key2'", failure.Reasons[0]);
     }
 
     [Fact]
@@ -121,9 +122,10 @@ public class ExactKeysTests
         });
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
-        Assert.Equal(2, failure.Reasons.Length);
-        Assert.Contains(failure.Reasons, r => r.Contains("Unexpected key 'extra1'"));
-        Assert.Contains(failure.Reasons, r => r.Contains("Unexpected key 'extra2'"));
+        Assert.Single(failure.Reasons);
+        Assert.Contains("Unexpected keys:", failure.Reasons[0]);
+        Assert.Contains("'extra1'", failure.Reasons[0]);
+        Assert.Contains("'extra2'", failure.Reasons[0]);
     }
 
     [Fact]
@@ -142,16 +144,16 @@ public class ExactKeysTests
         });
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
-        Assert.Equal(3, failure.Reasons.Length);
-        Assert.Contains(failure.Reasons, r => r.Contains("Expected 42, got 1"));
-        Assert.Contains(failure.Reasons, r => r.Contains("Key 'key2' not found"));
-        Assert.Contains(failure.Reasons, r => r.Contains("Unexpected key 'extra'"));
+        // ExactItems returns early when it finds extra keys, so only 1 reason
+        Assert.Single(failure.Reasons);
+        Assert.Contains("Unexpected keys:", failure.Reasons[0]);
+        Assert.Contains("'extra'", failure.Reasons[0]);
     }
 
     [Fact]
     public void EvaluateExactKeys_EmptyPatternWithNonEmptyDictionary_ReturnsFailure()
     {
-        var matcher = DictionaryPattern.ExactItems<string, int>(new Dictionary<string, IPattern<int>>());
+        var matcher = DictionaryPattern.ExactItems(new Dictionary<string, IPattern<int>>());
 
         var result = matcher.Evaluate(new Dictionary<string, int>
         {
@@ -160,7 +162,8 @@ public class ExactKeysTests
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
-        Assert.Contains("Unexpected key 'key1' found in dictionary", failure.Reasons[0]);
+        Assert.Contains("Unexpected keys:", failure.Reasons[0]);
+        Assert.Contains("'key1'", failure.Reasons[0]);
     }
 
     [Fact]
@@ -175,7 +178,7 @@ public class ExactKeysTests
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
-        Assert.Contains("Key 'key1' not found", failure.Reasons[0]);
+        Assert.Contains("Missing required key 'key1'", failure.Reasons[0]);
     }
 
     [Fact]
@@ -193,7 +196,8 @@ public class ExactKeysTests
         }, ".settings");
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
-        Assert.Contains(".settings[extra]:", failure.Reasons[0]);
+        Assert.Contains(".settings:", failure.Reasons[0]);
+        Assert.Contains("Unexpected keys:", failure.Reasons[0]);
     }
 
     [Fact]

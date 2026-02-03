@@ -70,7 +70,7 @@ internal static class PatternCodeGenerator
             sb.Append(")");
         }
 
-        sb.AppendLine($" : IPattern<{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>");
+        sb.AppendLine($" : IPattern<{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>, IPatternConstructor<{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>");
         sb.AppendLine("{");
 
         // Evaluate method
@@ -113,6 +113,14 @@ internal static class PatternCodeGenerator
         // Add static From method
         sb.AppendLine();
         sb.AppendLine($"    public static IPattern<{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}> From(");
+        sb.AppendLine($"        {typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} value)");
+        sb.AppendLine("    {");
+        sb.AppendLine($"        return ({patternName})value;");
+        sb.AppendLine("    }");
+
+        // Add static Create method (for IPatternConstructor)
+        sb.AppendLine();
+        sb.AppendLine($"    public static IPattern<{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}> Create(");
         sb.AppendLine($"        {typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} value)");
         sb.AppendLine("    {");
         sb.AppendLine($"        return ({patternName})value;");
@@ -437,7 +445,7 @@ internal static class PatternCodeGenerator
         // Union pattern class declaration - abstract base with no parameters
         var unionFullType = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        sb.AppendLine($"public abstract partial record {patternName} : IPattern<{unionFullType}>");
+        sb.AppendLine($"public abstract partial record {patternName} : IPattern<{unionFullType}>, IPatternConstructor<{unionFullType}>");
         sb.AppendLine("{");
         sb.AppendLine($"    private {patternName}() {{ }}");
         sb.AppendLine();
@@ -472,6 +480,14 @@ internal static class PatternCodeGenerator
         }
 
         sb.AppendLine("        );");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+
+        // Add static Create method for union pattern (IPatternConstructor interface)
+        sb.AppendLine($"    public static IPattern<{unionFullType}> Create(");
+        sb.AppendLine($"        {unionFullType} value)");
+        sb.AppendLine("    {");
+        sb.AppendLine($"        return From(value);");
         sb.AppendLine("    }");
         sb.AppendLine();
 

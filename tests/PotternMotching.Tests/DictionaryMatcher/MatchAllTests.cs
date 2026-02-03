@@ -8,10 +8,7 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_EmptyPatternMatchesAnyDictionary_ReturnsSuccess()
     {
-        var matcher = DictionaryPattern.Items<string, int>(new()
-        {
-
-        });
+        var matcher = DictionaryPattern.Items(new Dictionary<string, IPattern<int>>());
 
         var result = matcher.Evaluate(new Dictionary<string, int>
         {
@@ -94,7 +91,7 @@ public class MatchAllTests
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
-        Assert.Contains("Key 'missing' not found in dictionary", failure.Reasons[0]);
+        Assert.Contains("Missing required key 'missing'", failure.Reasons[0]);
     }
 
     [Fact]
@@ -131,8 +128,8 @@ public class MatchAllTests
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Equal(2, failure.Reasons.Length);
-        Assert.Contains(failure.Reasons, r => r.Contains("Key 'missing1' not found"));
-        Assert.Contains(failure.Reasons, r => r.Contains("Key 'missing2' not found"));
+        Assert.Contains(failure.Reasons, r => r.Contains("Missing required key 'missing1'"));
+        Assert.Contains(failure.Reasons, r => r.Contains("Missing required key 'missing2'"));
     }
 
     [Fact]
@@ -173,7 +170,7 @@ public class MatchAllTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Equal(2, failure.Reasons.Length);
         Assert.Contains(failure.Reasons, r => r.Contains("Expected 42, got 1"));
-        Assert.Contains(failure.Reasons, r => r.Contains("Key 'missing' not found"));
+        Assert.Contains(failure.Reasons, r => r.Contains("Missing required key 'missing'"));
     }
 
     [Fact]
@@ -188,7 +185,7 @@ public class MatchAllTests
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
-        Assert.Contains("Key 'key1' not found", failure.Reasons[0]);
+        Assert.Contains("Missing required key 'key1'", failure.Reasons[0]);
     }
 
     [Fact]
@@ -213,7 +210,7 @@ public class MatchAllTests
     {
         var matcher = DictionaryPattern.Items(new Dictionary<string, IPattern<string[]>>
         {
-            ["tags"] = new CollectionPattern<string>.MatchAll([
+            ["tags"] = CollectionPattern.AnyOrder([
                 ValuePattern.Exact("tag1"),
                 ValuePattern.Exact("tag2")
             ])

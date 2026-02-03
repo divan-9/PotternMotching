@@ -10,18 +10,17 @@ internal static class DictionaryPatternExtensions
     {
         var results = new List<MatchResult>();
 
-        foreach (var item in pattern.RequiredItems)
+        foreach (var (key, valuePattern) in pattern.RequiredItems)
         {
-            if (!value.TryGetValue(item.Key, out var actualValue))
+            if (!value.TryGetValue(key, out var actualValue))
             {
                 results.Add(new MatchResult.Failure([
-                    $"{path}: Missing required key '{item.Key}'"
+                    $"{path}: Missing required key '{key}'"
                 ]));
                 continue;
             }
 
-            var valuePattern = (IPattern<TValue>)item.ValuePattern;
-            results.Add(valuePattern.Evaluate(actualValue, $"{path}[{item.Key}]"));
+            results.Add(valuePattern.Evaluate(actualValue, $"{path}[{key}]"));
         }
 
         return MatchResult.Combine(results);
@@ -36,8 +35,7 @@ internal static class DictionaryPatternExtensions
         var required = pattern.RequiredItems;
 
         // Check for extra keys
-        var requiredKeys = required.Select(item => item.Key).ToHashSet();
-        var extraKeys = value.Keys.Except(requiredKeys).ToList();
+        var extraKeys = value.Keys.Except(required.Keys).ToList();
         if (extraKeys.Any())
         {
             return new MatchResult.Failure([
@@ -48,18 +46,17 @@ internal static class DictionaryPatternExtensions
         // Check for missing keys and value matches
         var results = new List<MatchResult>();
 
-        foreach (var item in required)
+        foreach (var (key, valuePattern) in required)
         {
-            if (!value.TryGetValue(item.Key, out var actualValue))
+            if (!value.TryGetValue(key, out var actualValue))
             {
                 results.Add(new MatchResult.Failure([
-                    $"{path}: Missing required key '{item.Key}'"
+                    $"{path}: Missing required key '{key}'"
                 ]));
                 continue;
             }
 
-            var valuePattern = (IPattern<TValue>)item.ValuePattern;
-            results.Add(valuePattern.Evaluate(actualValue, $"{path}[{item.Key}]"));
+            results.Add(valuePattern.Evaluate(actualValue, $"{path}[{key}]"));
         }
 
         return MatchResult.Combine(results);

@@ -10,7 +10,7 @@ public class IntegrationTests
     {
         var matcher = DictionaryPattern.Items(new Dictionary<string, IPattern<int[]>>
         {
-            ["scores"] = new CollectionPattern<int>.Sequence([
+            ["scores"] = CollectionPattern.Sequence([
                 ValuePattern.Exact(95),
                 ValuePattern.Exact(87),
                 ValuePattern.Exact(92)
@@ -75,7 +75,7 @@ public class IntegrationTests
         });
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
-        Assert.Contains(failure.Reasons, r => r.Contains("Unexpected key 'retries'"));
+        Assert.Contains(failure.Reasons, r => r.Contains("Unexpected keys:") && r.Contains("'retries'"));
     }
 
     [Fact]

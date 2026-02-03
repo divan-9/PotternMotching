@@ -41,11 +41,10 @@ public readonly struct DictionaryPatternDefault<TKey, TValue, TDefaultValuePatte
         IDictionary<TKey, TValue> value)
     {
         return new DictionaryPatternDefault<TKey, TValue, TDefaultValuePattern>(
-            DictionaryPattern.Items<TKey, TValue>(
-                value.Select(kvp => new DictionaryItem<TKey>(
-                    kvp.Key,
-                    TDefaultValuePattern.Create(kvp.Value)))
-                .ToArray()));
+            DictionaryPattern.Items(
+                value.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => TDefaultValuePattern.Create(kvp.Value))));
     }
 
     public static implicit operator DictionaryPatternDefault<TKey, TValue, TDefaultValuePattern>(
