@@ -1,6 +1,6 @@
 namespace PotternMotching.Tests.DictionaryMatcher;
 
-using PotternMotching.Matchers;
+using PotternMotching.Patterns;
 using Xunit;
 
 public class ExactKeysTests
@@ -8,7 +8,7 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_EmptyPatternMatchesEmptyDictionary_ReturnsSuccess()
     {
-        var matcher = DictionaryMatcher.ExactKeys<string, int>(new Dictionary<string, IMatcher<int>>());
+        var matcher = DictionaryMatcher.ExactKeys<string, int>(new Dictionary<string, IPattern<int>>());
 
         var result = matcher.Evaluate(new Dictionary<string, int>());
 
@@ -18,9 +18,9 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_ExactMatchWithSingleKey_ReturnsSuccess()
     {
-        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -34,10 +34,10 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_ExactMatchWithMultipleKeys_ReturnsSuccess()
     {
-        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<string>>
+        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<string>>
         {
-            ["name"] = ValueMatcher.Exact("Alice"),
-            ["city"] = ValueMatcher.Exact("Seattle")
+            ["name"] = ValuePattern.Exact("Alice"),
+            ["city"] = ValuePattern.Exact("Seattle")
         });
 
         var result = matcher.Evaluate(new Dictionary<string, string>
@@ -52,9 +52,9 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_DictionaryHasExtraKey_ReturnsFailure()
     {
-        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -71,10 +71,10 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_DictionaryMissingKey_ReturnsFailure()
     {
-        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42),
-            ["key2"] = ValueMatcher.Exact(100)
+            ["key1"] = ValuePattern.Exact(42),
+            ["key2"] = ValuePattern.Exact(100)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -90,9 +90,9 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_ValueMismatch_ReturnsFailure()
     {
-        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -108,9 +108,9 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_MultipleExtraKeys_ReturnsFailureWithAllReasons()
     {
-        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -129,10 +129,10 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_MixedFailures_ReturnsFailureWithAllReasons()
     {
-        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42),
-            ["key2"] = ValueMatcher.Exact(100)
+            ["key1"] = ValuePattern.Exact(42),
+            ["key2"] = ValuePattern.Exact(100)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -151,7 +151,7 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_EmptyPatternWithNonEmptyDictionary_ReturnsFailure()
     {
-        var matcher = DictionaryMatcher.ExactKeys<string, int>(new Dictionary<string, IMatcher<int>>());
+        var matcher = DictionaryMatcher.ExactKeys<string, int>(new Dictionary<string, IPattern<int>>());
 
         var result = matcher.Evaluate(new Dictionary<string, int>
         {
@@ -166,9 +166,9 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_NonEmptyPatternWithEmptyDictionary_ReturnsFailure()
     {
-        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>());
@@ -181,9 +181,9 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_PathIsIncludedInFailureMessages()
     {
-        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -199,14 +199,14 @@ public class ExactKeysTests
     [Fact]
     public void EvaluateExactKeys_ComparedToMatchAll_DifferentBehavior()
     {
-        var exactKeysMatcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IMatcher<int>>
+        var exactKeysMatcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
-        var matchAllMatcher = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<int>>
+        var matchAllMatcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
         var dict = new Dictionary<string, int>

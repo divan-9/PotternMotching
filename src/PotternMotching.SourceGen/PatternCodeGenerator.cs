@@ -29,7 +29,7 @@ internal static class PatternCodeGenerator
         sb.AppendLine();
         sb.AppendLine("using System.Linq;");
         sb.AppendLine("using PotternMotching;");
-        sb.AppendLine("using PotternMotching.Matchers;");
+        sb.AppendLine("using PotternMotching.Patterns;");
         sb.AppendLine();
 
         // Namespace (only if not global)
@@ -70,7 +70,7 @@ internal static class PatternCodeGenerator
             sb.Append(")");
         }
 
-        sb.AppendLine($" : IMatcher<{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>");
+        sb.AppendLine($" : IPattern<{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>");
         sb.AppendLine("{");
 
         // Evaluate method
@@ -112,7 +112,7 @@ internal static class PatternCodeGenerator
 
         // Add static From method
         sb.AppendLine();
-        sb.AppendLine($"    public static IMatcher<{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}> From(");
+        sb.AppendLine($"    public static IPattern<{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}> From(");
         sb.AppendLine($"        {typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} value)");
         sb.AppendLine("    {");
         sb.AppendLine($"        return ({patternName})value;");
@@ -137,8 +137,8 @@ internal static class PatternCodeGenerator
             return $"{nestedFullName}Pattern";
         }
 
-        // For primitive elements, wrap in DefaultMatcher with ValueMatcher
-        return $"DefaultMatcher<{property.ElementType}, ValueMatcher<{property.ElementType}>>";
+        // For primitive elements, wrap in PatternDefault with ValuePattern
+        return $"PatternDefault<{property.ElementType}, ValuePattern<{property.ElementType}>>";
     }
 
     private static string GetMatcherTypeForProperty(PropertyAnalysisResult property)
@@ -151,8 +151,8 @@ internal static class PatternCodeGenerator
             return $"{nestedFullName}Pattern";
         }
 
-        // For primitive/value types, use ValueMatcher
-        return $"ValueMatcher<{property.PropertyType}>";
+        // For primitive/value types, use ValuePattern
+        return $"ValuePattern<{property.PropertyType}>";
     }
 
     private static string GetPatternWrapperType(PropertyAnalysisResult property)
@@ -160,24 +160,24 @@ internal static class PatternCodeGenerator
         return property.WrapperKind switch
         {
             PatternWrapperKind.Value =>
-                $"DefaultMatcher<{property.PropertyType}, {GetMatcherTypeForProperty(property)}>",
+                $"PatternDefault<{property.PropertyType}, {GetMatcherTypeForProperty(property)}>",
 
             PatternWrapperKind.Set =>
-                // Use DefaultCollectionMatcher for sets too
-                $"DefaultCollectionMatcher<{property.ElementType}, {GetDefaultItemMatcherType(property)}>",
+                // Use SequencePatternDefault for sets too
+                $"SequencePatternDefault<{property.ElementType}, {GetDefaultItemMatcherType(property)}>",
 
             PatternWrapperKind.Sequence =>
-                // Use DefaultCollectionMatcher for type-safe collection literal syntax
-                $"DefaultCollectionMatcher<{property.ElementType}, {GetDefaultItemMatcherType(property)}>",
+                // Use SequencePatternDefault for type-safe collection literal syntax
+                $"SequencePatternDefault<{property.ElementType}, {GetDefaultItemMatcherType(property)}>",
 
             PatternWrapperKind.Dictionary =>
-                // Dictionaries remain as DefaultMatcher with ValueMatcher for dictionary type
-                $"DefaultMatcher<System.Collections.Generic.IDictionary<{property.KeyType}, {property.ValueType}>, ValueMatcher<System.Collections.Generic.IDictionary<{property.KeyType}, {property.ValueType}>>>",
+                // Dictionaries remain as PatternDefault with ValuePattern for dictionary type
+                $"PatternDefault<System.Collections.Generic.IDictionary<{property.KeyType}, {property.ValueType}>, ValuePattern<System.Collections.Generic.IDictionary<{property.KeyType}, {property.ValueType}>>>",
 
             PatternWrapperKind.Nested =>
-                // Wrap nested patterns in DefaultMatcher for consistency and null matching support
+                // Wrap nested patterns in PatternDefault for consistency and null matching support
                 // For nested types, the pattern type IS the matcher
-                $"DefaultMatcher<{property.PropertyType}, {property.NestedType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}Pattern>",
+                $"PatternDefault<{property.PropertyType}, {property.NestedType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}Pattern>",
 
             _ => throw new InvalidOperationException($"Unknown wrapper kind: {property.WrapperKind}")
         };
@@ -202,7 +202,7 @@ internal static class PatternCodeGenerator
                 $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
 
             PatternWrapperKind.Nested =>
-                // Nested patterns now wrapped in DefaultMatcher, no null check needed
+                // Nested patterns now wrapped in PatternDefault, no null check needed
                 $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
 
             _ => throw new InvalidOperationException($"Unknown wrapper kind: {property.WrapperKind}")
@@ -266,19 +266,19 @@ internal static class PatternCodeGenerator
         return property.WrapperKind switch
         {
             PatternWrapperKind.Value =>
-                // DefaultMatcher<T, TDefaultMatcher> has implicit conversion from T
+                // PatternDefault<T, TPatternDefault> has implicit conversion from T
                 $"value.{propertyName}",
 
             PatternWrapperKind.Set or PatternWrapperKind.Sequence =>
-                // Convert collection to DefaultCollectionMatcher
+                // Convert collection to SequencePatternDefault
                 GenerateCollectionConversion(property, propertyName),
 
             PatternWrapperKind.Dictionary =>
-                // DefaultMatcher<IDictionary<K,V>, ValueMatcher<...>> has implicit conversion from IDictionary<K,V>
+                // PatternDefault<IDictionary<K,V>, ValuePattern<...>> has implicit conversion from IDictionary<K,V>
                 $"value.{propertyName}",
 
             PatternWrapperKind.Nested =>
-                // DefaultMatcher<T, TPattern> has implicit conversion from T
+                // PatternDefault<T, TPattern> has implicit conversion from T
                 // The implicit conversion will call TPattern.From(value) automatically
                 $"value.{propertyName}",
 
@@ -332,7 +332,7 @@ internal static class PatternCodeGenerator
         var itemMatcherType = GetDefaultItemMatcherType(property);
 
         // Wrap the From result in a constructor to get the right type
-        return $"new DefaultCollectionMatcher<{property.ElementType}, {itemMatcherType}>(DefaultCollectionMatcher<{property.ElementType}, {itemMatcherType}>.From(value.{propertyName}))";
+        return $"new SequencePatternDefault<{property.ElementType}, {itemMatcherType}>(SequencePatternDefault<{property.ElementType}, {itemMatcherType}>.From(value.{propertyName}))";
     }
 
     private static void GenerateVariantImplicitConversion(
@@ -394,7 +394,7 @@ internal static class PatternCodeGenerator
         sb.AppendLine();
         sb.AppendLine("using System.Linq;");
         sb.AppendLine("using PotternMotching;");
-        sb.AppendLine("using PotternMotching.Matchers;");
+        sb.AppendLine("using PotternMotching.Patterns;");
         sb.AppendLine("using Dunet;");
         sb.AppendLine();
 
@@ -408,7 +408,7 @@ internal static class PatternCodeGenerator
         // Union pattern class declaration - abstract base with no parameters
         var unionFullType = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        sb.AppendLine($"public abstract partial record {patternName} : IMatcher<{unionFullType}>");
+        sb.AppendLine($"public abstract partial record {patternName} : IPattern<{unionFullType}>");
         sb.AppendLine("{");
         sb.AppendLine($"    private {patternName}() {{ }}");
         sb.AppendLine();
@@ -420,7 +420,7 @@ internal static class PatternCodeGenerator
         sb.AppendLine();
 
         // Add static From method for union pattern
-        sb.AppendLine($"    public static IMatcher<{unionFullType}> From(");
+        sb.AppendLine($"    public static IPattern<{unionFullType}> From(");
         sb.AppendLine($"        {unionFullType} value)");
         sb.AppendLine("    {");
         sb.AppendLine("        return value.Match(");
@@ -523,7 +523,7 @@ internal static class PatternCodeGenerator
         var unionFullType = unionSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var patternName = $"{unionSymbol.Name}Pattern";
 
-        // Variant pattern class declaration - sealed, inherits from parent, implements IMatcher<Variant>
+        // Variant pattern class declaration - sealed, inherits from parent, implements IPattern<Variant>
         sb.Append($"    public sealed partial record {variantName}(");
 
         // Parameters
@@ -554,7 +554,7 @@ internal static class PatternCodeGenerator
             sb.Append(")");
         }
 
-        sb.AppendLine($" : {patternName}, IMatcher<{variantFullType}>");
+        sb.AppendLine($" : {patternName}, IPattern<{variantFullType}>");
         sb.AppendLine("    {");
 
         // Evaluate method for specific variant type
@@ -608,7 +608,7 @@ internal static class PatternCodeGenerator
 
         // Add static From method for variant
         sb.AppendLine();
-        sb.AppendLine($"        public static IMatcher<{variantFullType}> From(");
+        sb.AppendLine($"        public static IPattern<{variantFullType}> From(");
         sb.AppendLine($"            {variantFullType} value)");
         sb.AppendLine("        {");
         sb.AppendLine($"            return ({variantName})value;");

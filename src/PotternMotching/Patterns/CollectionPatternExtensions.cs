@@ -1,9 +1,9 @@
-namespace PotternMotching.Matchers;
+namespace PotternMotching.Patterns;
 
-internal static class CollectionMatcherExtensions
+internal static class CollectionPatternExtensions
 {
     internal static MatchResult EvaluateAnyOrder<T>(
-        this CollectionMatcher<T>.AnyOrder anyOrder,
+        this CollectionPattern<T>.AnyOrder anyOrder,
         IEnumerable<T> values,
         string path)
     {
@@ -28,7 +28,7 @@ internal static class CollectionMatcherExtensions
             if (!matched)
             {
                 return new MatchResult.Failure([
-                    $"{path}: [CollectionMatcher.AnyOrder] Expected to find an element matching pattern {pattern}, but none was found."
+                    $"{path}: [CollectionPattern.AnyOrder] Expected to find an element matching pattern {pattern}, but none was found."
                 ]);
             }
         }
@@ -37,7 +37,7 @@ internal static class CollectionMatcherExtensions
     }
 
     internal static MatchResult EvaluateAnyElement<T>(
-        this CollectionMatcher<T>.AnyElement anyElement,
+        this CollectionPattern<T>.AnyElement anyElement,
         IEnumerable<T> value,
         string path)
     {
@@ -50,12 +50,12 @@ internal static class CollectionMatcherExtensions
         }
 
         return new MatchResult.Failure([
-            $"{path}: [CollectionMatcher.AnyElement] Expected to find matches for pattern {anyElement.Pattern}, but no elements matched."
+            $"{path}: [CollectionPattern.AnyElement] Expected to find matches for pattern {anyElement.Pattern}, but no elements matched."
         ]);
     }
 
     internal static MatchResult EvaluateSequence<T>(
-        this CollectionMatcher<T>.Sequence sequence,
+        this CollectionPattern<T>.Sequence sequence,
         IEnumerable<T> value,
         string path)
     {

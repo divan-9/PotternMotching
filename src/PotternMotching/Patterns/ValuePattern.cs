@@ -1,4 +1,4 @@
-namespace PotternMotching.Matchers;
+namespace PotternMotching.Patterns;
 
 using Dunet;
 
@@ -11,7 +11,7 @@ using Dunet;
 /// Currently supports exact equality matching.
 /// </remarks>
 [Union]
-public partial record ValueMatcher<T> : IMatcher<T>
+public partial record ValuePattern<T> : IPattern<T>
 {
     /// <inheritdoc/>
     public MatchResult Evaluate(
@@ -21,7 +21,7 @@ public partial record ValueMatcher<T> : IMatcher<T>
         return this.Match(exact => exact.EvaluateExact(value, path));
     }
 
-    public static IMatcher<T> From(
+    public static IPattern<T> From(
         T value)
     {
         return new Exact(value);
@@ -35,20 +35,20 @@ public partial record ValueMatcher<T> : IMatcher<T>
     /// Uses <see cref="EqualityComparer{T}.Default"/> for comparison.
     /// </remarks>
     public partial record Exact(
-        T Value) : IMatcher<T>;
+        T Value) : IPattern<T>;
 
-    public static implicit operator DefaultMatcher<T, Exact>(
-        ValueMatcher<T> matcher)
+    public static implicit operator PatternDefault<T, Exact>(
+        ValuePattern<T> matcher)
     {
-        return new DefaultMatcher<T, Exact>(matcher);
+        return new PatternDefault<T, Exact>(matcher);
     }
 }
 
-public static class ValueMatcher
+public static class ValuePattern
 {
-    public static ValueMatcher<T>.Exact Exact<T>(
+    public static ValuePattern<T>.Exact Exact<T>(
         T value)
     {
-        return new ValueMatcher<T>.Exact(value);
+        return new ValuePattern<T>.Exact(value);
     }
 }

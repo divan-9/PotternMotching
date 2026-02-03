@@ -1,7 +1,7 @@
 
 using Dunet;
 using PotternMotching;
-using PotternMotching.Matchers;
+using PotternMotching.Patterns;
 
 var result = new Person(
     Name: "Alice",
@@ -28,12 +28,12 @@ var result = new Person(
 );
 
 // Demonstrate implicit conversion: can use Address values directly in collection literals
-DefaultCollectionMatcher<Address, AddressPattern> addressMatcher = [
+SequencePatternDefault<Address, AddressPattern> addressMatcher = [
     new AddressPattern(City: "Wonderland"),          // Pattern type
     new Address(City: "Wonderland", Zip: "12345"),   // Value type - implicitly converted!
 ];
 
-DefaultMatcher<Job, JobPattern> testMatcher = new JobPattern.Employed(
+PatternDefault<Job, JobPattern> testMatcher = new JobPattern.Employed(
     Company: "Tech Corp",
     Position: "Developer"
 );

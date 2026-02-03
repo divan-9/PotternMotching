@@ -1,6 +1,6 @@
-namespace PotternMotching.Tests.CollectionMatcher;
+namespace PotternMotching.Tests.CollectionPattern;
 
-using PotternMotching.Matchers;
+using PotternMotching.Patterns;
 using Xunit;
 
 public class EndsWithTests
@@ -8,7 +8,7 @@ public class EndsWithTests
     [Fact]
     public void EvaluateEndsWith_EmptyPatternMatchesAnyCollection_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.EndsWith<int>([]);
+        var matcher = CollectionPattern.EndsWith<int>([]);
 
         var result = matcher.Evaluate([1, 2, 3]);
 
@@ -18,7 +18,7 @@ public class EndsWithTests
     [Fact]
     public void EvaluateEndsWith_SingleItemAtEnd_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.EndsWith([ValueMatcher.Exact(3)]);
+        var matcher = CollectionPattern.EndsWith([ValuePattern.Exact(3)]);
 
         var result = matcher.Evaluate([1, 2, 3]);
 
@@ -28,10 +28,10 @@ public class EndsWithTests
     [Fact]
     public void EvaluateEndsWith_MultipleItemsAtEnd_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.EndsWith([
-            ValueMatcher.Exact(3),
-            ValueMatcher.Exact(4),
-            ValueMatcher.Exact(5)
+        var matcher = CollectionPattern.EndsWith([
+            ValuePattern.Exact(3),
+            ValuePattern.Exact(4),
+            ValuePattern.Exact(5)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3, 4, 5]);
@@ -42,10 +42,10 @@ public class EndsWithTests
     [Fact]
     public void EvaluateEndsWith_ExactSameLength_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.EndsWith([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.EndsWith([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3]);
@@ -56,10 +56,10 @@ public class EndsWithTests
     [Fact]
     public void EvaluateEndsWith_CollectionTooShort_ReturnsFailureWithLengthMessage()
     {
-        var matcher = CollectionMatcher.EndsWith([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.EndsWith([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         var result = matcher.Evaluate([1, 2], ".Items");
@@ -67,7 +67,7 @@ public class EndsWithTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items", failure.Reasons[0]);
-        Assert.Contains("[CollectionMatcher.EndsWith]", failure.Reasons[0]);
+        Assert.Contains("[CollectionPattern.EndsWith]", failure.Reasons[0]);
         Assert.Contains("end with 3 items", failure.Reasons[0]);
         Assert.Contains("only 2 items", failure.Reasons[0]);
     }
@@ -75,9 +75,9 @@ public class EndsWithTests
     [Fact]
     public void EvaluateEndsWith_LastItemMismatch_ReturnsFailureWithHatNotation()
     {
-        var matcher = CollectionMatcher.EndsWith([
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(99)
+        var matcher = CollectionPattern.EndsWith([
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(99)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3], ".Items");
@@ -85,7 +85,7 @@ public class EndsWithTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items[^1]", failure.Reasons[0]);
-        Assert.Contains("[ValueMatcher.Exact]", failure.Reasons[0]);
+        Assert.Contains("[ValuePattern.Exact]", failure.Reasons[0]);
         Assert.Contains("Expected 99", failure.Reasons[0]);
         Assert.Contains("got 3", failure.Reasons[0]);
     }
@@ -93,10 +93,10 @@ public class EndsWithTests
     [Fact]
     public void EvaluateEndsWith_EarlierItemMismatch_ReturnsFailureWithCorrectHatNotation()
     {
-        var matcher = CollectionMatcher.EndsWith([
-            ValueMatcher.Exact(99),
-            ValueMatcher.Exact(4),
-            ValueMatcher.Exact(5)
+        var matcher = CollectionPattern.EndsWith([
+            ValuePattern.Exact(99),
+            ValuePattern.Exact(4),
+            ValuePattern.Exact(5)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3, 4, 5], ".Items");
@@ -111,10 +111,10 @@ public class EndsWithTests
     [Fact]
     public void EvaluateEndsWith_MiddleItemMismatch_ReturnsFailureWithCorrectHatNotation()
     {
-        var matcher = CollectionMatcher.EndsWith([
-            ValueMatcher.Exact(3),
-            ValueMatcher.Exact(99),
-            ValueMatcher.Exact(5)
+        var matcher = CollectionPattern.EndsWith([
+            ValuePattern.Exact(3),
+            ValuePattern.Exact(99),
+            ValuePattern.Exact(5)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3, 4, 5], ".Items");
@@ -129,7 +129,7 @@ public class EndsWithTests
     [Fact]
     public void EvaluateEndsWith_EmptyCollectionWithNonEmptyPattern_ReturnsFailure()
     {
-        var matcher = CollectionMatcher.EndsWith([ValueMatcher.Exact(1)]);
+        var matcher = CollectionPattern.EndsWith([ValuePattern.Exact(1)]);
 
         var result = matcher.Evaluate(Array.Empty<int>(), ".Items");
 
@@ -144,10 +144,10 @@ public class EndsWithTests
     {
         // This test verifies that the implementation uses a queue buffer
         // by ensuring it works correctly with large collections
-        var matcher = CollectionMatcher.EndsWith([
-            ValueMatcher.Exact(998),
-            ValueMatcher.Exact(999),
-            ValueMatcher.Exact(1000)
+        var matcher = CollectionPattern.EndsWith([
+            ValuePattern.Exact(998),
+            ValuePattern.Exact(999),
+            ValuePattern.Exact(1000)
         ]);
 
         var largeCollection = Enumerable.Range(1, 1000);
@@ -160,9 +160,9 @@ public class EndsWithTests
     [Fact]
     public void EvaluateEndsWith_LargeCollectionSmallPattern_MemoryEfficient()
     {
-        var matcher = CollectionMatcher.EndsWith([
-            ValueMatcher.Exact(99),
-            ValueMatcher.Exact(100)
+        var matcher = CollectionPattern.EndsWith([
+            ValuePattern.Exact(99),
+            ValuePattern.Exact(100)
         ]);
 
         IEnumerable<int> GetLargeCollection()
@@ -191,9 +191,9 @@ public class EndsWithTests
             }
         }
 
-        var matcher = CollectionMatcher.EndsWith([
-            ValueMatcher.Exact(9),
-            ValueMatcher.Exact(10)
+        var matcher = CollectionPattern.EndsWith([
+            ValuePattern.Exact(9),
+            ValuePattern.Exact(10)
         ]);
 
         var result = matcher.Evaluate(GetNumbers());

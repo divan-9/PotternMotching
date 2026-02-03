@@ -1,6 +1,6 @@
-namespace PotternMotching.Tests.CollectionMatcher;
+namespace PotternMotching.Tests.CollectionPattern;
 
-using PotternMotching.Matchers;
+using PotternMotching.Patterns;
 using Xunit;
 
 public class SequenceTests
@@ -8,7 +8,7 @@ public class SequenceTests
     [Fact]
     public void EvaluateSequence_EmptySequenceMatchesEmptyCollection_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.Sequence<int>([]);
+        var matcher = CollectionPattern.Sequence<int>([]);
 
         var result = matcher.Evaluate([]);
 
@@ -18,7 +18,7 @@ public class SequenceTests
     [Fact]
     public void EvaluateSequence_SingleItemSequence_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.Sequence([ValueMatcher.Exact(42)]);
+        var matcher = CollectionPattern.Sequence([ValuePattern.Exact(42)]);
 
         var result = matcher.Evaluate([42]);
 
@@ -28,10 +28,10 @@ public class SequenceTests
     [Fact]
     public void EvaluateSequence_MultipleItemsInExactOrder_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.Sequence([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.Sequence([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3]);
@@ -42,10 +42,10 @@ public class SequenceTests
     [Fact]
     public void EvaluateSequence_NestedMatchers_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.Sequence([
-            ValueMatcher.Exact("a"),
-            ValueMatcher.Exact("b"),
-            ValueMatcher.Exact("c")
+        var matcher = CollectionPattern.Sequence([
+            ValuePattern.Exact("a"),
+            ValuePattern.Exact("b"),
+            ValuePattern.Exact("c")
         ]);
 
         var result = matcher.Evaluate(["a", "b", "c"]);
@@ -56,10 +56,10 @@ public class SequenceTests
     [Fact]
     public void EvaluateSequence_CollectionTooShort_ReturnsFailureWithLengthMessage()
     {
-        var matcher = CollectionMatcher.Sequence([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.Sequence([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         var result = matcher.Evaluate([1, 2], ".Items");
@@ -67,7 +67,7 @@ public class SequenceTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items", failure.Reasons[0]);
-        Assert.Contains("[CollectionMatcher.Sequence]", failure.Reasons[0]);
+        Assert.Contains("[CollectionPattern.Sequence]", failure.Reasons[0]);
         Assert.Contains("at least 3", failure.Reasons[0]);
         Assert.Contains("got 2", failure.Reasons[0]);
     }
@@ -75,9 +75,9 @@ public class SequenceTests
     [Fact]
     public void EvaluateSequence_CollectionTooLong_ReturnsFailureWithLengthMessage()
     {
-        var matcher = CollectionMatcher.Sequence([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2)
+        var matcher = CollectionPattern.Sequence([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3, 4], ".Items");
@@ -85,7 +85,7 @@ public class SequenceTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items", failure.Reasons[0]);
-        Assert.Contains("[CollectionMatcher.Sequence]", failure.Reasons[0]);
+        Assert.Contains("[CollectionPattern.Sequence]", failure.Reasons[0]);
         Assert.Contains("length 2", failure.Reasons[0]);
         Assert.Contains("more than 2", failure.Reasons[0]);
     }
@@ -93,10 +93,10 @@ public class SequenceTests
     [Fact]
     public void EvaluateSequence_WrongOrder_ReturnsFailureWithFirstMismatch()
     {
-        var matcher = CollectionMatcher.Sequence([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.Sequence([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         var result = matcher.Evaluate([1, 3, 2], ".Items");
@@ -104,7 +104,7 @@ public class SequenceTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items[1]", failure.Reasons[0]);
-        Assert.Contains("[ValueMatcher.Exact]", failure.Reasons[0]);
+        Assert.Contains("[ValuePattern.Exact]", failure.Reasons[0]);
         Assert.Contains("Expected 2", failure.Reasons[0]);
         Assert.Contains("got 3", failure.Reasons[0]);
     }
@@ -112,9 +112,9 @@ public class SequenceTests
     [Fact]
     public void EvaluateSequence_ItemMismatchAtIndex0_ReturnsFailureWithCorrectIndex()
     {
-        var matcher = CollectionMatcher.Sequence([
-            ValueMatcher.Exact("a"),
-            ValueMatcher.Exact("b")
+        var matcher = CollectionPattern.Sequence([
+            ValuePattern.Exact("a"),
+            ValuePattern.Exact("b")
         ]);
 
         var result = matcher.Evaluate(["x", "b"], ".Items");
@@ -127,11 +127,11 @@ public class SequenceTests
     [Fact]
     public void EvaluateSequence_ItemMismatchAtIndex2_ReturnsFailureWithCorrectIndex()
     {
-        var matcher = CollectionMatcher.Sequence([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3),
-            ValueMatcher.Exact(4)
+        var matcher = CollectionPattern.Sequence([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3),
+            ValuePattern.Exact(4)
         ]);
 
         var result = matcher.Evaluate([1, 2, 99, 4], ".Items");
@@ -146,10 +146,10 @@ public class SequenceTests
     [Fact]
     public void EvaluateSequence_UseEnumeratorNotMaterializedArray_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.Sequence([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.Sequence([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         IEnumerable<int> GetNumbers()
@@ -180,11 +180,11 @@ public class SequenceTests
             yield return 4;
         }
 
-        var matcher = CollectionMatcher.Sequence([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3),
-            ValueMatcher.Exact(4)
+        var matcher = CollectionPattern.Sequence([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3),
+            ValuePattern.Exact(4)
         ]);
 
         var result = matcher.Evaluate(GetNumbers());

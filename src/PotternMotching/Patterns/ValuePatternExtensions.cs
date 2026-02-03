@@ -1,9 +1,9 @@
-namespace PotternMotching.Matchers;
+namespace PotternMotching.Patterns;
 
-internal static class ValueMatcherExtensions
+internal static class ValuePatternExtensions
 {
     internal static MatchResult EvaluateExact<T>(
-        this ValueMatcher<T>.Exact exact,
+        this ValuePattern<T>.Exact exact,
         T value,
         string path)
     {
@@ -12,6 +12,6 @@ internal static class ValueMatcherExtensions
             return new MatchResult.Success();
         }
 
-        return new MatchResult.Failure([$"{path}: [ValueMatcher.Exact] Expected {exact.Value}, got {value}"]);
+        return new MatchResult.Failure([$"{path}: [ValuePattern.Exact] Expected {exact.Value}, got {value}"]);
     }
 }

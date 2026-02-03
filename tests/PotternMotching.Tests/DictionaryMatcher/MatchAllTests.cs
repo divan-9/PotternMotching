@@ -1,6 +1,6 @@
 namespace PotternMotching.Tests.DictionaryMatcher;
 
-using PotternMotching.Matchers;
+using PotternMotching.Patterns;
 using Xunit;
 
 public class MatchAllTests
@@ -8,7 +8,7 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_EmptyPatternMatchesAnyDictionary_ReturnsSuccess()
     {
-        var matcher = DictionaryMatcher.MatchAll<string, int>(new Dictionary<string, IMatcher<int>>());
+        var matcher = DictionaryMatcher.MatchAll<string, int>(new Dictionary<string, IPattern<int>>());
 
         var result = matcher.Evaluate(new Dictionary<string, int>
         {
@@ -22,9 +22,9 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_SingleKeyValuePairMatches_ReturnsSuccess()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -39,10 +39,10 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_MultipleKeyValuePairsAllMatch_ReturnsSuccess()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<string>>
+        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<string>>
         {
-            ["name"] = ValueMatcher.Exact("Alice"),
-            ["city"] = ValueMatcher.Exact("Seattle")
+            ["name"] = ValuePattern.Exact("Alice"),
+            ["city"] = ValuePattern.Exact("Seattle")
         });
 
         var result = matcher.Evaluate(new Dictionary<string, string>
@@ -58,11 +58,11 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_AllKeysMatchExactDictionary_ReturnsSuccess()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<int, IMatcher<string>>
+        var matcher = DictionaryMatcher.MatchAll(new Dictionary<int, IPattern<string>>
         {
-            [1] = ValueMatcher.Exact("one"),
-            [2] = ValueMatcher.Exact("two"),
-            [3] = ValueMatcher.Exact("three")
+            [1] = ValuePattern.Exact("one"),
+            [2] = ValuePattern.Exact("two"),
+            [3] = ValuePattern.Exact("three")
         });
 
         var result = matcher.Evaluate(new Dictionary<int, string>
@@ -78,9 +78,9 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_KeyNotFoundInDictionary_ReturnsFailure()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int>>
         {
-            ["missing"] = ValueMatcher.Exact(42)
+            ["missing"] = ValuePattern.Exact(42)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -97,9 +97,9 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_ValueDoesNotMatch_ReturnsFailure()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -115,10 +115,10 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_MultipleKeysNotFound_ReturnsFailureWithAllReasons()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int>>
         {
-            ["missing1"] = ValueMatcher.Exact(1),
-            ["missing2"] = ValueMatcher.Exact(2)
+            ["missing1"] = ValuePattern.Exact(1),
+            ["missing2"] = ValuePattern.Exact(2)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -135,10 +135,10 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_MultipleValueMismatches_ReturnsFailureWithAllReasons()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42),
-            ["key2"] = ValueMatcher.Exact(100)
+            ["key1"] = ValuePattern.Exact(42),
+            ["key2"] = ValuePattern.Exact(100)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -156,10 +156,10 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_MixedFailures_ReturnsFailureWithAllReasons()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42),
-            ["missing"] = ValueMatcher.Exact(100)
+            ["key1"] = ValuePattern.Exact(42),
+            ["missing"] = ValuePattern.Exact(100)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -176,9 +176,9 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_EmptyDictionaryWithPatterns_ReturnsFailure()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>());
@@ -191,9 +191,9 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_PathIsIncludedInFailureMessages()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<int>>
+        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int>>
         {
-            ["key1"] = ValueMatcher.Exact(42)
+            ["key1"] = ValuePattern.Exact(42)
         });
 
         var result = matcher.Evaluate(new Dictionary<string, int>
@@ -208,11 +208,11 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_ComplexNestedValues_WorksCorrectly()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IMatcher<string[]>>
+        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<string[]>>
         {
-            ["tags"] = new CollectionMatcher<string>.MatchAll([
-                ValueMatcher.Exact("tag1"),
-                ValueMatcher.Exact("tag2")
+            ["tags"] = new CollectionPattern<string>.MatchAll([
+                ValuePattern.Exact("tag1"),
+                ValuePattern.Exact("tag2")
             ])
         });
 

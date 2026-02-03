@@ -15,10 +15,10 @@ namespace PotternMotching;
 /// </para>
 /// <list type="bullet">
 /// <item><description>Records with primary constructors (no inheritance except from object)</description></item>
-/// <item><description>Primitive types and value types (mapped to <see cref="Matchers.DefaultMatcher{T}"/>)</description></item>
-/// <item><description>Arrays and lists (mapped to <see cref="Matchers.DefaultCollectionMatcher{T, TDefaultItemMatcher}"/>)</description></item>
-/// <item><description>HashSet and ISet (mapped to <see cref="Matchers.DefaultCollectionMatcher{T, TDefaultItemMatcher}"/>)</description></item>
-/// <item><description>Dictionary and IDictionary (mapped to <see cref="Matchers.DefaultMatcher{T}"/> where T is IDictionary)</description></item>
+/// <item><description>Primitive types and value types (mapped to <see cref="Patterns.PatternDefault{T, TPatternDefault}"/>)</description></item>
+/// <item><description>Arrays and lists (mapped to <see cref="Patterns.SequencePatternDefault{T, TDefaultItemPattern}"/>)</description></item>
+/// <item><description>HashSet and ISet (mapped to <see cref="Patterns.SequencePatternDefault{T, TDefaultItemPattern}"/>)</description></item>
+/// <item><description>Dictionary and IDictionary (mapped to <see cref="Patterns.PatternDefault{T, TPatternDefault}"/> where T is IDictionary)</description></item>
 /// <item><description>Nested records with [AutoPattern] (mapped to their pattern types)</description></item>
 /// </list>
 /// <para>
@@ -30,9 +30,9 @@ namespace PotternMotching;
 ///
 /// // Automatically generates:
 /// // public sealed record PersonPattern(
-/// //     DefaultMatcher&lt;string&gt; Name = default,
-/// //     DefaultMatcher&lt;int&gt; Age = default
-/// // ) : IMatcher&lt;Person&gt; { ... }
+/// //     PatternDefault&lt;string&gt; Name = default,
+/// //     PatternDefault&lt;int&gt; Age = default
+/// // ) : IPattern&lt;Person&gt; { ... }
 ///
 /// // Usage:
 /// var pattern = new PersonPattern(Name: "Alice", Age: 30);

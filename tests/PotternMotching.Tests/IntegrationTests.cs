@@ -1,9 +1,9 @@
 namespace PotternMotching.Tests;
 
-using PotternMotching.Matchers;
+using PotternMotching.Patterns;
 using Xunit;
-using CM = PotternMotching.Matchers.CollectionMatcher;
-using VM = PotternMotching.Matchers.ValueMatcher;
+using CM = PotternMotching.Patterns.CollectionPattern;
+using VM = PotternMotching.Patterns.ValuePattern;
 
 public class IntegrationTests
 {
@@ -13,7 +13,7 @@ public class IntegrationTests
     private record Company(string Name, Address[] Offices);
 
     [Fact]
-    public void NestedPatterns_ValueMatchersInCollectionMatchers_ReturnsSuccess()
+    public void NestedPatterns_ValuePatternsInCollectionPatterns_ReturnsSuccess()
     {
         var matcher = CM.Sequence([
             VM.Exact(1),
@@ -85,7 +85,7 @@ public class IntegrationTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Property[0][1]", failure.Reasons[0]);
-        Assert.Contains("[ValueMatcher.Exact]", failure.Reasons[0]);
+        Assert.Contains("[ValuePattern.Exact]", failure.Reasons[0]);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class IntegrationTests
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
-        Assert.Contains("[ValueMatcher.Exact]", failure.Reasons[0]);
+        Assert.Contains("[ValuePattern.Exact]", failure.Reasons[0]);
     }
 
     [Fact]

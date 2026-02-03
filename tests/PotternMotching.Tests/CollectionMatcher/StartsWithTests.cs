@@ -1,6 +1,6 @@
-namespace PotternMotching.Tests.CollectionMatcher;
+namespace PotternMotching.Tests.CollectionPattern;
 
-using PotternMotching.Matchers;
+using PotternMotching.Patterns;
 using Xunit;
 
 public class StartsWithTests
@@ -8,7 +8,7 @@ public class StartsWithTests
     [Fact]
     public void EvaluateStartsWith_EmptyPatternMatchesAnyCollection_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.StartsWith<int>([]);
+        var matcher = CollectionPattern.StartsWith<int>([]);
 
         var result = matcher.Evaluate([1, 2, 3]);
 
@@ -18,7 +18,7 @@ public class StartsWithTests
     [Fact]
     public void EvaluateStartsWith_SingleItemAtStart_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.StartsWith([ValueMatcher.Exact(1)]);
+        var matcher = CollectionPattern.StartsWith([ValuePattern.Exact(1)]);
 
         var result = matcher.Evaluate([1, 2, 3]);
 
@@ -28,10 +28,10 @@ public class StartsWithTests
     [Fact]
     public void EvaluateStartsWith_MultipleItemsAtStart_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.StartsWith([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.StartsWith([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3, 4, 5]);
@@ -42,10 +42,10 @@ public class StartsWithTests
     [Fact]
     public void EvaluateStartsWith_ExactSameLength_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.StartsWith([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.StartsWith([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3]);
@@ -56,9 +56,9 @@ public class StartsWithTests
     [Fact]
     public void EvaluateStartsWith_CollectionLongerThanPattern_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.StartsWith([
-            ValueMatcher.Exact("a"),
-            ValueMatcher.Exact("b")
+        var matcher = CollectionPattern.StartsWith([
+            ValuePattern.Exact("a"),
+            ValuePattern.Exact("b")
         ]);
 
         var result = matcher.Evaluate(["a", "b", "c", "d", "e"]);
@@ -69,10 +69,10 @@ public class StartsWithTests
     [Fact]
     public void EvaluateStartsWith_CollectionTooShort_ReturnsFailureWithLengthMessage()
     {
-        var matcher = CollectionMatcher.StartsWith([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.StartsWith([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         var result = matcher.Evaluate([1, 2], ".Items");
@@ -80,7 +80,7 @@ public class StartsWithTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items", failure.Reasons[0]);
-        Assert.Contains("[CollectionMatcher.StartsWith]", failure.Reasons[0]);
+        Assert.Contains("[CollectionPattern.StartsWith]", failure.Reasons[0]);
         Assert.Contains("start with 3 items", failure.Reasons[0]);
         Assert.Contains("only 2 items", failure.Reasons[0]);
     }
@@ -88,10 +88,10 @@ public class StartsWithTests
     [Fact]
     public void EvaluateStartsWith_FirstItemMismatch_ReturnsFailureWithIndex0()
     {
-        var matcher = CollectionMatcher.StartsWith([
-            ValueMatcher.Exact(99),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.StartsWith([
+            ValuePattern.Exact(99),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3, 4], ".Items");
@@ -99,7 +99,7 @@ public class StartsWithTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items[0]", failure.Reasons[0]);
-        Assert.Contains("[ValueMatcher.Exact]", failure.Reasons[0]);
+        Assert.Contains("[ValuePattern.Exact]", failure.Reasons[0]);
         Assert.Contains("Expected 99", failure.Reasons[0]);
         Assert.Contains("got 1", failure.Reasons[0]);
     }
@@ -107,10 +107,10 @@ public class StartsWithTests
     [Fact]
     public void EvaluateStartsWith_LaterItemMismatch_ReturnsFailureWithCorrectIndex()
     {
-        var matcher = CollectionMatcher.StartsWith([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(99)
+        var matcher = CollectionPattern.StartsWith([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(99)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3, 4, 5], ".Items");
@@ -125,7 +125,7 @@ public class StartsWithTests
     [Fact]
     public void EvaluateStartsWith_EmptyCollectionWithNonEmptyPattern_ReturnsFailure()
     {
-        var matcher = CollectionMatcher.StartsWith([ValueMatcher.Exact(1)]);
+        var matcher = CollectionPattern.StartsWith([ValuePattern.Exact(1)]);
 
         var result = matcher.Evaluate(Array.Empty<int>(), ".Items");
 
@@ -153,9 +153,9 @@ public class StartsWithTests
             yield return 5;
         }
 
-        var matcher = CollectionMatcher.StartsWith([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2)
+        var matcher = CollectionPattern.StartsWith([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2)
         ]);
 
         var result = matcher.Evaluate(GetNumbers());
@@ -180,10 +180,10 @@ public class StartsWithTests
             yield return 4;
         }
 
-        var matcher = CollectionMatcher.StartsWith([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.StartsWith([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         var result = matcher.Evaluate(GetNumbers());

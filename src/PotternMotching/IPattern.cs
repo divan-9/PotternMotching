@@ -1,15 +1,15 @@
 namespace PotternMotching;
 
 /// <summary>
-/// Defines a matcher that can evaluate whether a value matches a specific pattern.
+/// Defines a pattern that can evaluate whether a value matches a specific pattern.
 /// </summary>
 /// <typeparam name="T">The type of value to match against.</typeparam>
 /// <remarks>
-/// Matchers are the core abstraction in PotternMotching. They evaluate values and return
+/// Patterns are the core abstraction in PotternMotching. They evaluate values and return
 /// either <see cref="MatchResult.Success"/> if the value matches the pattern, or
 /// <see cref="MatchResult.Failure"/> with detailed reasons if it doesn't.
 /// </remarks>
-public interface IMatcher<in T>
+public interface IPattern<in T>
 {
     /// <summary>
     /// Evaluates whether the given value matches this pattern.
@@ -27,5 +27,5 @@ public interface IMatcher<in T>
          T value,
          string path = "");
 
-    static abstract IMatcher<T> From(T value);
+    static abstract IPattern<T> From(T value);
 }

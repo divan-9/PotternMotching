@@ -1,6 +1,6 @@
-namespace PotternMotching.Tests.CollectionMatcher;
+namespace PotternMotching.Tests.CollectionPattern;
 
-using PotternMotching.Matchers;
+using PotternMotching.Patterns;
 using Xunit;
 
 public class MatchAllTests
@@ -8,7 +8,7 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_EmptyPatternsMatchAnyCollection_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.MatchAll<int>([]);
+        var matcher = CollectionPattern.MatchAll<int>([]);
 
         var result = matcher.Evaluate([1, 2, 3]);
 
@@ -18,7 +18,7 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_SinglePatternFoundInCollection_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.MatchAll([ValueMatcher.Exact(2)]);
+        var matcher = CollectionPattern.MatchAll([ValuePattern.Exact(2)]);
 
         var result = matcher.Evaluate([1, 2, 3]);
 
@@ -28,10 +28,10 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_MultiplePatternsAllFound_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.MatchAll([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(3),
-            ValueMatcher.Exact(2)
+        var matcher = CollectionPattern.MatchAll([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(3),
+            ValuePattern.Exact(2)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3]);
@@ -42,7 +42,7 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_SamePatternMatchesMultipleItems_ReturnsSuccessAfterFindingFirst()
     {
-        var matcher = CollectionMatcher.MatchAll([ValueMatcher.Exact(2)]);
+        var matcher = CollectionPattern.MatchAll([ValuePattern.Exact(2)]);
 
         var result = matcher.Evaluate([2, 2, 2]);
 
@@ -52,10 +52,10 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_OrderDoesNotMatter_ReturnsSuccess()
     {
-        var matcher = CollectionMatcher.MatchAll([
-            ValueMatcher.Exact(3),
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2)
+        var matcher = CollectionPattern.MatchAll([
+            ValuePattern.Exact(3),
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3]);
@@ -66,14 +66,14 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_PatternNotFound_ReturnsFailureWithPatternDetails()
     {
-        var matcher = CollectionMatcher.MatchAll([ValueMatcher.Exact(99)]);
+        var matcher = CollectionPattern.MatchAll([ValuePattern.Exact(99)]);
 
         var result = matcher.Evaluate([1, 2, 3], ".Items");
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items", failure.Reasons[0]);
-        Assert.Contains("[CollectionMatcher.MatchAll]", failure.Reasons[0]);
+        Assert.Contains("[CollectionPattern.MatchAll]", failure.Reasons[0]);
         Assert.Contains("pattern[0]", failure.Reasons[0]);
         Assert.Contains("1 pattern(s)", failure.Reasons[0]);
     }
@@ -81,11 +81,11 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_MultiplePatternsMissing_ReturnsFailureWithAllMissingPatterns()
     {
-        var matcher = CollectionMatcher.MatchAll([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(99),
-            ValueMatcher.Exact(3),
-            ValueMatcher.Exact(100)
+        var matcher = CollectionPattern.MatchAll([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(99),
+            ValuePattern.Exact(3),
+            ValuePattern.Exact(100)
         ]);
 
         var result = matcher.Evaluate([1, 2, 3], ".Items");
@@ -93,7 +93,7 @@ public class MatchAllTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items", failure.Reasons[0]);
-        Assert.Contains("[CollectionMatcher.MatchAll]", failure.Reasons[0]);
+        Assert.Contains("[CollectionPattern.MatchAll]", failure.Reasons[0]);
         Assert.Contains("2 pattern(s)", failure.Reasons[0]);
         Assert.Contains("pattern[1]", failure.Reasons[0]);
         Assert.Contains("pattern[3]", failure.Reasons[0]);
@@ -102,9 +102,9 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_EmptyCollectionWithNonEmptyPatterns_ReturnsFailure()
     {
-        var matcher = CollectionMatcher.MatchAll([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2)
+        var matcher = CollectionPattern.MatchAll([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2)
         ]);
 
         var result = matcher.Evaluate(Array.Empty<int>(), ".Items");
@@ -119,7 +119,7 @@ public class MatchAllTests
     [Fact]
     public void EvaluateMatchAll_FailedPatternShowsMatcherInMessage_VerifyFormat()
     {
-        var matcher = CollectionMatcher.MatchAll([ValueMatcher.Exact("missing")]);
+        var matcher = CollectionPattern.MatchAll([ValuePattern.Exact("missing")]);
 
         var result = matcher.Evaluate(["a", "b", "c"], ".Items");
 
@@ -144,10 +144,10 @@ public class MatchAllTests
             yield return 3;
         }
 
-        var matcher = CollectionMatcher.MatchAll([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2),
-            ValueMatcher.Exact(3)
+        var matcher = CollectionPattern.MatchAll([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
         ]);
 
         var result = matcher.Evaluate(GetNumbers());
@@ -174,9 +174,9 @@ public class MatchAllTests
             yield return 5;
         }
 
-        var matcher = CollectionMatcher.MatchAll([
-            ValueMatcher.Exact(1),
-            ValueMatcher.Exact(2)
+        var matcher = CollectionPattern.MatchAll([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2)
         ]);
 
         var result = matcher.Evaluate(GetNumbers());

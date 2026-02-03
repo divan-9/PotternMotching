@@ -1,11 +1,11 @@
-namespace PotternMotching.Matchers;
+namespace PotternMotching.Patterns;
 
-public record EmptyMatcher<T> : IMatcher<T>
+public record EmptyPattern<T> : IPattern<T>
 {
-    public static IMatcher<T> From(
+    public static IPattern<T> From(
         T value)
     {
-        return new EmptyMatcher<T>();
+        return new EmptyPattern<T>();
     }
 
     /// <inheritdoc/>
