@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 [CollectionBuilder(typeof(SequencePatternDefaultBuilder), "Create")]
 public readonly struct SequencePatternDefault<T, TDefaultItemMatcher> : IPattern<IEnumerable<T>>
-    where TDefaultItemMatcher : IPattern<T>
+    where TDefaultItemMatcher : IPattern<T>, IPatternConstructor<T>
 {
     private readonly IPattern<IEnumerable<T>> innerPattern;
 
@@ -24,7 +24,7 @@ public readonly struct SequencePatternDefault<T, TDefaultItemMatcher> : IPattern
     {
         return new SequencePatternDefault<T, TDefaultItemMatcher>(
             CollectionPattern.Sequence([..
-                value.Select(v => (TDefaultItemMatcher)TDefaultItemMatcher.From(v))
+                value.Select(v => (TDefaultItemMatcher)TDefaultItemMatcher.Create(v))
             ]));
     }
 
@@ -51,7 +51,7 @@ public class SequencePatternDefaultBuilder
 {
     public static SequencePatternDefault<T, TDefaultItemMatcher> Create<T, TDefaultItemMatcher>(
         ReadOnlySpan<TDefaultItemMatcher> values)
-        where TDefaultItemMatcher : IPattern<T>
+        where TDefaultItemMatcher : IPattern<T>, IPatternConstructor<T>
     {
         return new SequencePatternDefault<T, TDefaultItemMatcher>(
             CollectionPattern.Sequence([.. values]));

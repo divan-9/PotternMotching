@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 [CollectionBuilder(typeof(SetPatternDefaultBuilder), "Create")]
 public readonly struct SetPatternDefault<T, TDefaultItemMatcher> : IPattern<IEnumerable<T>>
-    where TDefaultItemMatcher : IPattern<T>
+    where TDefaultItemMatcher : IPattern<T>, IPatternConstructor<T>
 {
     private readonly IPattern<IEnumerable<T>> innerMatcher;
 
@@ -24,7 +24,7 @@ public readonly struct SetPatternDefault<T, TDefaultItemMatcher> : IPattern<IEnu
     {
         return new SetPatternDefault<T, TDefaultItemMatcher>(
             CollectionPattern.AnyOrder([..
-                value.Select(v => (TDefaultItemMatcher)TDefaultItemMatcher.From(v))
+                value.Select(v => (TDefaultItemMatcher)TDefaultItemMatcher.Create(v))
             ]));
     }
 
@@ -51,7 +51,7 @@ public class SetPatternDefaultBuilder
 {
     public static SetPatternDefault<T, TDefaultItemMatcher> Create<T, TDefaultItemMatcher>(
         ReadOnlySpan<TDefaultItemMatcher> values)
-        where TDefaultItemMatcher : IPattern<T>
+        where TDefaultItemMatcher : IPattern<T>, IPatternConstructor<T>
     {
         return new SetPatternDefault<T, TDefaultItemMatcher>(
             CollectionPattern.AnyOrder([.. values]));

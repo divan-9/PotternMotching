@@ -141,6 +141,23 @@ internal static class PatternCodeGenerator
         return $"PatternDefault<{property.ElementType}, ValuePattern<{property.ElementType}>>";
     }
 
+    private static string GetDictionaryValueMatcherType(PropertyAnalysisResult property)
+    {
+        // For dictionary values, determine the appropriate pattern type
+        // This is the pattern type for the VALUE in Dictionary<K, V>
+
+        // Check if value type is a nested pattern type
+        if (property.RequiresNestedPattern && property.NestedType != null)
+        {
+            var nestedFullName = property.NestedType.ToDisplayString(
+                SymbolDisplayFormat.FullyQualifiedFormat);
+            return $"{nestedFullName}Pattern";
+        }
+
+        // For primitive value types, use ValuePattern
+        return $"ValuePattern<{property.ValueType}>";
+    }
+
     private static string GetMatcherTypeForProperty(PropertyAnalysisResult property)
     {
         // For nested types with [AutoPattern], the pattern IS the matcher
@@ -171,8 +188,8 @@ internal static class PatternCodeGenerator
                 $"SequencePatternDefault<{property.ElementType}, {GetDefaultItemMatcherType(property)}>",
 
             PatternWrapperKind.Dictionary =>
-                // Dictionaries remain as PatternDefault with ValuePattern for dictionary type
-                $"PatternDefault<System.Collections.Generic.IDictionary<{property.KeyType}, {property.ValueType}>, ValuePattern<System.Collections.Generic.IDictionary<{property.KeyType}, {property.ValueType}>>>",
+                // Use DictionaryPatternDefault for proper dictionary matching
+                $"DictionaryPatternDefault<{property.KeyType}, {property.ValueType}, {GetDictionaryValueMatcherType(property)}>",
 
             PatternWrapperKind.Nested =>
                 // Wrap nested patterns in PatternDefault for consistency and null matching support
@@ -274,8 +291,8 @@ internal static class PatternCodeGenerator
                 GenerateCollectionConversion(property, propertyName),
 
             PatternWrapperKind.Dictionary =>
-                // PatternDefault<IDictionary<K,V>, ValuePattern<...>> has implicit conversion from IDictionary<K,V>
-                $"value.{propertyName}",
+                // Use DictionaryPatternDefault.From for conversion
+                GenerateDictionaryConversion(property, propertyName),
 
             PatternWrapperKind.Nested =>
                 // PatternDefault<T, TPattern> has implicit conversion from T
@@ -338,6 +355,13 @@ internal static class PatternCodeGenerator
 
         // Wrap the From result in a constructor to get the right type
         return $"new {patternType}<{property.ElementType}, {itemMatcherType}>({patternType}<{property.ElementType}, {itemMatcherType}>.From(value.{propertyName}))";
+    }
+
+    private static string GenerateDictionaryConversion(PropertyAnalysisResult property, string propertyName)
+    {
+        var valueMatcherType = GetDictionaryValueMatcherType(property);
+
+        return $"new DictionaryPatternDefault<{property.KeyType}, {property.ValueType}, {valueMatcherType}>(DictionaryPatternDefault<{property.KeyType}, {property.ValueType}, {valueMatcherType}>.From(value.{propertyName}))";
     }
 
     private static void GenerateVariantImplicitConversion(

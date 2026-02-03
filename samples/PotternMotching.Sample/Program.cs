@@ -27,6 +27,13 @@ var result = new Person(
     ]
 );
 
+DictionaryPatternDefault<string, Address, AddressPattern> addressDictMatcher = new()
+{
+    ["home"] = new AddressPattern(City: "Wonderland"),
+    ["work"] = new Address(City: "Wonderland", Zip: "12345"),
+};
+
+
 // Demonstrate implicit conversion: can use Address values directly in collection literals
 SequencePatternDefault<Address, AddressPattern> addressMatcher = [
     new AddressPattern(City: "Wonderland"),          // Pattern type

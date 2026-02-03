@@ -59,6 +59,99 @@ internal static class CollectionPatternExtensions
         IEnumerable<T> value,
         string path)
     {
-        throw new NotImplementedException();
+        var valueArray = value.ToArray();
+        var patterns = sequence.Patterns;
+
+        // Length check
+        if (valueArray.Length != patterns.Length)
+        {
+            return new MatchResult.Failure([
+                $"{path}: Expected exactly {patterns.Length} items, but got {valueArray.Length}"
+            ]);
+        }
+
+        // Match each element
+        var results = new List<MatchResult>();
+        for (int i = 0; i < patterns.Length; i++)
+        {
+            results.Add(patterns[i].Evaluate(valueArray[i], $"{path}[{i}]"));
+        }
+
+        return MatchResult.Combine(results);
+    }
+
+    internal static MatchResult EvaluateStartsWith<T>(
+        this CollectionPattern<T>.StartsWith pattern,
+        IEnumerable<T> value,
+        string path)
+    {
+        var patterns = pattern.Patterns;
+
+        if (patterns.Length == 0)
+        {
+            return new MatchResult.Success();
+        }
+
+        var results = new List<MatchResult>();
+        var enumerator = value.GetEnumerator();
+
+        for (int i = 0; i < patterns.Length; i++)
+        {
+            if (!enumerator.MoveNext())
+            {
+                return new MatchResult.Failure([
+                    $"{path}: Expected at least {patterns.Length} items, but collection ended at index {i}"
+                ]);
+            }
+
+            results.Add(patterns[i].Evaluate(enumerator.Current, $"{path}[{i}]"));
+        }
+
+        return MatchResult.Combine(results);
+    }
+
+    internal static MatchResult EvaluateEndsWith<T>(
+        this CollectionPattern<T>.EndsWith pattern,
+        IEnumerable<T> value,
+        string path)
+    {
+        var patterns = pattern.Patterns;
+
+        if (patterns.Length == 0)
+        {
+            return new MatchResult.Success();
+        }
+
+        // Use queue as circular buffer to get last N items
+        var buffer = new Queue<T>(patterns.Length);
+
+        foreach (var item in value)
+        {
+            if (buffer.Count == patterns.Length)
+            {
+                buffer.Dequeue();
+            }
+            buffer.Enqueue(item);
+        }
+
+        // Check we have enough items
+        if (buffer.Count < patterns.Length)
+        {
+            return new MatchResult.Failure([
+                $"{path}: Expected at least {patterns.Length} items, but got {buffer.Count}"
+            ]);
+        }
+
+        // Match from end using hat notation
+        var results = new List<MatchResult>();
+        var bufferArray = buffer.ToArray();
+
+        for (int i = 0; i < patterns.Length; i++)
+        {
+            var hatIndex = patterns.Length - i;
+            results.Add(patterns[i].Evaluate(bufferArray[i], $"{path}[^{hatIndex}]"));
+        }
+
+        return MatchResult.Combine(results);
     }
 }

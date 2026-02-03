@@ -8,7 +8,7 @@ public class IntegrationTests
     [Fact]
     public void DictionaryMatcher_WithNestedCollections_WorksCorrectly()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int[]>>
+        var matcher = DictionaryPattern.Items(new Dictionary<string, IPattern<int[]>>
         {
             ["scores"] = new CollectionPattern<int>.Sequence([
                 ValuePattern.Exact(95),
@@ -29,9 +29,9 @@ public class IntegrationTests
     [Fact]
     public void DictionaryMatcher_WithDictionaryOfDictionaries_WorksCorrectly()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<Dictionary<string, int>>>
+        var matcher = DictionaryPattern.Items(new Dictionary<string, IPattern<Dictionary<string, int>>>
         {
-            ["user1"] = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
+            ["user1"] = DictionaryPattern.ExactItems(new Dictionary<string, IPattern<int>>
             {
                 ["age"] = ValuePattern.Exact(30),
                 ["score"] = ValuePattern.Exact(100)
@@ -57,9 +57,9 @@ public class IntegrationTests
     [Fact]
     public void ExactKeys_WithNestedDictionary_FailsOnExtraNestedKeys()
     {
-        var matcher = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<Dictionary<string, int>>>
+        var matcher = DictionaryPattern.ExactItems(new Dictionary<string, IPattern<Dictionary<string, int>>>
         {
-            ["config"] = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
+            ["config"] = DictionaryPattern.ExactItems(new Dictionary<string, IPattern<int>>
             {
                 ["timeout"] = ValuePattern.Exact(30)
             })
@@ -81,9 +81,9 @@ public class IntegrationTests
     [Fact]
     public void DictionaryMatcher_FailureMessagesIncludeFullPath()
     {
-        var matcher = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<Dictionary<string, int>>>
+        var matcher = DictionaryPattern.Items(new Dictionary<string, IPattern<Dictionary<string, int>>>
         {
-            ["settings"] = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int>>
+            ["settings"] = DictionaryPattern.Items(new Dictionary<string, IPattern<int>>
             {
                 ["value"] = ValuePattern.Exact(42)
             })
@@ -112,12 +112,12 @@ public class IntegrationTests
             ["extra"] = 100
         };
 
-        var matchAllResult = DictionaryMatcher.MatchAll(new Dictionary<string, IPattern<int>>
+        var matchAllResult = DictionaryPattern.Items(new Dictionary<string, IPattern<int>>
         {
             ["required"] = ValuePattern.Exact(42)
         }).Evaluate(testDict);
 
-        var exactKeysResult = DictionaryMatcher.ExactKeys(new Dictionary<string, IPattern<int>>
+        var exactKeysResult = DictionaryPattern.ExactItems(new Dictionary<string, IPattern<int>>
         {
             ["required"] = ValuePattern.Exact(42)
         }).Evaluate(testDict);

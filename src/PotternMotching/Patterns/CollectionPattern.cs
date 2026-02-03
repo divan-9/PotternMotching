@@ -21,7 +21,9 @@ public partial record CollectionPattern<T> : IPattern<IEnumerable<T>>
         return this.Match(
             anyElement => anyElement.EvaluateAnyElement(value, path),
             sequence => sequence.EvaluateSequence(value, path),
-            anyOrder => anyOrder.EvaluateAnyOrder(value, path));
+            anyOrder => anyOrder.EvaluateAnyOrder(value, path),
+            startsWith => startsWith.EvaluateStartsWith(value, path),
+            endsWith => endsWith.EvaluateEndsWith(value, path));
     }
 
     public partial record AnyElement(
@@ -33,6 +35,12 @@ public partial record CollectionPattern<T> : IPattern<IEnumerable<T>>
         IPattern<T>[] Patterns);
 
     public partial record AnyOrder(
+        IPattern<T>[] Patterns);
+
+    public partial record StartsWith(
+        IPattern<T>[] Patterns);
+
+    public partial record EndsWith(
         IPattern<T>[] Patterns);
 }
 
@@ -74,5 +82,31 @@ public static class CollectionPattern
         T value)
     {
         return new CollectionPattern<T>.AnyElement(ValuePattern.Exact(value));
+    }
+
+    [OverloadResolutionPriority(1)]
+    public static CollectionPattern<T>.StartsWith StartsWith<T>(
+        IPattern<T>[] patterns)
+    {
+        return new CollectionPattern<T>.StartsWith(patterns);
+    }
+
+    public static CollectionPattern<T>.StartsWith StartsWith<T>(
+        T[] values)
+    {
+        return new CollectionPattern<T>.StartsWith([.. values.Select(ValuePattern.Exact)]);
+    }
+
+    [OverloadResolutionPriority(1)]
+    public static CollectionPattern<T>.EndsWith EndsWith<T>(
+        IPattern<T>[] patterns)
+    {
+        return new CollectionPattern<T>.EndsWith(patterns);
+    }
+
+    public static CollectionPattern<T>.EndsWith EndsWith<T>(
+        T[] values)
+    {
+        return new CollectionPattern<T>.EndsWith([.. values.Select(ValuePattern.Exact)]);
     }
 }

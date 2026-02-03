@@ -56,7 +56,7 @@ public class IntegrationTests
     {
         var person = new Person("Alice", 30, ["Reading", "Coding"]);
 
-        var hobbyMatcher = CM.MatchAll([
+        var hobbyMatcher = CM.AnyOrder([
             VM.Exact("Reading"),
             VM.Exact("Coding")
         ]);
@@ -163,7 +163,7 @@ public class IntegrationTests
             ]
         );
 
-        var officeMatcher = CM.MatchAll([
+        var officeMatcher = CM.AnyOrder([
             VM.Exact(new Address("123 Main St", "San Francisco", 94102)),
             VM.Exact(new Address("456 Oak Ave", "New York", 10001))
         ]);
@@ -226,7 +226,7 @@ public class IntegrationTests
 
         var nameMatcher = VM.Exact("Alice");
         var ageMatcher = VM.Exact(30);
-        var hobbyMatcher = CM.MatchAll([
+        var hobbyMatcher = CM.AnyOrder([
             VM.Exact("Reading"),
             VM.Exact("Coding")
         ]);
@@ -247,7 +247,7 @@ public class IntegrationTests
 
         var nameMatcher = VM.Exact("Bob"); // Will fail
         var ageMatcher = VM.Exact(25); // Will fail
-        var hobbyMatcher = CM.MatchAll([
+        var hobbyMatcher = CM.AnyOrder([
             VM.Exact("Swimming") // Will fail
         ]);
 

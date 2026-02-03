@@ -26,6 +26,9 @@ public interface IPattern<in T>
     MatchResult Evaluate(
          T value,
          string path = "");
+}
 
-    static abstract IPattern<T> From(T value);
+public interface IPatternConstructor<in T>
+{
+    static abstract IPattern<T> Create(T value);
 }

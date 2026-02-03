@@ -11,7 +11,7 @@ using Dunet;
 /// Currently supports exact equality matching.
 /// </remarks>
 [Union]
-public partial record ValuePattern<T> : IPattern<T>
+public partial record ValuePattern<T> : IPattern<T>, IPatternConstructor<T>
 {
     /// <inheritdoc/>
     public MatchResult Evaluate(
@@ -21,7 +21,7 @@ public partial record ValuePattern<T> : IPattern<T>
         return this.Match(exact => exact.EvaluateExact(value, path));
     }
 
-    public static IPattern<T> From(
+    public static IPattern<T> Create(
         T value)
     {
         return new Exact(value);

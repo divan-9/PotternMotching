@@ -1,7 +1,7 @@
 namespace PotternMotching.Patterns;
 
 public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>
-    where TPatternDefault : IPattern<T>
+    where TPatternDefault : IPattern<T>, IPatternConstructor<T>
 {
     private readonly IPattern<T> innerMatcher;
 
@@ -18,7 +18,7 @@ public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>
     public static IPattern<T> From(
         T value)
     {
-        return new PatternDefault<T, TPatternDefault>(TPatternDefault.From(value));
+        return new PatternDefault<T, TPatternDefault>(TPatternDefault.Create(value));
     }
 
     public MatchResult Evaluate(T value, string path = "")
@@ -29,7 +29,7 @@ public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>
     public static implicit operator PatternDefault<T, TPatternDefault>(
         T value)
     {
-        return new PatternDefault<T, TPatternDefault>(TPatternDefault.From(value));
+        return new PatternDefault<T, TPatternDefault>(TPatternDefault.Create(value));
     }
 
     public static implicit operator PatternDefault<T, TPatternDefault>(
