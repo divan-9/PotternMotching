@@ -3,12 +3,7 @@ namespace PotternMotching.Patterns;
 public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>, IPatternConstructor<T>
     where TPatternDefault : IPattern<T>, IPatternConstructor<T>
 {
-    private readonly IPattern<T> innerMatcher;
-
-    public PatternDefault()
-    {
-        this.innerMatcher = new EmptyPattern<T>();
-    }
+    private readonly IPattern<T>? innerMatcher;
 
     public PatternDefault(IPattern<T> matcher)
     {
@@ -29,7 +24,7 @@ public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>, IPatter
 
     public MatchResult Evaluate(T value, string path = "")
     {
-        return this.innerMatcher.Evaluate(value, path);
+        return this.innerMatcher?.Evaluate(value, path) ?? new MatchResult.Success();
     }
 
     public static implicit operator PatternDefault<T, TPatternDefault>(

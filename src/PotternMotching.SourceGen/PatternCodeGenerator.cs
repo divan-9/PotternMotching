@@ -140,6 +140,18 @@ internal static class PatternCodeGenerator
         // If the element type requires a nested pattern, use the pattern type
         if (property.RequiresNestedPattern && property.NestedType != null)
         {
+            // Check if element is a union variant
+            if (property.PropertyTypeSymbol is INamedTypeSymbol propertyTypeSymbol &&
+                propertyTypeSymbol.ContainingType != null &&
+                SymbolEqualityComparer.Default.Equals(propertyTypeSymbol.ContainingType, property.NestedType))
+            {
+                // Union variant element
+                var unionFullName = property.NestedType.ToDisplayString(
+                    SymbolDisplayFormat.FullyQualifiedFormat);
+                var variantName = propertyTypeSymbol.Name;
+                return $"{unionFullName}Pattern.{variantName}";
+            }
+
             var nestedFullName = property.NestedType.ToDisplayString(
                 SymbolDisplayFormat.FullyQualifiedFormat);
             return $"{nestedFullName}Pattern";
@@ -157,6 +169,18 @@ internal static class PatternCodeGenerator
         // Check if value type is a nested pattern type
         if (property.RequiresNestedPattern && property.NestedType != null)
         {
+            // Check if value is a union variant
+            if (property.PropertyTypeSymbol is INamedTypeSymbol propertyTypeSymbol &&
+                propertyTypeSymbol.ContainingType != null &&
+                SymbolEqualityComparer.Default.Equals(propertyTypeSymbol.ContainingType, property.NestedType))
+            {
+                // Union variant value
+                var unionFullName = property.NestedType.ToDisplayString(
+                    SymbolDisplayFormat.FullyQualifiedFormat);
+                var variantName = propertyTypeSymbol.Name;
+                return $"{unionFullName}Pattern.{variantName}";
+            }
+
             var nestedFullName = property.NestedType.ToDisplayString(
                 SymbolDisplayFormat.FullyQualifiedFormat);
             return $"{nestedFullName}Pattern";
@@ -611,7 +635,7 @@ internal static class PatternCodeGenerator
             sb.Append(")");
         }
 
-        sb.AppendLine($" : {patternName}, IPattern<{variantFullType}>");
+        sb.AppendLine($" : {patternName}, IPattern<{variantFullType}>, IPatternConstructor<{variantFullType}>");
         sb.AppendLine("    {");
 
         // Evaluate method for specific variant type
@@ -669,6 +693,14 @@ internal static class PatternCodeGenerator
         sb.AppendLine($"            {variantFullType} value)");
         sb.AppendLine("        {");
         sb.AppendLine($"            return ({variantName})value;");
+        sb.AppendLine("        }");
+
+        // Add static Create method for IPatternConstructor interface
+        sb.AppendLine();
+        sb.AppendLine($"        public static IPattern<{variantFullType}> Create(");
+        sb.AppendLine($"            {variantFullType} value)");
+        sb.AppendLine("        {");
+        sb.AppendLine($"            return From(value);");
         sb.AppendLine("        }");
 
         // Add implicit conversion operator for variant

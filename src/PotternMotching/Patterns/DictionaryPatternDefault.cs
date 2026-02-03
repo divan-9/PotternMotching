@@ -5,12 +5,7 @@ public readonly struct DictionaryPatternDefault<TKey, TValue, TDefaultValuePatte
     where TKey : notnull
     where TDefaultValuePattern : IPattern<TValue>, IPatternConstructor<TValue>
 {
-    private readonly IPattern<IDictionary<TKey, TValue>> innerPattern;
-
-    public DictionaryPatternDefault()
-    {
-        this.innerPattern = new EmptyPattern<IDictionary<TKey, TValue>>();
-    }
+    private readonly IPattern<IDictionary<TKey, TValue>>? innerPattern;
 
     public DictionaryPatternDefault(
         IPattern<IDictionary<TKey, TValue>> pattern)
@@ -22,7 +17,7 @@ public readonly struct DictionaryPatternDefault<TKey, TValue, TDefaultValuePatte
         IDictionary<TKey, TValue> value,
         string path = "")
     {
-        return this.innerPattern.Evaluate(value, path);
+        return this.innerPattern?.Evaluate(value, path) ?? new MatchResult.Success();
     }
 
     public TDefaultValuePattern this[TKey key]

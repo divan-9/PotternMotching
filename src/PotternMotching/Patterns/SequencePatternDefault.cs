@@ -6,12 +6,7 @@ using System.Runtime.CompilerServices;
 public readonly struct SequencePatternDefault<T, TDefaultItemMatcher> : IPattern<IEnumerable<T>>
     where TDefaultItemMatcher : IPattern<T>, IPatternConstructor<T>
 {
-    private readonly IPattern<IEnumerable<T>> innerPattern;
-
-    public SequencePatternDefault()
-    {
-        this.innerPattern = new EmptyPattern<IEnumerable<T>>();
-    }
+    private readonly IPattern<IEnumerable<T>>? innerPattern;
 
     public SequencePatternDefault(
         IPattern<IEnumerable<T>> innerPattern)
@@ -32,7 +27,7 @@ public readonly struct SequencePatternDefault<T, TDefaultItemMatcher> : IPattern
         IEnumerable<T> value,
         string path = "")
     {
-        return this.innerPattern.Evaluate(value, path);
+        return this.innerPattern?.Evaluate(value, path) ?? new MatchResult.Success();
     }
 
     public IEnumerator<TDefaultItemMatcher> GetEnumerator()

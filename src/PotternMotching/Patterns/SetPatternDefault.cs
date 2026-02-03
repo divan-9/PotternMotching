@@ -8,11 +8,6 @@ public readonly struct SetPatternDefault<T, TDefaultItemMatcher> : IPattern<IEnu
 {
     private readonly IPattern<IEnumerable<T>> innerMatcher;
 
-    public SetPatternDefault()
-    {
-        this.innerMatcher = new EmptyPattern<IEnumerable<T>>();
-    }
-
     public SetPatternDefault(
         IPattern<IEnumerable<T>> matcher)
     {

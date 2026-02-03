@@ -27,6 +27,26 @@ var result = new Person(
     ]
 );
 
+// OLD: This was the incorrect type before the fix - now it won't compile
+// SequencePatternDefault<Job.Employed, JobPattern> jobSeqMatcher = [
+//     new(
+//         Company: "Tech Corp",
+//         Position: "Developer"),
+//     new(
+//         Company: "Business Inc",
+//         Position: "Manager"),
+// ];
+
+// CORRECT: Using the specific variant pattern type
+SequencePatternDefault<Job.Employed, JobPattern.Employed> jobSeqMatcher2 = [
+    new(
+        Company: "Tech Corp",
+        Position: "Developer"),
+    new(
+        Company: "Business Inc",
+        Position: "Manager"),
+];
+
 // DictionaryPatternDefault<string, Address, AddressPattern> addressDictMatcher = new()
 // {
 //     ["home"] = new AddressPattern(City: "Wonderland"),
