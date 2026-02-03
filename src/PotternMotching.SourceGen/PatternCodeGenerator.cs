@@ -491,6 +491,18 @@ internal static class PatternCodeGenerator
         sb.AppendLine("    }");
         sb.AppendLine();
 
+        // Add implicit conversion operators from each variant type to base pattern
+        foreach (var variant in analysis.Variants)
+        {
+            var variantFullType = $"{unionFullType}.{variant.VariantName}";
+            sb.AppendLine($"    public static implicit operator {patternName}(");
+            sb.AppendLine($"        {variantFullType} value)");
+            sb.AppendLine("    {");
+            sb.AppendLine($"        return ({patternName}.{variant.VariantName})value;");
+            sb.AppendLine("    }");
+            sb.AppendLine();
+        }
+
         // Generate each variant pattern
         foreach (var variant in analysis.Variants)
         {

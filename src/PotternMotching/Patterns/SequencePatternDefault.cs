@@ -45,6 +45,14 @@ public readonly struct SequencePatternDefault<T, TDefaultItemMatcher> : IPattern
     {
         return new(pattern);
     }
+
+    public static implicit operator SequencePatternDefault<T, TDefaultItemMatcher>(
+        T[] items)
+    {
+        return CollectionPattern.Sequence([
+            ..items.Select(v => (TDefaultItemMatcher)TDefaultItemMatcher.Create(v))
+        ]);
+    }
 }
 
 public class SequencePatternDefaultBuilder
@@ -55,5 +63,15 @@ public class SequencePatternDefaultBuilder
     {
         return new SequencePatternDefault<T, TDefaultItemMatcher>(
             CollectionPattern.Sequence([.. values]));
+    }
+
+    public static SequencePatternDefault<T, TDefaultItemMatcher> Create<T, TDefaultItemMatcher>(
+        ReadOnlySpan<T> values)
+        where TDefaultItemMatcher : IPattern<T>, IPatternConstructor<T>
+    {
+        return new SequencePatternDefault<T, TDefaultItemMatcher>(
+            CollectionPattern.Sequence([
+                .. values.ToArray().Select(v => (TDefaultItemMatcher)TDefaultItemMatcher.Create(v))
+            ]));
     }
 }

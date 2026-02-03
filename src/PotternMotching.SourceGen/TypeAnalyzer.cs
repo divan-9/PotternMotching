@@ -198,7 +198,8 @@ internal static class TypeAnalyzer
                 null,
                 null,
                 requiresPattern,
-                nestedType);
+                nestedType,
+                elementType as INamedTypeSymbol);
         }
 
         // Check for named types (generic collections, etc.)
@@ -220,7 +221,8 @@ internal static class TypeAnalyzer
                     null,
                     null,
                     requiresPattern,
-                    nestedTypeSymbol);
+                    nestedTypeSymbol,
+                    elementType as INamedTypeSymbol);
             }
 
             // Check for ISet<T>
@@ -237,7 +239,8 @@ internal static class TypeAnalyzer
                     null,
                     null,
                     requiresPattern,
-                    nestedTypeSymbol);
+                    nestedTypeSymbol,
+                    elementType as INamedTypeSymbol);
             }
 
             // Check for IDictionary<TKey, TValue> or Dictionary<TKey, TValue>
@@ -272,7 +275,8 @@ internal static class TypeAnalyzer
                     null,
                     null,
                     requiresPattern,
-                    nestedTypeSymbol);
+                    nestedTypeSymbol,
+                    elementType as INamedTypeSymbol);
             }
         }
 
@@ -291,7 +295,8 @@ internal static class TypeAnalyzer
                     null,
                     null,
                     false,
-                    nestedType);
+                    nestedType,
+                    namedTypeNoArgs);
             }
         }
 
@@ -326,11 +331,39 @@ internal static class TypeAnalyzer
             return (false, null);
         }
 
+        // Check if THIS type directly has [AutoPattern]
         var hasAttribute = namedType.GetAttributes()
             .Any(a => a.AttributeClass?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
                 .Contains(AutoPatternAttributeName) ?? false);
 
-        return (hasAttribute, hasAttribute ? namedType : null);
+        if (hasAttribute)
+        {
+            return (true, namedType);
+        }
+
+        // Check if this type is a VARIANT of a union with [AutoPattern]
+        var containingType = namedType.ContainingType;
+        if (containingType != null && containingType.IsRecord)
+        {
+            // Check if containing type has [Union] attribute (from Dunet)
+            var hasUnionAttribute = containingType.GetAttributes()
+                .Any(a => a.AttributeClass?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                    .Contains(UnionAttributeName) ?? false);
+
+            // Check if containing type has [AutoPattern] attribute
+            var hasContainingAutoPattern = containingType.GetAttributes()
+                .Any(a => a.AttributeClass?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                    .Contains(AutoPatternAttributeName) ?? false);
+
+            if (hasUnionAttribute && hasContainingAutoPattern)
+            {
+                // This is a union variant - return the CONTAINING type (the union)
+                // This allows us to construct the pattern type as JobPattern.Employed
+                return (true, containingType);
+            }
+        }
+
+        return (false, null);
     }
 
     private static bool IsUnionType(INamedTypeSymbol typeSymbol)

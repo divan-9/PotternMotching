@@ -12,7 +12,8 @@ public sealed class PropertyAnalysisResult
         string? keyType = null,
         string? valueType = null,
         bool requiresNestedPattern = false,
-        INamedTypeSymbol? nestedType = null)
+        INamedTypeSymbol? nestedType = null,
+        ITypeSymbol? propertyTypeSymbol = null)
     {
         PropertyName = propertyName;
         PropertyType = propertyType;
@@ -22,6 +23,7 @@ public sealed class PropertyAnalysisResult
         ValueType = valueType;
         RequiresNestedPattern = requiresNestedPattern;
         NestedType = nestedType;
+        PropertyTypeSymbol = propertyTypeSymbol;
     }
 
     public string PropertyName { get; }
@@ -32,4 +34,5 @@ public sealed class PropertyAnalysisResult
     public string? ValueType { get; }
     public bool RequiresNestedPattern { get; }
     public INamedTypeSymbol? NestedType { get; }
+    public ITypeSymbol? PropertyTypeSymbol { get; }
 }
