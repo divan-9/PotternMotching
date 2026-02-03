@@ -6,17 +6,17 @@ using System.Runtime.CompilerServices;
 public readonly struct SequencePatternDefault<T, TDefaultItemMatcher> : IPattern<IEnumerable<T>>
     where TDefaultItemMatcher : IPattern<T>
 {
-    private readonly IPattern<IEnumerable<T>> innerMatcher;
+    private readonly IPattern<IEnumerable<T>> innerPattern;
 
     public SequencePatternDefault()
     {
-        this.innerMatcher = new EmptyPattern<IEnumerable<T>>();
+        this.innerPattern = new EmptyPattern<IEnumerable<T>>();
     }
 
     public SequencePatternDefault(
-        IPattern<IEnumerable<T>> matcher)
+        IPattern<IEnumerable<T>> innerPattern)
     {
-        this.innerMatcher = matcher;
+        this.innerPattern = innerPattern;
     }
 
     public static IPattern<IEnumerable<T>> From(
@@ -32,12 +32,18 @@ public readonly struct SequencePatternDefault<T, TDefaultItemMatcher> : IPattern
         IEnumerable<T> value,
         string path = "")
     {
-        return this.innerMatcher.Evaluate(value, path);
+        return this.innerPattern.Evaluate(value, path);
     }
 
     public IEnumerator<TDefaultItemMatcher> GetEnumerator()
     {
         throw new NotImplementedException();
+    }
+
+    public static implicit operator SequencePatternDefault<T, TDefaultItemMatcher>(
+        CollectionPattern<T> pattern)
+    {
+        return new(pattern);
     }
 }
 

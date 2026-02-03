@@ -45,14 +45,11 @@ var pattern = new PersonPattern(
     Address: new AddressPattern(City: "Wonderland"),
     Job: new JobPattern.Employed(
         Company: "Tech Corp"),
-    Nicknames: [
-        "Ally",
-        "Lice"
-    ],
-    Addresses: [
-        new AddressPattern(City: "Wonderland"),
+    Nicknames: CollectionPattern.AnyElement("Ally"),
+    Addresses: CollectionPattern.AnyOrder([
         new Address(City: "Looking Glass", Zip: "67890"),  // Value type - implicitly converted!
-    ]);
+        new Address(City: "Wonderland", Zip: "12345")      // Value type - implicitly converted!,
+    ]));
 
 // Or convert entire Person objects to patterns using implicit conversion
 PersonPattern pattern2 = result;

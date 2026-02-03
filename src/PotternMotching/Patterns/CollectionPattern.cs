@@ -25,7 +25,9 @@ public partial record CollectionPattern<T> : IPattern<IEnumerable<T>>
     }
 
     public partial record AnyElement(
-        IPattern<T> Pattern);
+        IPattern<T> Pattern)
+    {
+    };
 
     public partial record Sequence(
         IPattern<T>[] Patterns);

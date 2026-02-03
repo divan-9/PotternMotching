@@ -163,11 +163,11 @@ internal static class PatternCodeGenerator
                 $"PatternDefault<{property.PropertyType}, {GetMatcherTypeForProperty(property)}>",
 
             PatternWrapperKind.Set =>
-                // Use SequencePatternDefault for sets too
-                $"SequencePatternDefault<{property.ElementType}, {GetDefaultItemMatcherType(property)}>",
+                // Use SetPatternDefault for unordered collections (HashSet, ISet)
+                $"SetPatternDefault<{property.ElementType}, {GetDefaultItemMatcherType(property)}>",
 
             PatternWrapperKind.Sequence =>
-                // Use SequencePatternDefault for type-safe collection literal syntax
+                // Use SequencePatternDefault for ordered collections (arrays, lists)
                 $"SequencePatternDefault<{property.ElementType}, {GetDefaultItemMatcherType(property)}>",
 
             PatternWrapperKind.Dictionary =>
@@ -331,8 +331,13 @@ internal static class PatternCodeGenerator
     {
         var itemMatcherType = GetDefaultItemMatcherType(property);
 
+        // Use the appropriate collection pattern type based on wrapper kind
+        var patternType = property.WrapperKind == PatternWrapperKind.Set
+            ? "SetPatternDefault"
+            : "SequencePatternDefault";
+
         // Wrap the From result in a constructor to get the right type
-        return $"new SequencePatternDefault<{property.ElementType}, {itemMatcherType}>(SequencePatternDefault<{property.ElementType}, {itemMatcherType}>.From(value.{propertyName}))";
+        return $"new {patternType}<{property.ElementType}, {itemMatcherType}>({patternType}<{property.ElementType}, {itemMatcherType}>.From(value.{propertyName}))";
     }
 
     private static void GenerateVariantImplicitConversion(
