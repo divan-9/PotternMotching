@@ -7,6 +7,10 @@ var result = new Person(
     Name: "Alice",
     Age: 30,
     Nicknames: ["Ally", "Lice"],
+    Address: new Address(
+        City: "Wonderland",
+        Zip: "12345"
+    ),
     Job: new Job.Employed(
         Company: "Tech Corp",
         Position: "Developer"
@@ -23,27 +27,42 @@ var result = new Person(
     ]
 );
 
+// Demonstrate implicit conversion: can use Address values directly in collection literals
+DefaultCollectionMatcher<Address, AddressPattern> addressMatcher = [
+    new AddressPattern(City: "Wonderland"),          // Pattern type
+    new Address(City: "Wonderland", Zip: "12345"),   // Value type - implicitly converted!
+];
+
+DefaultMatcher<Job, JobPattern> testMatcher = new JobPattern.Employed(
+    Company: "Tech Corp",
+    Position: "Developer"
+);
+
+// Can create patterns manually
 var pattern = new PersonPattern(
     Name: "Alice",
     Age: 30,
+    Address: new AddressPattern(City: "Wonderland"),
     Job: new JobPattern.Employed(
         Company: "Tech Corp"),
-    Nicknames: CollectionMatcher.AnyOrder([
+    Nicknames: [
         "Ally",
         "Lice"
-    ]),
-    Addresses: CollectionMatcher.Sequence([
-        new AddressPattern(
-            City: "Wonderland"),
-        new AddressPattern(
-            City: "Looking Glass",
-            Zip: "67890"),
-    ]));
+    ],
+    Addresses: [
+        new AddressPattern(City: "Wonderland"),
+        new Address(City: "Looking Glass", Zip: "67890"),  // Value type - implicitly converted!
+    ]);
 
+// Or convert entire Person objects to patterns using implicit conversion
+PersonPattern pattern2 = result;
+
+[AutoPattern]
 public record Person(
     string? Name,
     int Age,
     Job Job,
+    Address Address,
     HashSet<string> Nicknames,
     Address[] Addresses
 );
@@ -55,49 +74,9 @@ public record Address(
 );
 
 [Union]
+[AutoPattern]
 public partial record Job
 {
     public partial record Employed(string Company, string Position);
     public partial record Unemployed;
-}
-
-public abstract record JobPattern : IMatcher<Job>
-{
-    public MatchResult Evaluate(
-        Job value,
-        string path = "")
-    {
-        throw new NotImplementedException();
-    }
-
-    public static implicit operator DefaultMatcher<Job>(
-        JobPattern matcher)
-    {
-        return new DefaultMatcher<Job>(matcher);
-    }
-
-    public record Employed(
-        DefaultMatcher<string> Company = default,
-        DefaultMatcher<string> Position = default) : JobPattern;
-
-    public record Unemployed() : JobPattern;
-};
-
-public record PersonPattern(
-    DefaultMatcher<string?> Name = default,
-    DefaultMatcher<int> Age = default,
-    DefaultMatcher<Job> Job = default,
-    DefaultMatcher<IEnumerable<string>> Nicknames = default,
-    DefaultMatcher<IEnumerable<Address>> Addresses = default);
-
-public record AddressPattern(
-    DefaultMatcher<string> City = default,
-    DefaultMatcher<string> Zip = default) : IMatcher<Address>
-{
-    public MatchResult Evaluate(
-        Address value,
-        string path = "")
-    {
-
-    }
 }

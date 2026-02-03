@@ -59,42 +59,6 @@ internal static class CollectionMatcherExtensions
         IEnumerable<T> value,
         string path)
     {
-        var index = 0;
-
-        using var valueEnumerator = value.GetEnumerator();
-        using var patternEnumerator = ((IEnumerable<IMatcher<T>>)sequence.Patterns).GetEnumerator();
-
-        while (true)
-        {
-            var hasValue = valueEnumerator.MoveNext();
-            var hasPattern = patternEnumerator.MoveNext();
-
-            if (!hasValue && !hasPattern)
-            {
-                return new MatchResult.Success();
-            }
-
-            if (!hasValue)
-            {
-                return new MatchResult.Failure([
-                    $"{path}: [CollectionMatcher.Sequence] Expected sequence of length at least {index + 1}, got {index}"
-                ]);
-            }
-
-            if (!hasPattern)
-            {
-                return new MatchResult.Failure([
-                    $"{path}: [CollectionMatcher.Sequence] Expected sequence of length {sequence.Patterns.Length}, got more than {index}"
-                ]);
-            }
-
-            var result = patternEnumerator.Current.Evaluate(valueEnumerator.Current, $"{path}[{index}]");
-            if (result is MatchResult.Failure)
-            {
-                return result;
-            }
-
-            index++;
-        }
+        throw new NotImplementedException();
     }
 }

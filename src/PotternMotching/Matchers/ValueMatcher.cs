@@ -21,6 +21,12 @@ public partial record ValueMatcher<T> : IMatcher<T>
         return this.Match(exact => exact.EvaluateExact(value, path));
     }
 
+    public static IMatcher<T> From(
+        T value)
+    {
+        return new Exact(value);
+    }
+
     /// <summary>
     /// Matches a value using exact equality comparison.
     /// </summary>
@@ -31,10 +37,10 @@ public partial record ValueMatcher<T> : IMatcher<T>
     public partial record Exact(
         T Value) : IMatcher<T>;
 
-    public static implicit operator DefaultMatcher<T>(
+    public static implicit operator DefaultMatcher<T, Exact>(
         ValueMatcher<T> matcher)
     {
-        return new DefaultMatcher<T>(matcher);
+        return new DefaultMatcher<T, Exact>(matcher);
     }
 }
 

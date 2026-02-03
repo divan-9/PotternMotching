@@ -110,12 +110,12 @@ var result = pattern.Evaluate(company);  // Success
 
 The source generator automatically maps types to appropriate matchers:
 
-| Your Type | Generated Pattern |
-|-----------|------------------|
-| `int`, `string`, primitives | `ValuePattern<T>` |
-| `T[]`, `List<T>`, `IEnumerable<T>` | `SequencePattern<T, P>` |
-| `HashSet<T>`, `ISet<T>` | `SetPattern<T>` |
-| `Dictionary<K,V>`, `IDictionary<K,V>` | `DictionaryPattern<K,V>` |
+| Your Type | Generated Pattern Property Type |
+|-----------|--------------------------------|
+| `int`, `string`, primitives | `DefaultMatcher<T>` |
+| `T[]`, `List<T>`, `IEnumerable<T>` | `DefaultCollectionMatcher<T, DefaultMatcher<T>>` or `DefaultCollectionMatcher<T, PatternType>` |
+| `HashSet<T>`, `ISet<T>` | `DefaultCollectionMatcher<T, DefaultMatcher<T>>` or `DefaultCollectionMatcher<T, PatternType>` |
+| `Dictionary<K,V>`, `IDictionary<K,V>` | `DefaultMatcher<IDictionary<K,V>>` |
 | Nested `[AutoPattern]` records | `RecordNamePattern?` |
 
 ## Matcher Types

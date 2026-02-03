@@ -6,6 +6,13 @@ using Dunet;
 [Union]
 public partial record CollectionMatcher<T> : IMatcher<IEnumerable<T>>
 {
+    public static IMatcher<IEnumerable<T>> From(
+        IEnumerable<T> value)
+    {
+        return CollectionMatcher.Sequence(
+            [.. value.Select(v => new ValueMatcher<T>.Exact(v))]);
+    }
+
     /// <inheritdoc/>
     public MatchResult Evaluate(
         IEnumerable<T> value,
@@ -13,8 +20,8 @@ public partial record CollectionMatcher<T> : IMatcher<IEnumerable<T>>
     {
         return this.Match(
             anyElement => anyElement.EvaluateAnyElement(value, path),
-            anyOrder => anyOrder.EvaluateAnyOrder(value, path),
-            sequence => sequence.EvaluateSequence(value, path));
+            sequence => sequence.EvaluateSequence(value, path),
+            anyOrder => anyOrder.EvaluateAnyOrder(value, path));
     }
 
     public partial record AnyElement(
@@ -25,12 +32,6 @@ public partial record CollectionMatcher<T> : IMatcher<IEnumerable<T>>
 
     public partial record AnyOrder(
         IMatcher<T>[] Patterns);
-
-    public static implicit operator DefaultMatcher<IEnumerable<T>>(
-        CollectionMatcher<T> matcher)
-    {
-        return new DefaultMatcher<IEnumerable<T>>(matcher);
-    }
 }
 
 public static class CollectionMatcher
@@ -49,13 +50,13 @@ public static class CollectionMatcher
     }
 
     [OverloadResolutionPriority(1)]
-    public static CollectionMatcher<T>.Sequence AnyOrder<T>(
+    public static CollectionMatcher<T>.AnyOrder AnyOrder<T>(
         IMatcher<T>[] example)
     {
         return new CollectionMatcher<T>.AnyOrder(example);
     }
 
-    public static CollectionMatcher<T>.Sequence AnyOrder<T>(
+    public static CollectionMatcher<T>.AnyOrder AnyOrder<T>(
         T[] example)
     {
         return new CollectionMatcher<T>.AnyOrder([.. example.Select(ValueMatcher.Exact)]);

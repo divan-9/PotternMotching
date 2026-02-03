@@ -210,22 +210,34 @@ internal static class TypeAnalyzer
             if (typeFullName == "System.Collections.Generic.HashSet<T>")
             {
                 var elementType = namedType.TypeArguments[0];
+                var (requiresPattern, nestedTypeSymbol) = CheckForNestedPattern(elementType, compilation);
+
                 return new PropertyAnalysisResult(
                     parameter.Name,
                     propertyTypeString,
                     PatternWrapperKind.Set,
-                    elementType.ToDisplayString(FullyQualifiedFormatWithNullability));
+                    elementType.ToDisplayString(FullyQualifiedFormatWithNullability),
+                    null,
+                    null,
+                    requiresPattern,
+                    nestedTypeSymbol);
             }
 
             // Check for ISet<T>
             if (ImplementsInterface(namedType, "System.Collections.Generic.ISet`1"))
             {
                 var elementType = namedType.TypeArguments[0];
+                var (requiresPattern, nestedTypeSymbol) = CheckForNestedPattern(elementType, compilation);
+
                 return new PropertyAnalysisResult(
                     parameter.Name,
                     propertyTypeString,
                     PatternWrapperKind.Set,
-                    elementType.ToDisplayString(FullyQualifiedFormatWithNullability));
+                    elementType.ToDisplayString(FullyQualifiedFormatWithNullability),
+                    null,
+                    null,
+                    requiresPattern,
+                    nestedTypeSymbol);
             }
 
             // Check for IDictionary<TKey, TValue> or Dictionary<TKey, TValue>
