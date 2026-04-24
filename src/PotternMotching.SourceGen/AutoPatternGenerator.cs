@@ -1,3 +1,4 @@
+#pragma warning disable
 namespace PotternMotching.SourceGen;
 
 using System.Collections.Immutable;
@@ -12,19 +13,38 @@ public class AutoPatternGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // Create syntax provider to find candidate types
-        var typeDeclarations = context.SyntaxProvider
+        var byAttribute = context.SyntaxProvider
             .CreateSyntaxProvider(
                 predicate: static (node, _) => IsCandidateClass(node),
-                transform: static (ctx, _) => GetSemanticTargetForGeneration(ctx))
+                transform: static (ctx, _) => GetTargetsByAttribute(ctx))
             .Where(static type => type is not null);
 
-        // Combine with compilation
-        var compilationAndTypes = context.CompilationProvider.Combine(typeDeclarations.Collect());
+        var byAssert = context.SyntaxProvider
+            .CreateSyntaxProvider(
+                predicate: static (node, _) => IsAssertInvocation(node),
+                transform: static (ctx, _) => GetTargetsByAssert(ctx))
+            .Where(static symbol => symbol is not null);
 
-        // Generate source
-        context.RegisterSourceOutput(compilationAndTypes,
-            static (spc, source) => Execute(source.Left, source.Right!, spc));
+        var compilationAndSymbols = context.CompilationProvider
+            .Combine(byAttribute.Collect())
+            .Combine(byAssert.Collect());
+
+        context.RegisterSourceOutput(compilationAndSymbols, (spc, source) =>
+        {
+            var compilation = source.Left.Left;
+            var attributedSymbols = source.Left.Right;
+            var assertSymbols = source.Right;
+
+            var all = attributedSymbols
+                .Concat(assertSymbols)
+                .Where(s => s is not null)
+                .Distinct(SymbolEqualityComparer.Default)
+                .Cast<INamedTypeSymbol>()
+                .ToImmutableArray();
+
+            Execute(compilation, all, spc);
+        });
+
     }
 
     private static bool IsCandidateClass(SyntaxNode node)
@@ -34,66 +54,120 @@ public class AutoPatternGenerator : IIncrementalGenerator
                typeDecl.AttributeLists.Count > 0;
     }
 
-    private static TypeDeclarationSyntax? GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
+    private static bool IsAssertInvocation(SyntaxNode node)
+    {
+        return node is InvocationExpressionSyntax invocation &&
+               invocation.Expression is MemberAccessExpressionSyntax memberAccess &&
+               memberAccess.Name.Identifier.Text == "Assert";
+    }
+
+    private static INamedTypeSymbol? GetTargetsByAssert(
+        GeneratorSyntaxContext context)
+    {
+        if (context.Node is not InvocationExpressionSyntax invocation)
+        {
+            return null;
+        }
+
+        if (invocation.Expression is not MemberAccessExpressionSyntax memberAccess ||
+            memberAccess.Name.Identifier.Text != "Assert") 
+        {
+            return null;
+        }
+
+        var firstArgument = invocation.ArgumentList.Arguments.FirstOrDefault();
+        if (firstArgument == null)
+        {
+            return null;
+        }
+
+        var typeInfo = context.SemanticModel.GetTypeInfo(
+            firstArgument.Expression);
+
+        // использовать именно convertedType посоветовала нейронка с аргументом,
+        // что это более надежно в сложных выражениях - требует уточнения
+        var symbol = typeInfo.ConvertedType as INamedTypeSymbol;
+
+        if (symbol == null ||
+            symbol.TypeKind == TypeKind.Error ||
+            symbol.SpecialType != SpecialType.None ||
+            symbol.Name.EndsWith("Pattern"))
+        {
+            return null;
+        }
+
+        return symbol;
+    }
+
+    private static INamedTypeSymbol? GetTargetsByAttribute(
+        GeneratorSyntaxContext context)
     {
         var typeDeclaration = (TypeDeclarationSyntax)context.Node;
 
-        // Check if it has the AutoPattern attribute using semantic model
-        foreach (var attributeList in typeDeclaration.AttributeLists)
+        var hasAttribute = typeDeclaration.AttributeLists
+            .SelectMany(list => list.Attributes)
+            .Any(attr => attr.Name.ToString().EndsWith("AutoPattern"));
+
+        if (!hasAttribute) 
         {
-            foreach (var attribute in attributeList.Attributes)
-            {
-                var symbolInfo = context.SemanticModel.GetSymbolInfo(attribute);
-                if (symbolInfo.Symbol is not IMethodSymbol attributeSymbol)
-                    continue;
-
-                var attributeClass = attributeSymbol.ContainingType;
-                var fullName = attributeClass.ToDisplayString();
-
-                if (fullName == "PotternMotching.AutoPatternAttribute")
-                {
-                    return typeDeclaration;
-                }
-            }
+            return null;
         }
 
-        return null;
+        return context.SemanticModel.GetDeclaredSymbol(typeDeclaration)
+            as INamedTypeSymbol;
     }
 
     private static void Execute(
         Compilation compilation,
-        ImmutableArray<TypeDeclarationSyntax> types,
+        ImmutableArray<INamedTypeSymbol> symbols,
         SourceProductionContext context)
     {
-        if (types.IsDefaultOrEmpty)
-            return;
-
-        foreach (var typeDeclaration in types.Distinct())
+        foreach (var typeSymbol in symbols)
         {
-            // Get the semantic model for this syntax tree
-            var semanticModel = compilation.GetSemanticModel(typeDeclaration.SyntaxTree);
-
-            // Get the type symbol
-            if (semanticModel.GetDeclaredSymbol(typeDeclaration) is not INamedTypeSymbol typeSymbol)
-                continue;
-
-            // Analyze the type
             var analysis = TypeAnalyzer.Analyze(typeSymbol, compilation);
-
-            // Report diagnostics
-            foreach (var diagnostic in analysis.Diagnostics)
+            if (!analysis.IsValid)
             {
-                context.ReportDiagnostic(diagnostic);
+                continue;
             }
 
-            // Generate code if valid
-            if (analysis.IsValid)
-            {
-                var sourceCode = PatternCodeGenerator.Generate(analysis);
-                var fileName = $"{typeSymbol.Name}Pattern.g.cs";
+            var sourceCode = PatternCodeGenerator.Generate(analysis);
+            context.AddSource($"{typeSymbol.Name}Pattern.g.cs", sourceCode);
 
-                context.AddSource(fileName, SourceText.From(sourceCode, Encoding.UTF8));
-            }
+            var extensionCode = GenerateAssertExtension(typeSymbol, compilation.Assembly);
+            context.AddSource($"{typeSymbol.Name}AssertExtension.g.cs", extensionCode);
         }
+    }
+
+    private static string GenerateAssertExtension(
+        INamedTypeSymbol typeSymbol,
+        IAssemblySymbol currentAssembly)
+    {
+        var typeName = typeSymbol.Name;
+        var fullTypeName = typeSymbol.ToDisplayString(
+            SymbolDisplayFormat.FullyQualifiedFormat);
+        var patternName = $"{typeName}Pattern";
+        
+        var ns = typeSymbol.ContainingNamespace.IsGlobalNamespace 
+                ? "GlobalExtensions" 
+                : typeSymbol.ContainingNamespace.ToDisplayString();
+
+        return $@"// <auto-generated />
+using System;
+
+namespace {ns}
+{{
+    public static partial class {typeName}AssertExtensions
+    {{
+        public static void Assert(
+            this {fullTypeName} target,
+            {fullTypeName} expected,
+            [global::System.Runtime.CompilerServices.CallerArgumentExpression(""target"")] string? path = null)
+        {{
+            // Создаем паттерн (он сгенерирован в этой же сборке тестов)
+            var pattern = {patternName}.Create(expected);
+            global::PotternMotching.Ossertions.Assert(target, pattern, path);
+        }}
+    }}
+}}";
     }
 }
