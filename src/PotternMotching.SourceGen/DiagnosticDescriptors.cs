@@ -54,6 +54,38 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
+    public static readonly DiagnosticDescriptor ExternalTargetCouldNotBeResolved = new(
+        id: "PM0007",
+        title: "External target type could not be resolved",
+        messageFormat: "Could not resolve target type for [AutoPatternFor] on '{0}'",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor ExternalTargetMustBeClassOrRecord = new(
+        id: "PM0008",
+        title: "External target type must be a class or record",
+        messageFormat: "Target type '{0}' must be a class or record to use [AutoPatternFor]",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor GeneratedPatternNameCollision = new(
+        id: "PM0009",
+        title: "Generated pattern name collision",
+        messageFormat: "Generated pattern type '{0}' conflicts with another auto-generated pattern",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor UnsupportedExternalTarget = new(
+        id: "PM0010",
+        title: "Unsupported external target type",
+        messageFormat: "Target type '{0}' is not supported by [AutoPatternFor]",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     public static readonly DiagnosticDescriptor DebugPropertyType = new(
         id: "PM9999",
         title: "Debug: Property type detected",

@@ -1,6 +1,6 @@
 # PotternMotching
 
-A fluent pattern matching library for .NET that provides powerful patterns for values, collections, and dictionaries with automatic pattern generation from records.
+A fluent pattern matching library for .NET that provides powerful patterns for values, collections, and dictionaries with automatic pattern generation from records and external types.
 
 [![NuGet](https://img.shields.io/nuget/v/PotternMotching.svg)](https://www.nuget.org/packages/PotternMotching/)
 [![Build](https://github.com/divan-9/PotternMotching/actions/workflows/build.yml/badge.svg)](https://github.com/divan-9/PotternMotching/actions/workflows/build.yml)
@@ -124,6 +124,51 @@ var company = new Company(
 var result = pattern.Evaluate(company);  // Success
 ```
 
+### External Types
+
+You can also generate patterns for types you do **not** own.
+
+```csharp
+// In another assembly
+namespace Shared.Contracts;
+
+public class ExternalUserDto
+{
+    public string Id { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
+    public string[] Roles { get; init; } = [];
+}
+```
+
+```csharp
+// In your test project or consumer project
+using PotternMotching;
+using Shared.Contracts;
+
+namespace MyProject.Tests.Patterns;
+
+[AutoPatternFor(typeof(ExternalUserDto))]
+internal static class ExternalPatterns;
+```
+
+This generates a top-level pattern type in the marker namespace:
+
+```csharp
+using MyProject.Tests.Patterns;
+
+var pattern = new ExternalUserDtoPattern(
+    Id: "42",
+    Roles: ["admin"]
+);
+```
+
+Notes:
+- `[AutoPatternFor]` supports external **records and classes**
+- for classes, all public instance properties with a public getter may be matched
+- the generated type name is always `{TypeName}Pattern`
+- the generated type is emitted into the **marker type namespace**
+- nested external types are matched as nested patterns only when a pattern is already known; otherwise they fall back to exact value matching
+
 ### Flexible Matching with Defaults
 
 Properties you don't specify match anything:
@@ -162,7 +207,7 @@ The source generator automatically maps types to appropriate pattern wrappers:
 | `T[]`, `List<T>`, `IEnumerable<T>` | `SequencePatternDefault<T, ...>` | Exact sequence (order + length) |
 | `HashSet<T>`, `ISet<T>` | `SetPatternDefault<T, ...>` | Subset (unordered, allows extras) |
 | `Dictionary<K,V>`, `IDictionary<K,V>` | `DictionaryPatternDefault<K,V, ...>` | Key-value pairs (allows extra keys) |
-| Nested `[AutoPattern]` records | `RecordNamePattern?` | Nested pattern matching |
+| Nested pattern-capable records (`[AutoPattern]` or `[AutoPatternFor]`) | `RecordNamePattern?` | Nested pattern matching |
 | Discriminated unions ([Dunet](https://github.com/domn1995/dunet)) | Variant-specific patterns | Variant-aware matching |
 
 ## Pattern Types Reference
