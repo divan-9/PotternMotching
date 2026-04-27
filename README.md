@@ -124,6 +124,48 @@ var company = new Company(
 var result = pattern.Evaluate(company);  // Success
 ```
 
+### External Records
+
+You can also generate patterns for record types you do **not** own.
+
+```csharp
+// In another assembly
+namespace Shared.Contracts;
+
+public record ExternalUserDto(
+    string Id,
+    string Name,
+    string[] Roles);
+```
+
+```csharp
+// In your test project or consumer project
+using PotternMotching;
+using Shared.Contracts;
+
+namespace MyProject.Tests.Patterns;
+
+[AutoPatternFor(typeof(ExternalUserDto))]
+internal static class ExternalPatterns;
+```
+
+This generates a top-level pattern type in the marker namespace:
+
+```csharp
+using MyProject.Tests.Patterns;
+
+var pattern = new ExternalUserDtoPattern(
+    Id: "42",
+    Roles: ["admin"]
+);
+```
+
+Notes:
+- only **records** are supported by `[AutoPatternFor]`
+- the generated type name is always `{RecordName}Pattern`
+- the generated type is emitted into the **marker type namespace**
+- nested external records are matched as nested patterns only when a pattern is already known; otherwise they fall back to exact value matching
+
 ### Flexible Matching with Defaults
 
 Properties you don't specify match anything:
@@ -162,7 +204,7 @@ The source generator automatically maps types to appropriate pattern wrappers:
 | `T[]`, `List<T>`, `IEnumerable<T>` | `SequencePatternDefault<T, ...>` | Exact sequence (order + length) |
 | `HashSet<T>`, `ISet<T>` | `SetPatternDefault<T, ...>` | Subset (unordered, allows extras) |
 | `Dictionary<K,V>`, `IDictionary<K,V>` | `DictionaryPatternDefault<K,V, ...>` | Key-value pairs (allows extra keys) |
-| Nested `[AutoPattern]` records | `RecordNamePattern?` | Nested pattern matching |
+| Nested pattern-capable records (`[AutoPattern]` or `[AutoPatternFor]`) | `RecordNamePattern?` | Nested pattern matching |
 | Discriminated unions ([Dunet](https://github.com/domn1995/dunet)) | Variant-specific patterns | Variant-aware matching |
 
 ## Pattern Types Reference

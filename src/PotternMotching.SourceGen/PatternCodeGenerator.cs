@@ -8,18 +8,21 @@ using PotternMotching.SourceGen.Models;
 
 internal static class PatternCodeGenerator
 {
-    public static string Generate(TypeAnalysisResult analysis)
+    public static string Generate(
+        TypeAnalysisResult analysis,
+        string? generatedNamespace = null,
+        string? generatedPatternName = null)
     {
         if (analysis.IsUnion)
         {
-            return GenerateUnionPattern(analysis);
+            return GenerateUnionPattern(analysis, generatedNamespace, generatedPatternName);
         }
 
         var typeSymbol = analysis.TypeSymbol;
         var typeName = typeSymbol.Name;
-        var patternName = $"{typeName}Pattern";
-        var namespaceName = typeSymbol.ContainingNamespace.ToDisplayString();
-        var isGlobalNamespace = typeSymbol.ContainingNamespace.IsGlobalNamespace;
+        var patternName = generatedPatternName ?? $"{typeName}Pattern";
+        var namespaceName = generatedNamespace ?? typeSymbol.ContainingNamespace.ToDisplayString();
+        var isGlobalNamespace = string.IsNullOrEmpty(namespaceName);
 
         var sb = new StringBuilder();
 
@@ -128,7 +131,7 @@ internal static class PatternCodeGenerator
 
         // Add implicit conversion operator
         sb.AppendLine();
-        GenerateImplicitConversion(sb, typeSymbol, analysis.Properties);
+        GenerateImplicitConversion(sb, typeSymbol, patternName, analysis.Properties);
 
         sb.AppendLine("}");
 
@@ -138,23 +141,18 @@ internal static class PatternCodeGenerator
     private static string GetDefaultItemMatcherType(PropertyAnalysisResult property)
     {
         // If the element type requires a nested pattern, use the pattern type
-        if (property.RequiresNestedPattern && property.NestedType != null)
+        if (property.RequiresNestedPattern && property.NestedType != null && property.NestedPatternType != null)
         {
             // Check if element is a union variant
             if (property.PropertyTypeSymbol is INamedTypeSymbol propertyTypeSymbol &&
                 propertyTypeSymbol.ContainingType != null &&
                 SymbolEqualityComparer.Default.Equals(propertyTypeSymbol.ContainingType, property.NestedType))
             {
-                // Union variant element
-                var unionFullName = property.NestedType.ToDisplayString(
-                    SymbolDisplayFormat.FullyQualifiedFormat);
                 var variantName = propertyTypeSymbol.Name;
-                return $"{unionFullName}Pattern.{variantName}";
+                return $"{property.NestedPatternType}.{variantName}";
             }
 
-            var nestedFullName = property.NestedType.ToDisplayString(
-                SymbolDisplayFormat.FullyQualifiedFormat);
-            return $"{nestedFullName}Pattern";
+            return property.NestedPatternType;
         }
 
         // For primitive elements, wrap in PatternDefault with ValuePattern
@@ -167,23 +165,18 @@ internal static class PatternCodeGenerator
         // This is the pattern type for the VALUE in Dictionary<K, V>
 
         // Check if value type is a nested pattern type
-        if (property.RequiresNestedPattern && property.NestedType != null)
+        if (property.RequiresNestedPattern && property.NestedType != null && property.NestedPatternType != null)
         {
             // Check if value is a union variant
             if (property.PropertyTypeSymbol is INamedTypeSymbol propertyTypeSymbol &&
                 propertyTypeSymbol.ContainingType != null &&
                 SymbolEqualityComparer.Default.Equals(propertyTypeSymbol.ContainingType, property.NestedType))
             {
-                // Union variant value
-                var unionFullName = property.NestedType.ToDisplayString(
-                    SymbolDisplayFormat.FullyQualifiedFormat);
                 var variantName = propertyTypeSymbol.Name;
-                return $"{unionFullName}Pattern.{variantName}";
+                return $"{property.NestedPatternType}.{variantName}";
             }
 
-            var nestedFullName = property.NestedType.ToDisplayString(
-                SymbolDisplayFormat.FullyQualifiedFormat);
-            return $"{nestedFullName}Pattern";
+            return property.NestedPatternType;
         }
 
         // For primitive value types, use ValuePattern
@@ -192,12 +185,10 @@ internal static class PatternCodeGenerator
 
     private static string GetMatcherTypeForProperty(PropertyAnalysisResult property)
     {
-        // For nested types with [AutoPattern], the pattern IS the matcher
-        if (property.RequiresNestedPattern && property.NestedType != null)
+        // For nested types with a known generated pattern, the pattern IS the matcher
+        if (property.RequiresNestedPattern && property.NestedPatternType != null)
         {
-            var nestedFullName = property.NestedType.ToDisplayString(
-                SymbolDisplayFormat.FullyQualifiedFormat);
-            return $"{nestedFullName}Pattern";
+            return property.NestedPatternType;
         }
 
         // For primitive/value types, use ValuePattern
@@ -226,7 +217,7 @@ internal static class PatternCodeGenerator
             PatternWrapperKind.Nested =>
                 // Wrap nested patterns in PatternDefault for consistency and null matching support
                 // For nested types, the pattern type IS the matcher
-                $"PatternDefault<{property.PropertyType}, {property.NestedType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}Pattern>",
+                $"PatternDefault<{property.PropertyType}, {property.NestedPatternType!}>",
 
             _ => throw new InvalidOperationException($"Unknown wrapper kind: {property.WrapperKind}")
         };
@@ -300,10 +291,9 @@ internal static class PatternCodeGenerator
     private static void GenerateImplicitConversion(
         StringBuilder sb,
         INamedTypeSymbol typeSymbol,
+        string patternName,
         ImmutableArray<PropertyAnalysisResult> properties)
     {
-        var typeName = typeSymbol.Name;
-        var patternName = $"{typeName}Pattern";
         var typeFullName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
         sb.AppendLine($"    public static implicit operator {patternName}(");
@@ -470,13 +460,16 @@ internal static class PatternCodeGenerator
         sb.AppendLine("        }");
     }
 
-    private static string GenerateUnionPattern(TypeAnalysisResult analysis)
+    private static string GenerateUnionPattern(
+        TypeAnalysisResult analysis,
+        string? generatedNamespace = null,
+        string? generatedPatternName = null)
     {
         var typeSymbol = analysis.TypeSymbol;
         var typeName = typeSymbol.Name;
-        var patternName = $"{typeName}Pattern";
-        var namespaceName = typeSymbol.ContainingNamespace.ToDisplayString();
-        var isGlobalNamespace = typeSymbol.ContainingNamespace.IsGlobalNamespace;
+        var patternName = generatedPatternName ?? $"{typeName}Pattern";
+        var namespaceName = generatedNamespace ?? typeSymbol.ContainingNamespace.ToDisplayString();
+        var isGlobalNamespace = string.IsNullOrEmpty(namespaceName);
 
         var sb = new StringBuilder();
 

@@ -14,5 +14,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\PotternMotching\PotternMotching.csproj"/>
+    <ProjectReference Include="..\..\src\PotternMotching.SourceGen\PotternMotching.SourceGen.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\PotternMotching.TestExternalModels\PotternMotching.TestExternalModels.csproj"/>
   </ItemGroup>
 </Project>
