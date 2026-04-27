@@ -104,7 +104,7 @@ public class AutoPatternGenerator : IIncrementalGenerator
         {
             var analysis = request.IsOwnedType
                 ? TypeAnalyzer.Analyze(request.TargetSymbol, compilation, knownPatternTypes)
-                : TypeAnalyzer.AnalyzeExternalRecord(request.TargetSymbol, compilation, knownPatternTypes);
+                : TypeAnalyzer.AnalyzeExternalType(request.TargetSymbol, compilation, knownPatternTypes);
 
             foreach (var diagnostic in analysis.Diagnostics)
             {

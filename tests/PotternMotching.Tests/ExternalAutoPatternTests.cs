@@ -76,4 +76,49 @@ public class ExternalAutoPatternTests
 
         Assert.IsType<MatchResult.Success>(result);
     }
+
+    [Fact]
+    public void ExternalClass_PublicReadableProperties_AreGeneratedAndMatched()
+    {
+        var value = new ExternalClassDto
+        {
+            Id = "42",
+            Name = "Alice",
+            Roles = ["admin", "editor"],
+            Address = new ExternalAddress("Seattle", "98101"),
+            Hidden = "secret",
+        };
+
+        var pattern = new ExternalClassDtoPattern(
+            Id: "42",
+            Name: "Alice",
+            RoleCount: 2,
+            Address: new ExternalAddressPattern(City: "Seattle"));
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void ExternalClass_ImplicitConversionToPattern_Works()
+    {
+        ExternalClassDtoPattern pattern = new ExternalClassDto
+        {
+            Id = "42",
+            Name = "Alice",
+            Roles = ["admin", "editor"],
+            Address = new ExternalAddress("Seattle", "98101"),
+        };
+
+        var result = pattern.Evaluate(new ExternalClassDto
+        {
+            Id = "42",
+            Name = "Alice",
+            Roles = ["admin", "editor"],
+            Address = new ExternalAddress("Seattle", "98101"),
+        });
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
 }

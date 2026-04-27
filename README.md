@@ -1,6 +1,6 @@
 # PotternMotching
 
-A fluent pattern matching library for .NET that provides powerful patterns for values, collections, and dictionaries with automatic pattern generation from records.
+A fluent pattern matching library for .NET that provides powerful patterns for values, collections, and dictionaries with automatic pattern generation from records and external types.
 
 [![NuGet](https://img.shields.io/nuget/v/PotternMotching.svg)](https://www.nuget.org/packages/PotternMotching/)
 [![Build](https://github.com/divan-9/PotternMotching/actions/workflows/build.yml/badge.svg)](https://github.com/divan-9/PotternMotching/actions/workflows/build.yml)
@@ -124,18 +124,20 @@ var company = new Company(
 var result = pattern.Evaluate(company);  // Success
 ```
 
-### External Records
+### External Types
 
-You can also generate patterns for record types you do **not** own.
+You can also generate patterns for types you do **not** own.
 
 ```csharp
 // In another assembly
 namespace Shared.Contracts;
 
-public record ExternalUserDto(
-    string Id,
-    string Name,
-    string[] Roles);
+public class ExternalUserDto
+{
+    public string Id { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
+    public string[] Roles { get; init; } = [];
+}
 ```
 
 ```csharp
@@ -161,10 +163,11 @@ var pattern = new ExternalUserDtoPattern(
 ```
 
 Notes:
-- only **records** are supported by `[AutoPatternFor]`
-- the generated type name is always `{RecordName}Pattern`
+- `[AutoPatternFor]` supports external **records and classes**
+- for classes, all public instance properties with a public getter may be matched
+- the generated type name is always `{TypeName}Pattern`
 - the generated type is emitted into the **marker type namespace**
-- nested external records are matched as nested patterns only when a pattern is already known; otherwise they fall back to exact value matching
+- nested external types are matched as nested patterns only when a pattern is already known; otherwise they fall back to exact value matching
 
 ### Flexible Matching with Defaults
 
