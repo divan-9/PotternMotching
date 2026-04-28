@@ -300,7 +300,7 @@ var result = pattern.Evaluate(company);
 
 ## Test Assertions
 
-Use the `Assert` extension method for concise test assertions with automatic expression capture:
+Use the `AssertPattern` extension method for concise pattern assertions with automatic expression capture:
 
 ```csharp
 using PotternMotching;
@@ -308,10 +308,16 @@ using PotternMotching;
 var person = new Person("Alice", 30);
 var pattern = new PersonPattern(Name: "Alice", Age: 30);
 
-person.Assert(pattern);  // Throws AssertionFailedException if no match
+person.AssertPattern(pattern);  // Throws AssertionFailedException if no match
 
 // On failure, automatically includes the variable name in the error:
 // FAILURE: person.Age: [ValuePattern.Exact] Expected 25, got 30
+```
+
+For exact value comparison without explicitly constructing a pattern, use `AssertExact`:
+
+```csharp
+person.AssertExact(new Person("Alice", 30));
 ```
 
 ## Advanced: Discriminated Unions

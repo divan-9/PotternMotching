@@ -4,7 +4,7 @@ namespace PotternMotching;
 /// The exception that is thrown when a pattern assertion fails.
 /// </summary>
 /// <remarks>
-/// This exception is thrown by the <see cref="Ossertions.Assert{T}(T, IPattern{T}, string?)"/> method when a value
+/// This exception is thrown by the <see cref="Ossertions.AssertPattern{T}(T, IPattern{T}, string?)"/> method when a value
 /// does not match the specified pattern. The exception message contains detailed information
 /// about why the pattern match failed.
 /// </remarks>

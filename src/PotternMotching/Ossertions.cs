@@ -38,13 +38,13 @@ public static class Ossertions
     /// var person = new Person("Alice", 30);
     /// var pattern = new PersonPattern(Name: "Alice", Age: 30);
     ///
-    /// person.Assert(pattern); // Passes
+    /// person.AssertPattern(pattern); // Passes
     ///
     /// var wrongPerson = new Person("Bob", 25);
-    /// wrongPerson.Assert(pattern); // Throws AssertionFailedException with details
+    /// wrongPerson.AssertPattern(pattern); // Throws AssertionFailedException with details
     /// </code>
     /// </example>
-    public static void Assert<T>(
+    public static void AssertPattern<T>(
         this T target,
         IPattern<T> pattern,
         [CallerArgumentExpression(nameof(target))] string? path = null)
@@ -76,22 +76,23 @@ public static class Ossertions
     /// Thrown when the target value does not exactly match the expected example value.
     /// </exception>
     /// <remarks>
-    /// This overload is a convenience wrapper over <see cref="ValuePattern.Exact{T}(T)"/>.
+    /// This is a convenience wrapper over <see cref="ValuePattern.Exact{T}(T)"/>.
     /// It is useful when you want an exact-value assertion without explicitly constructing a pattern.
     /// </remarks>
     /// <example>
     /// <code>
     /// var person = new Person("Alice", 30);
     ///
-    /// person.Assert(new Person("Alice", 30)); // Passes
-    /// person.Assert(new Person("Bob", 25));   // Throws AssertionFailedException
+    /// person.AssertExact(new Person("Alice", 30)); // Passes
+    /// person.AssertExact(new Person("Bob", 25));   // Throws AssertionFailedException
     /// </code>
     /// </example>
-    public static void Assert<T>(
+    public static void AssertExact<T>(
         this T target,
         T example,
         [CallerArgumentExpression(nameof(target))] string? path = null)
     {
-        target.Assert(ValuePattern.Exact(example), path);
+        target.AssertPattern(ValuePattern.Exact(example), path);
     }
 }
+
