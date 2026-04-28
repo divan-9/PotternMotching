@@ -11,7 +11,6 @@ using PotternMotching.SourceGen.Models;
 [Generator]
 public class AutoPatternGenerator : IIncrementalGenerator
 {
-    private const string AutoPatternAttributeName = "PotternMotching.AutoPatternAttribute";
     private const string AutoPatternForAttributeName = "PotternMotching.AutoPatternForAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -60,7 +59,7 @@ public class AutoPatternGenerator : IIncrementalGenerator
     private static bool IsRelevantAttribute(AttributeData attribute)
     {
         var fullName = attribute.AttributeClass?.ToDisplayString();
-        return fullName == AutoPatternAttributeName || fullName == AutoPatternForAttributeName;
+        return fullName == AutoPatternForAttributeName;
     }
 
     private static void Execute(
@@ -102,9 +101,7 @@ public class AutoPatternGenerator : IIncrementalGenerator
 
         foreach (var request in generationRequests)
         {
-            var analysis = request.IsOwnedType
-                ? TypeAnalyzer.Analyze(request.TargetSymbol, compilation, knownPatternTypes)
-                : TypeAnalyzer.AnalyzeExternalType(request.TargetSymbol, compilation, knownPatternTypes);
+            var analysis = TypeAnalyzer.AnalyzeTargetType(request.TargetSymbol, knownPatternTypes);
 
             foreach (var diagnostic in analysis.Diagnostics)
             {
@@ -133,16 +130,6 @@ public class AutoPatternGenerator : IIncrementalGenerator
         {
             var attributeName = attribute.AttributeClass?.ToDisplayString();
 
-            if (attributeName == AutoPatternAttributeName)
-            {
-                requests.Add(new GenerationRequest(
-                    sourceSymbol,
-                    sourceSymbol,
-                    GetNamespace(sourceSymbol.ContainingNamespace),
-                    $"{sourceSymbol.Name}Pattern",
-                    isOwnedType: true));
-            }
-
             if (attributeName != AutoPatternForAttributeName)
                 continue;
 
@@ -161,8 +148,7 @@ public class AutoPatternGenerator : IIncrementalGenerator
                 sourceSymbol,
                 targetSymbol,
                 GetNamespace(sourceSymbol.ContainingNamespace),
-                $"{targetSymbol.Name}Pattern",
-                isOwnedType: false));
+                $"{targetSymbol.Name}Pattern"));
         }
 
         return (requests.ToImmutable(), diagnostics.ToImmutable());

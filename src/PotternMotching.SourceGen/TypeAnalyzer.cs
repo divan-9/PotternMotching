@@ -8,7 +8,6 @@ using PotternMotching.SourceGen.Models;
 
 internal static class TypeAnalyzer
 {
-    private const string AutoPatternAttributeName = "PotternMotching.AutoPatternAttribute";
     private const string UnionAttributeName = "Dunet.UnionAttribute";
 
     // Custom format that includes nullable annotations
@@ -65,38 +64,8 @@ internal static class TypeAnalyzer
         return baseType;
     }
 
-    public static TypeAnalysisResult Analyze(
+    public static TypeAnalysisResult AnalyzeTargetType(
         INamedTypeSymbol typeSymbol,
-        Compilation compilation,
-        ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes = null)
-    {
-        var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
-
-        if (IsUnionType(typeSymbol))
-        {
-            return AnalyzeUnion(typeSymbol, diagnostics, knownPatternTypes);
-        }
-
-        if (!typeSymbol.IsRecord)
-        {
-            diagnostics.Add(Diagnostic.Create(
-                DiagnosticDescriptors.TypeMustBeRecord,
-                typeSymbol.Locations.FirstOrDefault(),
-                typeSymbol.Name));
-
-            return new TypeAnalysisResult(
-                typeSymbol,
-                false,
-                ImmutableArray<PropertyAnalysisResult>.Empty,
-                diagnostics.ToImmutable());
-        }
-
-        return AnalyzeOwnedRecordType(typeSymbol, diagnostics, knownPatternTypes);
-    }
-
-    public static TypeAnalysisResult AnalyzeExternalType(
-        INamedTypeSymbol typeSymbol,
-        Compilation compilation,
         ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes = null)
     {
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
@@ -131,13 +100,15 @@ internal static class TypeAnalyzer
 
         if (IsUnionType(typeSymbol))
         {
-            return AnalyzeExternalUnionType(typeSymbol, diagnostics, knownPatternTypes);
+            return AnalyzeUnionType(typeSymbol, diagnostics, knownPatternTypes);
         }
 
-        return AnalyzeExternalClassLikeType(typeSymbol, diagnostics, knownPatternTypes);
+        return typeSymbol.IsRecord
+            ? AnalyzeRecordType(typeSymbol, diagnostics, knownPatternTypes)
+            : AnalyzeClassLikeType(typeSymbol, diagnostics, knownPatternTypes);
     }
 
-    private static TypeAnalysisResult AnalyzeOwnedRecordType(
+    private static TypeAnalysisResult AnalyzeRecordType(
         INamedTypeSymbol typeSymbol,
         ImmutableArray<Diagnostic>.Builder diagnostics,
         ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes)
@@ -184,7 +155,7 @@ internal static class TypeAnalyzer
             diagnostics.ToImmutable());
     }
 
-    private static TypeAnalysisResult AnalyzeExternalClassLikeType(
+    private static TypeAnalysisResult AnalyzeClassLikeType(
         INamedTypeSymbol typeSymbol,
         ImmutableArray<Diagnostic>.Builder diagnostics,
         ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes)
@@ -204,7 +175,7 @@ internal static class TypeAnalyzer
             diagnostics.ToImmutable());
     }
 
-    private static TypeAnalysisResult AnalyzeExternalUnionType(
+    private static TypeAnalysisResult AnalyzeUnionType(
         INamedTypeSymbol typeSymbol,
         ImmutableArray<Diagnostic>.Builder diagnostics,
         ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes)
@@ -494,46 +465,22 @@ internal static class TypeAnalyzer
             return (true, namedType, knownPatternType);
         }
 
-        var hasAttribute = namedType.GetAttributes()
-            .Any(a => a.AttributeClass?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                .Contains(AutoPatternAttributeName) ?? false);
-
-        if (hasAttribute)
-        {
-            return (true, namedType, GetDefaultPatternTypeName(namedType));
-        }
-
         var containingType = namedType.ContainingType;
-        if (containingType != null && containingType.IsRecord)
+        if (containingType != null)
         {
             var hasUnionAttribute = containingType.GetAttributes()
                 .Any(a => a.AttributeClass?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
                     .Contains(UnionAttributeName) ?? false);
 
-            if (hasUnionAttribute)
+            if (hasUnionAttribute &&
+                knownPatternTypes != null &&
+                knownPatternTypes.TryGetValue(containingType, out var unionPatternType))
             {
-                if (knownPatternTypes != null && knownPatternTypes.TryGetValue(containingType, out var unionPatternType))
-                {
-                    return (true, containingType, unionPatternType);
-                }
-
-                var hasContainingAutoPattern = containingType.GetAttributes()
-                    .Any(a => a.AttributeClass?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Contains(AutoPatternAttributeName) ?? false);
-
-                if (hasContainingAutoPattern)
-                {
-                    return (true, containingType, GetDefaultPatternTypeName(containingType));
-                }
+                return (true, containingType, unionPatternType);
             }
         }
 
         return (false, null, null);
-    }
-
-    private static string GetDefaultPatternTypeName(INamedTypeSymbol typeSymbol)
-    {
-        return $"{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}Pattern";
     }
 
     private static bool IsUnionType(INamedTypeSymbol typeSymbol)
