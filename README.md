@@ -320,6 +320,22 @@ For exact value comparison without explicitly constructing a pattern, use `Asser
 person.AssertExact(new Person("Alice", 30));
 ```
 
+For subset assertions on collections, use `AssertSubset`:
+
+```csharp
+var tags = new[] { "important", "backend", "urgent" };
+
+tags.AssertSubset(["important", "urgent"]);
+```
+
+For exact sequence assertions on collections, use `AssertSequence`:
+
+```csharp
+var values = new[] { 1, 2, 3 };
+
+values.AssertSequence([1, 2, 3]);
+```
+
 ## Advanced: Discriminated Unions
 
 PotternMotching integrates with [Dunet](https://github.com/domn1995/dunet) for discriminated union support:

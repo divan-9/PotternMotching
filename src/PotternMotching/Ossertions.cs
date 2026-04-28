@@ -94,5 +94,122 @@ public static class Ossertions
     {
         target.AssertPattern(ValuePattern.Exact(example), path);
     }
-}
 
+    /// <summary>
+    /// Asserts that the target collection contains all items from the specified example collection.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The collection of expected items that must all be present in the target.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not contain all expected items.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.Subset{T}(T[])"/>.
+    /// It is useful when you want to assert subset membership without explicitly constructing a collection pattern.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var tags = new[] { "important", "backend", "urgent" };
+    ///
+    /// tags.AssertSubset(["important", "urgent"]); // Passes
+    /// tags.AssertSubset(["frontend"]);             // Throws AssertionFailedException
+    /// </code>
+    /// </example>
+    public static void AssertSubset<T>(
+        this IEnumerable<T> target,
+        IPattern<T>[] example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.Subset(example), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target collection contains all items from the specified example collection.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The collection of expected items that must all be present in the target.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not contain all expected items.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.Subset{T}(T[])"/>.
+    /// It is useful when you want to assert subset membership without explicitly constructing a collection pattern.
+    /// </remarks>
+    [OverloadResolutionPriority(1)]
+    public static void AssertSubset<T>(
+        this IEnumerable<T> target,
+        IEnumerable<T> example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.Subset([.. example]), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target collection exactly matches the specified example sequence.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The expected sequence of items.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not exactly match the expected sequence.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.Sequence{T}(T[])"/>.
+    /// It is useful when you want to assert an exact sequence without explicitly constructing a collection pattern.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var values = new[] { 1, 2, 3 };
+    ///
+    /// values.AssertSequence([1, 2, 3]); // Passes
+    /// values.AssertSequence([1, 3]);    // Throws AssertionFailedException
+    /// </code>
+    /// </example>
+    [OverloadResolutionPriority(1)]
+    public static void AssertSequence<T>(
+        this IEnumerable<T> target,
+        IPattern<T>[] example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.Sequence(example), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target collection exactly matches the specified example sequence.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The expected sequence of items.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not exactly match the expected sequence.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.Sequence{T}(T[])"/>.
+    /// It is useful when you want to assert an exact sequence without explicitly constructing a collection pattern.
+    /// </remarks>
+    public static void AssertSequence<T>(
+        this IEnumerable<T> target,
+        IEnumerable<T> example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.Sequence([.. example]), path);
+    }
+}
