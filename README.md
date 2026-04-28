@@ -78,23 +78,25 @@ exactPattern.Evaluate(new Dictionary<string, int>
 
 ## Automatic Pattern Generation
 
-Mark your records with `[AutoPattern]` to automatically generate pattern classes with smart defaults:
+Declare target types with `[AutoPatternFor(typeof(...))]` on a marker class to automatically generate pattern classes with smart defaults:
 
 ```csharp
 using PotternMotching;
 
-[AutoPattern]
 public record Person(string Name, int Age);
 
-[AutoPattern]
 public record Address(string City, string Zip);
 
-[AutoPattern]
 public record Company(
     string Name,
     Address HeadOffice,
     Address[] Branches,
     HashSet<string> Tags);
+
+[AutoPatternFor(typeof(Person))]
+[AutoPatternFor(typeof(Address))]
+[AutoPatternFor(typeof(Company))]
+internal static class PatternMarkers;
 ```
 
 The source generator creates pattern classes you can use immediately:
@@ -126,7 +128,7 @@ var result = pattern.Evaluate(company);  // Success
 
 ### External Types
 
-You can also generate patterns for types you do **not** own.
+The same attribute works for types you do **not** own.
 
 ```csharp
 // In another assembly
@@ -163,12 +165,12 @@ var pattern = new ExternalUserDtoPattern(
 ```
 
 Notes:
-- `[AutoPatternFor]` supports external **records**, **classes**, and external **Dunet unions**
+- `[AutoPatternFor]` supports **records**, **classes**, and **Dunet unions**
 - for classes, all public instance properties with a public getter may be matched
-- external Dunet union roots generate variant-aware patterns just like owned unions
+- Dunet union roots generate variant-aware patterns
 - the generated type name is always `{TypeName}Pattern`
 - the generated type is emitted into the **marker type namespace**
-- nested external types are matched as nested patterns only when a pattern is already known; otherwise they fall back to exact value matching
+- nested types are matched as nested patterns only when a pattern is already known; otherwise they fall back to exact value matching
 
 ### Flexible Matching with Defaults
 
@@ -208,7 +210,7 @@ The source generator automatically maps types to appropriate pattern wrappers:
 | `T[]`, `List<T>`, `IEnumerable<T>` | `SequencePatternDefault<T, ...>` | Exact sequence (order + length) |
 | `HashSet<T>`, `ISet<T>` | `SetPatternDefault<T, ...>` | Subset (unordered, allows extras) |
 | `Dictionary<K,V>`, `IDictionary<K,V>` | `DictionaryPatternDefault<K,V, ...>` | Key-value pairs (allows extra keys) |
-| Nested pattern-capable records (`[AutoPattern]` or `[AutoPatternFor]`) | `RecordNamePattern?` | Nested pattern matching |
+| Nested pattern-capable types targeted with `[AutoPatternFor]` | `RecordNamePattern?` | Nested pattern matching |
 | Discriminated unions ([Dunet](https://github.com/domn1995/dunet)) | Variant-specific patterns | Variant-aware matching |
 
 ## Pattern Types Reference
@@ -352,15 +354,17 @@ using Dunet;
 using PotternMotching;
 
 [Union]
-[AutoPattern]
 public partial record Job
 {
     public partial record Employed(string Company, string Position);
     public partial record Unemployed;
 }
 
-[AutoPattern]
 public record Person(string Name, Job Job);
+
+[AutoPatternFor(typeof(Job))]
+[AutoPatternFor(typeof(Person))]
+internal static class PatternMarkers;
 ```
 
 Generated patterns are variant-aware:

@@ -210,7 +210,6 @@ if (keywordResult3 is MatchResult.Failure fk3)
     // Should print: ".Content: Expected variant Object, got String"
 }
 
-[AutoPattern]
 public record Person(
     string? Name,
     int Age,
@@ -220,27 +219,23 @@ public record Person(
     Address[] Addresses
 );
 
-[AutoPattern]
 public record Address(
     string City,
     string Zip
 );
 
 [Union]
-[AutoPattern]
 public partial record Job
 {
     public partial record Employed(string Company, string Position);
     public partial record Unemployed;
 }
 
-[AutoPattern]
 public record JobApplication(
     string CompanyName,
     Job.Employed DesiredPosition
 );
 
-[AutoPattern]
 public record Company(
     string Name,
     List<Job.Employed> Employees
@@ -248,10 +243,17 @@ public record Company(
 
 // Test union with keyword variant names
 [Union]
-[AutoPattern]
 public partial record ImpressionContent
 {
     public partial record String(string Value);
     public partial record Composite();
     public partial record Object(string Id);
 }
+
+[AutoPatternFor(typeof(Person))]
+[AutoPatternFor(typeof(Address))]
+[AutoPatternFor(typeof(Job))]
+[AutoPatternFor(typeof(JobApplication))]
+[AutoPatternFor(typeof(Company))]
+[AutoPatternFor(typeof(ImpressionContent))]
+internal static class PatternMarkers;
