@@ -1,6 +1,7 @@
 namespace PotternMotching;
 
 using System.Runtime.CompilerServices;
+using PotternMotching.Patterns;
 
 /// <summary>
 /// Provides assertion methods for pattern matching in tests.
@@ -59,5 +60,38 @@ public static class Ossertions
                 var message = string.Join("\n", failure.Reasons.Select(x => $"\t\tFAILURE: {x}"));
                 throw new AssertionFailedException($"\n{message}");
             });
+    }
+
+    /// <summary>
+    /// Asserts that the target value exactly matches the specified example value.
+    /// </summary>
+    /// <typeparam name="T">The type of the value to compare.</typeparam>
+    /// <param name="target">The actual value being asserted.</param>
+    /// <param name="example">The expected value to compare against.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target value does not exactly match the expected example value.
+    /// </exception>
+    /// <remarks>
+    /// This overload is a convenience wrapper over <see cref="ValuePattern.Exact{T}(T)"/>.
+    /// It is useful when you want an exact-value assertion without explicitly constructing a pattern.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var person = new Person("Alice", 30);
+    ///
+    /// person.Assert(new Person("Alice", 30)); // Passes
+    /// person.Assert(new Person("Bob", 25));   // Throws AssertionFailedException
+    /// </code>
+    /// </example>
+    public static void Assert<T>(
+        this T target,
+        T example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.Assert(ValuePattern.Exact(example), path);
     }
 }
