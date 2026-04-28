@@ -1,5 +1,7 @@
 namespace PotternMotching.TestExternalModels;
 
+using Dunet;
+
 public record ExternalAddress(
     string City,
     string Zip);
@@ -37,6 +39,17 @@ public class ExternalClassDto : ExternalEntityBase
     public string Hidden { private get; init; } = string.Empty;
     internal string InternalOnly { get; init; } = string.Empty;
 }
+
+[Union]
+public partial record ExternalJob
+{
+    public partial record Employed(string Company, string Position);
+    public partial record Unemployed;
+}
+
+public record ExternalJobApplication(
+    string CompanyName,
+    ExternalJob DesiredPosition);
 
 public struct ExternalNonRecord
 {

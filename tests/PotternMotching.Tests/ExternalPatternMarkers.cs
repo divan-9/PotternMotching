@@ -7,4 +7,6 @@ using PotternMotching.TestExternalModels;
 [AutoPatternFor(typeof(ExternalCollectionsDto))]
 [AutoPatternFor(typeof(ExternalWrappedUnknown))]
 [AutoPatternFor(typeof(ExternalClassDto))]
+[AutoPatternFor(typeof(ExternalJob))]
+[AutoPatternFor(typeof(ExternalJobApplication))]
 internal static class ExternalPatternMarkers;

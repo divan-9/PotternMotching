@@ -163,8 +163,9 @@ var pattern = new ExternalUserDtoPattern(
 ```
 
 Notes:
-- `[AutoPatternFor]` supports external **records and classes**
+- `[AutoPatternFor]` supports external **records**, **classes**, and external **Dunet unions**
 - for classes, all public instance properties with a public getter may be matched
+- external Dunet union roots generate variant-aware patterns just like owned unions
 - the generated type name is always `{TypeName}Pattern`
 - the generated type is emitted into the **marker type namespace**
 - nested external types are matched as nested patterns only when a pattern is already known; otherwise they fall back to exact value matching

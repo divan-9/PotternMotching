@@ -115,7 +115,7 @@ internal static class TypeAnalyzer
                 diagnostics.ToImmutable());
         }
 
-        if (IsUnionType(typeSymbol) || IsUnsupportedExternalTarget(typeSymbol))
+        if (IsUnsupportedExternalTarget(typeSymbol))
         {
             diagnostics.Add(Diagnostic.Create(
                 DiagnosticDescriptors.UnsupportedExternalTarget,
@@ -127,6 +127,11 @@ internal static class TypeAnalyzer
                 false,
                 ImmutableArray<PropertyAnalysisResult>.Empty,
                 diagnostics.ToImmutable());
+        }
+
+        if (IsUnionType(typeSymbol))
+        {
+            return AnalyzeExternalUnionType(typeSymbol, diagnostics, knownPatternTypes);
         }
 
         return AnalyzeExternalClassLikeType(typeSymbol, diagnostics, knownPatternTypes);
@@ -197,6 +202,44 @@ internal static class TypeAnalyzer
             true,
             properties.ToImmutable(),
             diagnostics.ToImmutable());
+    }
+
+    private static TypeAnalysisResult AnalyzeExternalUnionType(
+        INamedTypeSymbol typeSymbol,
+        ImmutableArray<Diagnostic>.Builder diagnostics,
+        ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes)
+    {
+        var variantTypes = typeSymbol.GetTypeMembers()
+            .Where(t => t.IsRecord)
+            .ToList();
+
+        if (!variantTypes.Any())
+        {
+            diagnostics.Add(Diagnostic.Create(
+                DiagnosticDescriptors.UnsupportedExternalTarget,
+                typeSymbol.Locations.FirstOrDefault(),
+                typeSymbol.ToDisplayString()));
+
+            return new TypeAnalysisResult(
+                typeSymbol,
+                false,
+                ImmutableArray<PropertyAnalysisResult>.Empty,
+                diagnostics.ToImmutable());
+        }
+
+        var variants = ImmutableArray.CreateBuilder<VariantAnalysisResult>();
+        foreach (var variantType in variantTypes)
+        {
+            variants.Add(AnalyzeVariant(variantType, diagnostics, knownPatternTypes));
+        }
+
+        return new TypeAnalysisResult(
+            typeSymbol,
+            true,
+            ImmutableArray<PropertyAnalysisResult>.Empty,
+            diagnostics.ToImmutable(),
+            isUnion: true,
+            variants: variants.ToImmutable());
     }
 
     private static ImmutableArray<IPropertySymbol> GetPublicReadableInstanceProperties(INamedTypeSymbol typeSymbol)

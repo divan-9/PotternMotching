@@ -121,4 +121,44 @@ public class ExternalAutoPatternTests
 
         Assert.IsType<MatchResult.Success>(result);
     }
+
+    [Fact]
+    public void ExternalUnion_RootPattern_Works()
+    {
+        ExternalJobPattern pattern = new ExternalJobPattern.Employed(
+            Company: "Tech Corp",
+            Position: "Developer");
+
+        var result = pattern.Evaluate(new ExternalJob.Employed("Tech Corp", "Developer"));
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void ExternalUnion_ImplicitConversionToBasePattern_Works()
+    {
+        ExternalJobPattern pattern = new ExternalJob.Employed("Tech Corp", "Developer");
+
+        var result = pattern.Evaluate(new ExternalJob.Employed("Tech Corp", "Developer"));
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void ExternalUnion_NestedInExternalRecord_UsesGeneratedPattern()
+    {
+        var value = new ExternalJobApplication(
+            CompanyName: "Acme Corp",
+            DesiredPosition: new ExternalJob.Employed("Tech Corp", "Engineer"));
+
+        var pattern = new ExternalJobApplicationPattern(
+            CompanyName: "Acme Corp",
+            DesiredPosition: new ExternalJobPattern.Employed(
+                Company: "Tech Corp",
+                Position: "Engineer"));
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
 }
