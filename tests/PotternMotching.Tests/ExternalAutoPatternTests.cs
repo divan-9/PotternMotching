@@ -161,4 +161,76 @@ public class ExternalAutoPatternTests
 
         Assert.IsType<MatchResult.Success>(result);
     }
+
+    [Fact]
+    public void ExternalUnion_EmptyVariant_Works()
+    {
+        ExternalJobPattern pattern = new ExternalJob.Unemployed();
+
+        var result = pattern.Evaluate(new ExternalJob.Unemployed());
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void ExternalUnion_MismatchVariant_ReturnsHelpfulFailure()
+    {
+        var pattern = new ExternalJobPattern.Employed(
+            Company: "Tech Corp",
+            Position: "Developer");
+
+        var result = pattern.Evaluate(new ExternalJob.Unemployed(), ".Job");
+
+        var failure = Assert.IsType<MatchResult.Failure>(result);
+        Assert.Contains(".Job", failure.Reasons[0]);
+        Assert.Contains("Expected variant Employed", failure.Reasons[0]);
+        Assert.Contains("Unemployed", failure.Reasons[0]);
+    }
+
+    [Fact]
+    public void ExternalUnion_VariantCollectionInExternalRecord_UsesSpecificVariantPatternType()
+    {
+        var value = new ExternalCompany(
+            Name: "Tech Corp",
+            Employees:
+            [
+                new ExternalJob.Employed("Tech Corp", "Engineer"),
+                new ExternalJob.Employed("Tech Corp", "Manager")
+            ]);
+
+        var pattern = new ExternalCompanyPattern(
+            Name: "Tech Corp",
+            Employees:
+            [
+                new ExternalJobPattern.Employed(Company: "Tech Corp", Position: "Engineer"),
+                new ExternalJobPattern.Employed(Company: "Tech Corp", Position: "Manager")
+            ]);
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void ExternalUnion_WithKeywordVariantNames_Works()
+    {
+        ExternalContentPattern pattern = new ExternalContent.String(Value: "hello");
+
+        var result = pattern.Evaluate(new ExternalContent.String("hello"));
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void ExternalUnion_WithKeywordVariantNames_MismatchReportsActualVariant()
+    {
+        var pattern = new ExternalContentPattern.Object(Id: "42");
+
+        var result = pattern.Evaluate(new ExternalContent.String("hello"), ".Content");
+
+        var failure = Assert.IsType<MatchResult.Failure>(result);
+        Assert.Contains(".Content", failure.Reasons[0]);
+        Assert.Contains("Expected variant Object", failure.Reasons[0]);
+        Assert.Contains("String", failure.Reasons[0]);
+    }
 }

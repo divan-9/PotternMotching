@@ -9,4 +9,6 @@ using PotternMotching.TestExternalModels;
 [AutoPatternFor(typeof(ExternalClassDto))]
 [AutoPatternFor(typeof(ExternalJob))]
 [AutoPatternFor(typeof(ExternalJobApplication))]
+[AutoPatternFor(typeof(ExternalCompany))]
+[AutoPatternFor(typeof(ExternalContent))]
 internal static class ExternalPatternMarkers;

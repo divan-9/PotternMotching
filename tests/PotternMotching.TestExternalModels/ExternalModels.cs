@@ -51,6 +51,18 @@ public record ExternalJobApplication(
     string CompanyName,
     ExternalJob DesiredPosition);
 
+public record ExternalCompany(
+    string Name,
+    List<ExternalJob.Employed> Employees);
+
+[Union]
+public partial record ExternalContent
+{
+    public partial record String(string Value);
+    public partial record Object(string Id);
+    public partial record Composite;
+}
+
 public struct ExternalNonRecord
 {
     public string Id { get; set; }
