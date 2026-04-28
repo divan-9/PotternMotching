@@ -212,4 +212,122 @@ public static class Ossertions
     {
         target.AssertPattern(CollectionPattern.Sequence([.. example]), path);
     }
+
+    /// <summary>
+    /// Asserts that the target collection ends with the specified example sequence.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The expected ending sequence of items.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not end with the expected sequence.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.EndsWith{T}(T[])"/>.
+    /// It is useful when you want to assert a collection suffix without explicitly constructing a collection pattern.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var values = new[] { 1, 2, 3 };
+    ///
+    /// values.AssertEndsWith([2, 3]); // Passes
+    /// values.AssertEndsWith([1, 2]); // Throws AssertionFailedException
+    /// </code>
+    /// </example>
+    [OverloadResolutionPriority(1)]
+    public static void AssertEndsWith<T>(
+        this IEnumerable<T> target,
+        IPattern<T>[] example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.EndsWith(example), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target collection ends with the specified example sequence.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The expected ending sequence of items.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not end with the expected sequence.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.EndsWith{T}(T[])"/>.
+    /// It is useful when you want to assert a collection suffix without explicitly constructing a collection pattern.
+    /// </remarks>
+    public static void AssertEndsWith<T>(
+        this IEnumerable<T> target,
+        IEnumerable<T> example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.EndsWith([.. example]), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target collection starts with the specified example sequence.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The expected starting sequence of items.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not start with the expected sequence.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.StartsWith{T}(T[])"/>.
+    /// It is useful when you want to assert a collection prefix without explicitly constructing a collection pattern.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var values = new[] { 1, 2, 3 };
+    ///
+    /// values.AssertStartsWith([1, 2]); // Passes
+    /// values.AssertStartsWith([2, 3]); // Throws AssertionFailedException
+    /// </code>
+    /// </example>
+    [OverloadResolutionPriority(1)]
+    public static void AssertStartsWith<T>(
+        this IEnumerable<T> target,
+        IPattern<T>[] example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.StartsWith(example), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target collection starts with the specified example sequence.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The expected starting sequence of items.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not start with the expected sequence.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.StartsWith{T}(T[])"/>.
+    /// It is useful when you want to assert a collection prefix without explicitly constructing a collection pattern.
+    /// </remarks>
+    public static void AssertStartsWith<T>(
+        this IEnumerable<T> target,
+        IEnumerable<T> example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.StartsWith([.. example]), path);
+    }
 }

@@ -336,6 +336,13 @@ var values = new[] { 1, 2, 3 };
 values.AssertSequence([1, 2, 3]);
 ```
 
+For prefix and suffix assertions on collections, use `AssertStartsWith` and `AssertEndsWith`:
+
+```csharp
+values.AssertStartsWith([1, 2]);
+values.AssertEndsWith([2, 3]);
+```
+
 ## Advanced: Discriminated Unions
 
 PotternMotching integrates with [Dunet](https://github.com/domn1995/dunet) for discriminated union support:

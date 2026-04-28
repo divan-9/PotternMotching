@@ -65,4 +65,64 @@ public class AssertionTests
             ValuePattern.Exact(3)
         ]);
     }
+
+    [Fact]
+    public void AssertEndsWith_WhenTargetEndsWithExpectedSequence_DoesNotThrow()
+    {
+        var values = new[] { 1, 2, 3 };
+
+        values.AssertEndsWith([2, 3]);
+    }
+
+    [Fact]
+    public void AssertEndsWith_WhenTargetDoesNotEndWithExpectedSequence_ThrowsWithPath()
+    {
+        var values = new[] { 1, 2, 3 };
+
+        var exception = Assert.Throws<AssertionFailedException>(() => values.AssertEndsWith([1, 2]));
+
+        Assert.Contains("values[^2]", exception.Message);
+        Assert.Contains("ValuePattern.Exact", exception.Message);
+    }
+
+    [Fact]
+    public void AssertEndsWith_WhenUsingPatternArray_DoesNotThrow()
+    {
+        var values = new[] { 1, 2, 3 };
+
+        values.AssertEndsWith([
+            ValuePattern.Exact(2),
+            ValuePattern.Exact(3)
+        ]);
+    }
+
+    [Fact]
+    public void AssertStartsWith_WhenTargetStartsWithExpectedSequence_DoesNotThrow()
+    {
+        var values = new[] { 1, 2, 3 };
+
+        values.AssertStartsWith([1, 2]);
+    }
+
+    [Fact]
+    public void AssertStartsWith_WhenTargetDoesNotStartWithExpectedSequence_ThrowsWithPath()
+    {
+        var values = new[] { 1, 2, 3 };
+
+        var exception = Assert.Throws<AssertionFailedException>(() => values.AssertStartsWith([2, 3]));
+
+        Assert.Contains("values[0]", exception.Message);
+        Assert.Contains("ValuePattern.Exact", exception.Message);
+    }
+
+    [Fact]
+    public void AssertStartsWith_WhenUsingPatternArray_DoesNotThrow()
+    {
+        var values = new[] { 1, 2, 3 };
+
+        values.AssertStartsWith([
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2)
+        ]);
+    }
 }
