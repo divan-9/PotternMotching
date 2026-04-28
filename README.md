@@ -163,8 +163,9 @@ var pattern = new ExternalUserDtoPattern(
 ```
 
 Notes:
-- `[AutoPatternFor]` supports external **records and classes**
+- `[AutoPatternFor]` supports external **records**, **classes**, and external **Dunet unions**
 - for classes, all public instance properties with a public getter may be matched
+- external Dunet union roots generate variant-aware patterns just like owned unions
 - the generated type name is always `{TypeName}Pattern`
 - the generated type is emitted into the **marker type namespace**
 - nested external types are matched as nested patterns only when a pattern is already known; otherwise they fall back to exact value matching
@@ -299,7 +300,7 @@ var result = pattern.Evaluate(company);
 
 ## Test Assertions
 
-Use the `Assert` extension method for concise test assertions with automatic expression capture:
+Use the `AssertPattern` extension method for concise pattern assertions with automatic expression capture:
 
 ```csharp
 using PotternMotching;
@@ -307,10 +308,39 @@ using PotternMotching;
 var person = new Person("Alice", 30);
 var pattern = new PersonPattern(Name: "Alice", Age: 30);
 
-person.Assert(pattern);  // Throws AssertionFailedException if no match
+person.AssertPattern(pattern);  // Throws AssertionFailedException if no match
 
 // On failure, automatically includes the variable name in the error:
 // FAILURE: person.Age: [ValuePattern.Exact] Expected 25, got 30
+```
+
+For exact value comparison without explicitly constructing a pattern, use `AssertExact`:
+
+```csharp
+person.AssertExact(new Person("Alice", 30));
+```
+
+For subset assertions on collections, use `AssertSubset`:
+
+```csharp
+var tags = new[] { "important", "backend", "urgent" };
+
+tags.AssertSubset(["important", "urgent"]);
+```
+
+For exact sequence assertions on collections, use `AssertSequence`:
+
+```csharp
+var values = new[] { 1, 2, 3 };
+
+values.AssertSequence([1, 2, 3]);
+```
+
+For prefix and suffix assertions on collections, use `AssertStartsWith` and `AssertEndsWith`:
+
+```csharp
+values.AssertStartsWith([1, 2]);
+values.AssertEndsWith([2, 3]);
 ```
 
 ## Advanced: Discriminated Unions

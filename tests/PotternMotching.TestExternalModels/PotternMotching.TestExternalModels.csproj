@@ -6,4 +6,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Dunet" Version="1.15.0"/>
+  </ItemGroup>
 </Project>
