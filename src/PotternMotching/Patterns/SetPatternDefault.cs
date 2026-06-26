@@ -65,7 +65,7 @@ public readonly struct SetPatternDefault<T, TDefaultItemMatcher> : IPattern<IEnu
         IEnumerable<T> value,
         string path = "")
     {
-        return this.innerMatcher.Evaluate(value, path);
+        return this.innerMatcher?.Evaluate(value, path) ?? new MatchResult.Success();
     }
 
     /// <summary>

@@ -86,6 +86,14 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
+    public static readonly DiagnosticDescriptor NullLiteralRequiresNullableCast = new(
+        id: "PM0011",
+        title: "Null literal requires nullable cast",
+        messageFormat: "Null literal for parameter '{0}' requires a cast to nullable type '{1}'",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
     public static readonly DiagnosticDescriptor DebugPropertyType = new(
         id: "PM9999",
         title: "Debug: Property type detected",

@@ -67,3 +67,31 @@ public struct ExternalNonRecord
 {
     public string Id { get; set; }
 }
+
+// Nullable collection test models — reproduce nullable collection issues.
+
+/// <summary>
+/// Reproduces Issue 1 &amp; 2: nullable collection (the collection itself can be null)
+/// and implicit conversion crash when .From() is called on null.
+/// </summary>
+public record ExternalNullableCollection(
+    string Id,
+    List<string>? Names,
+    Dictionary<string, int>? Scores);
+
+/// <summary>
+/// Reproduces Issue 2: nullable elements inside a collection (<c>List&lt;string?&gt;</c>).
+/// The generated element pattern should use <c>ValuePattern&lt;string?&gt;</c>,
+/// not <c>ValuePattern&lt;string&gt;</c>.
+/// </summary>
+public record ExternalNullableElements(
+    string Id,
+    List<string?> Tags);
+
+/// <summary>
+/// Reproduces Issue 3: <c>HashSet</c> with <c>SetPatternDefault</c> — null inner matcher
+/// when using <c>default</c>.
+/// </summary>
+public record ExternalNullableSet(
+    string Id,
+    HashSet<string>? Flags);

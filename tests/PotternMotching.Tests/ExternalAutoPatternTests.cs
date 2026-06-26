@@ -233,4 +233,167 @@ public class ExternalAutoPatternTests
         Assert.Contains("Expected variant Object", failure.Reasons[0]);
         Assert.Contains("String", failure.Reasons[0]);
     }
+
+    // ──── Nullable collection regression tests ────
+
+    /// <summary>
+    /// Issue 1: Implicit conversion from a value with a null collection property
+    /// must not throw NullReferenceException.
+    /// </summary>
+    [Fact]
+    public void NullableCollection_ImplicitConversion_WithNullCollection_DoesNotCrash()
+    {
+        var value = new ExternalNullableCollection(
+            Id: "42",
+            Names: null,
+            Scores: null);
+
+        // This call will go through the generated implicit conversion which calls
+        // SequencePatternDefault.From(null) and DictionaryPatternDefault.From(null).
+        // Both would NRE without the fix (Issue 1).
+        var exception = Record.Exception(() =>
+        {
+            ExternalNullableCollectionPattern pattern = value;
+        });
+
+        Assert.Null(exception);
+    }
+
+    /// <summary>
+    /// Issue 1: A pattern created from a value with null collections should
+    /// match another value (collections default to "match any").
+    /// </summary>
+    [Fact]
+    public void NullableCollection_ImplicitConversion_MatchesAnyValue()
+    {
+        var source = new ExternalNullableCollection(
+            Id: "42",
+            Names: null,
+            Scores: null);
+
+        ExternalNullableCollectionPattern pattern = source;
+
+        var target = new ExternalNullableCollection(
+            Id: "42",
+            Names: ["Alice", "Bob"],
+            Scores: new Dictionary<string, int> { ["q"] = 10 });
+
+        var result = pattern.Evaluate(target);
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    /// <summary>
+    /// Issue 1: Implicit conversion with a non-null collection works correctly.
+    /// </summary>
+    [Fact]
+    public void NullableCollection_ImplicitConversion_WithNonNullCollection_Matches()
+    {
+        var value = new ExternalNullableCollection(
+            Id: "1",
+            Names: ["Alice", "Bob"],
+            Scores: new Dictionary<string, int> { ["q"] = 10 });
+
+        ExternalNullableCollectionPattern pattern = value;
+
+        var result = pattern.Evaluate(value);
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    /// <summary>
+    /// Issue 2: Nullable elements inside a collection (List&lt;string?&gt;).
+    /// The generated pattern SHOULD use ValuePattern&lt;string?&gt;
+    /// so that null elements are handled correctly.
+    /// Currently the generator loses the type argument nullability,
+    /// producing ValuePattern&lt;string&gt; (non-nullable), so null elements
+    /// cannot be expressed in pattern literals and may behave incorrectly.
+    /// After the fix, element type should be <c>string?</c>.
+    /// </summary>
+    [Fact]
+    public void NullableElements_WithNullElementInSource_ImplicitConversionWorks()
+    {
+        // Source has a null element in Tags (List<string?>).
+        var value = new ExternalNullableElements(
+            Id: "42",
+            Tags: ["alpha", null, "gamma"]);
+
+        // Implicit conversion should not crash even with null elements.
+        var exception = Record.Exception(() =>
+        {
+            ExternalNullableElementsPattern pattern = value;
+        });
+
+        Assert.Null(exception);
+    }
+
+    /// <summary>
+    /// Issue 2: Matching round-trip with nullable element in collection.
+    /// After the fix, the generated pattern element type should be <c>string?</c>
+    /// and this round-trip should succeed.
+    /// </summary>
+    [Fact]
+    public void NullableElements_RoundTrip_Matches()
+    {
+        var value = new ExternalNullableElements(
+            Id: "42",
+            Tags: ["alpha", null, "gamma"]);
+
+        ExternalNullableElementsPattern pattern = value;
+
+        var result = pattern.Evaluate(value);
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    /// <summary>
+    /// Issue 3: SetPatternDefault with <c>default</c> (unspecified)
+    /// must not throw when evaluating. The inner matcher is null.
+    /// </summary>
+    [Fact]
+    public void NullableSet_DefaultMatcher_DoesNotCrash()
+    {
+        var value = new ExternalNullableSet(
+            Id: "42",
+            Flags: ["beta", "gamma"]);
+
+        // Flags is default → innerMatcher is null.
+        // SetPatternDefault.Evaluate must handle null innerMatcher.
+        var pattern = new ExternalNullableSetPattern(Id: "42");
+
+        var exception = Record.Exception(() => pattern.Evaluate(value));
+        Assert.Null(exception);
+    }
+
+    /// <summary>
+    /// Issue 3: SetPatternDefault with <c>default</c> matches any value.
+    /// </summary>
+    [Fact]
+    public void NullableSet_DefaultMatcher_MatchesAny()
+    {
+        var value = new ExternalNullableSet(
+            Id: "42",
+            Flags: ["beta", "gamma"]);
+
+        var pattern = new ExternalNullableSetPattern(Id: "42");
+
+        var result = pattern.Evaluate(value);
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    /// <summary>
+    /// Issue 1+3: Implicit conversion from a value with null HashSet
+    /// must not throw, and the resulting default pattern matches any.
+    /// </summary>
+    [Fact]
+    public void NullableSet_ImplicitConversion_WithNullSet_DoesNotCrash()
+    {
+        var value = new ExternalNullableSet(
+            Id: "42",
+            Flags: null);
+
+        var exception = Record.Exception(() =>
+        {
+            ExternalNullableSetPattern pattern = value;
+        });
+
+        Assert.Null(exception);
+    }
 }
