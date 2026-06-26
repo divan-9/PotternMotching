@@ -233,13 +233,16 @@ internal static class PatternCodeGenerator
                 $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
 
             PatternWrapperKind.Set =>
-                $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
+                // Use ! — source property may be nullable (HashSet<T>?) but runtime handles null gracefully.
+                $"this.{propertyName}.Evaluate(value.{propertyName}!, {pathExpression})",
 
             PatternWrapperKind.Sequence =>
-                $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
+                // Use ! — source property may be nullable (List<T>?, T[]?) but runtime handles null gracefully.
+                $"this.{propertyName}.Evaluate(value.{propertyName}!, {pathExpression})",
 
             PatternWrapperKind.Dictionary =>
-                $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
+                // Use ! — source property may be nullable (Dictionary<K,V>?) but runtime handles null gracefully.
+                $"this.{propertyName}.Evaluate(value.{propertyName}!, {pathExpression})",
 
             PatternWrapperKind.Nested =>
                 // Nested patterns now wrapped in PatternDefault, no null check needed
