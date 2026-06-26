@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.4.1] - 2026-06-26
+
+### Fixed
+- Nullable collection implicit conversion no longer crashes on null properties (e.g. `List<T>?`).
+- Collection element nullability now preserved in generated patterns (e.g. `List<string?>` → `ValuePattern<string?>`).
+- `SetPatternDefault.Evaluate` no longer throws `NullReferenceException` when matcher is `default`.
+- Added missing `PM0011` diagnostic descriptor for null literal in nullable pattern defaults.
+
+## [0.4.0]
 
 ### Added
 - Support for generating patterns for **external records, classes, and Dunet unions** via `[AutoPatternFor(typeof(...))]`.
