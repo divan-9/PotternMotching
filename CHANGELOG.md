@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.2] - 2026-06-26
+
+### Fixed
+- Generated `Evaluate` no longer produces CS8604 warning for nullable collection properties. Collection property accesses now use null-forgiving operator (`!`) since the runtime pattern types already handle null gracefully.
+- Registered `PM0011` diagnostic in analyzer release tracking to fix RS2000 build warning.
+
 ## [0.4.1] - 2026-06-26
 
 ### Fixed
