@@ -64,6 +64,32 @@ internal static class TypeAnalyzer
         return baseType;
     }
 
+    /// <summary>
+    /// Gets the fully-qualified display string for a type symbol, ensuring that
+    /// reference-type nullable annotations on type arguments are preserved.
+    /// Unlike <see cref="GetTypeDisplayString"/>, this uses the type symbol's own
+    /// <see cref="ITypeSymbol.NullableAnnotation"/> instead of a caller-provided annotation.
+    /// </summary>
+    private static string GetTypeArgumentDisplayString(ITypeSymbol typeSymbol)
+    {
+        var baseType = typeSymbol.ToDisplayString(FullyQualifiedFormatWithNullability);
+
+        if (typeSymbol.IsReferenceType &&
+            typeSymbol.NullableAnnotation == NullableAnnotation.Annotated &&
+            !baseType.EndsWith("?"))
+        {
+            return baseType + "?";
+        }
+
+        if (typeSymbol is INamedTypeSymbol namedType &&
+            namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
+        {
+            return baseType;
+        }
+
+        return baseType;
+    }
+
     public static TypeAnalysisResult AnalyzeTargetType(
         INamedTypeSymbol typeSymbol,
         ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes = null)
@@ -332,7 +358,7 @@ internal static class TypeAnalyzer
                 propertyName,
                 propertyTypeString,
                 PatternWrapperKind.Sequence,
-                elementType.ToDisplayString(FullyQualifiedFormatWithNullability),
+                GetTypeArgumentDisplayString(elementType),
                 null,
                 null,
                 requiresPattern,
@@ -354,7 +380,7 @@ internal static class TypeAnalyzer
                     propertyName,
                     propertyTypeString,
                     PatternWrapperKind.Set,
-                    elementType.ToDisplayString(FullyQualifiedFormatWithNullability),
+                    GetTypeArgumentDisplayString(elementType),
                     null,
                     null,
                     requiresPattern,
@@ -372,7 +398,7 @@ internal static class TypeAnalyzer
                     propertyName,
                     propertyTypeString,
                     PatternWrapperKind.Set,
-                    elementType.ToDisplayString(FullyQualifiedFormatWithNullability),
+                    GetTypeArgumentDisplayString(elementType),
                     null,
                     null,
                     requiresPattern,
@@ -393,8 +419,8 @@ internal static class TypeAnalyzer
                         propertyTypeString,
                         PatternWrapperKind.Dictionary,
                         null,
-                        keyType.ToDisplayString(FullyQualifiedFormatWithNullability),
-                        valueType.ToDisplayString(FullyQualifiedFormatWithNullability));
+                        GetTypeArgumentDisplayString(keyType),
+                        GetTypeArgumentDisplayString(valueType));
                 }
             }
 
@@ -407,7 +433,7 @@ internal static class TypeAnalyzer
                     propertyName,
                     propertyTypeString,
                     PatternWrapperKind.Sequence,
-                    elementType.ToDisplayString(FullyQualifiedFormatWithNullability),
+                    GetTypeArgumentDisplayString(elementType),
                     null,
                     null,
                     requiresPattern,

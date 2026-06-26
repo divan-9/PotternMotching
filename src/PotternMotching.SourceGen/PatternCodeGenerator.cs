@@ -406,15 +406,20 @@ internal static class PatternCodeGenerator
             ? "SetPatternDefault"
             : "SequencePatternDefault";
 
-        // Wrap the From result in a constructor to get the right type
-        return $"new {patternType}<{property.ElementType}, {itemMatcherType}>({patternType}<{property.ElementType}, {itemMatcherType}>.From(value.{propertyName}))";
+        var fullType = $"{patternType}<{property.ElementType}, {itemMatcherType}>";
+
+        // Null-guard: when the source property is nullable (e.g. List<T>?), pass null → default.
+        return $"value.{propertyName} != null ? new {fullType}({fullType}.From(value.{propertyName})) : default";
     }
 
     private static string GenerateDictionaryConversion(PropertyAnalysisResult property, string propertyName)
     {
         var valueMatcherType = GetDictionaryValueMatcherType(property);
 
-        return $"new DictionaryPatternDefault<{property.KeyType}, {property.ValueType}, {valueMatcherType}>(DictionaryPatternDefault<{property.KeyType}, {property.ValueType}, {valueMatcherType}>.From(value.{propertyName}))";
+        var fullType = $"DictionaryPatternDefault<{property.KeyType}, {property.ValueType}, {valueMatcherType}>";
+
+        // Null-guard: when the source property is nullable (e.g. Dictionary<K,V>?), pass null → default.
+        return $"value.{propertyName} != null ? new {fullType}({fullType}.From(value.{propertyName})) : default";
     }
 
     private static void GenerateVariantImplicitConversion(

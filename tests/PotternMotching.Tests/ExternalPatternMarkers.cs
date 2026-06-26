@@ -11,4 +11,7 @@ using PotternMotching.TestExternalModels;
 [AutoPatternFor(typeof(ExternalJobApplication))]
 [AutoPatternFor(typeof(ExternalCompany))]
 [AutoPatternFor(typeof(ExternalContent))]
+[AutoPatternFor(typeof(ExternalNullableCollection))]
+[AutoPatternFor(typeof(ExternalNullableElements))]
+[AutoPatternFor(typeof(ExternalNullableSet))]
 internal static class ExternalPatternMarkers;
