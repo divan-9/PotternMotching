@@ -68,6 +68,25 @@ public struct ExternalNonRecord
     public string Id { get; set; }
 }
 
+public record ExternalGenericBox<T>(
+    T Value);
+
+public record ExternalGenericEnvelope<T>(
+    string Id,
+    ExternalGenericBox<T> Box);
+
+public interface IExternalFragmentTemplate;
+
+public record ExternalStringFragmentTemplate(
+    string Value) : IExternalFragmentTemplate;
+
+public record ExternalBannerFragmentTemplate(
+    string Url) : IExternalFragmentTemplate;
+
+public record ExternalImpressionRule(
+    string Id,
+    IExternalFragmentTemplate FragmentTemplate);
+
 // Nullable collection test models — reproduce nullable collection issues.
 
 /// <summary>

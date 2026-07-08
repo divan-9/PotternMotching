@@ -6,5 +6,6 @@ public enum PatternWrapperKind
     Set,
     Sequence,
     Dictionary,
-    Nested
+    Nested,
+    Polymorphic
 }

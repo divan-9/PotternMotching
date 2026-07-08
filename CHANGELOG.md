@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.3] - 2026-07-08
+
+### Added
+- `[AutoPatternFor]` now supports **closed generic external targets** such as `typeof(Result<string>)`.
+- Generated pattern names for closed generic targets now include concrete type arguments, for example `Result_StringPattern`.
+- Generated patterns now support **polymorphic properties** typed as interfaces or abstract base classes when concrete implementations are also targeted with `[AutoPatternFor]`.
+- Whole-object implicit conversion now works for polymorphic properties by generating runtime type-aware matcher adapters.
+- Added unit coverage for generic target generation and polymorphic property matching.
+
+### Notes
+- Open generic targets such as `typeof(Result<>)` remain unsupported.
+- Name collisions between generated generic pattern types still report `PM0009` and must be resolved by the consumer.
+- Polymorphic property matching falls back to exact value matching when no compatible generated concrete pattern is known.
+
 ## [0.4.2] - 2026-06-26
 
 ### Fixed
