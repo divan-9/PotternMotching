@@ -193,39 +193,6 @@ Notes:
 - closed generic generated type names use `{TypeName}_{TypeArg1}_{TypeArg2}...Pattern`
 - the generated type is emitted into the **marker type namespace**
 - nested types are matched as nested patterns only when a pattern is already known; otherwise they fall back to exact value matching
-- interface and abstract-base properties can use concrete generated patterns when compatible implementations are also targeted with `[AutoPatternFor]`
-- whole-object implicit conversion also supports such polymorphic properties when the runtime value is one of the known concrete implementations
-
-### Polymorphic Properties
-
-Generated patterns can also match interface-typed or abstract-base properties using compatible generated concrete patterns. If no compatible generated concrete pattern is known, matching falls back to exact value matching for the property.
-
-```csharp
-using PotternMotching;
-
-public interface IFragmentTemplate;
-public record StringFragmentTemplate(string Value) : IFragmentTemplate;
-public record BannerFragmentTemplate(string Url) : IFragmentTemplate;
-public record ImpressionRule(IFragmentTemplate FragmentTemplate);
-
-[AutoPatternFor(typeof(StringFragmentTemplate))]
-[AutoPatternFor(typeof(BannerFragmentTemplate))]
-[AutoPatternFor(typeof(ImpressionRule))]
-internal static class PatternMarkers;
-```
-
-```csharp
-var pattern = new ImpressionRulePattern(
-    FragmentTemplate: new StringFragmentTemplatePattern(Value: "xxxx")
-);
-```
-
-Whole-object conversion also works for such properties:
-
-```csharp
-ImpressionRulePattern pattern = new ImpressionRule(
-    new StringFragmentTemplate("xxxx"));
-```
 
 ### Flexible Matching with Defaults
 
@@ -266,7 +233,6 @@ The source generator automatically maps types to appropriate pattern wrappers:
 | `HashSet<T>`, `ISet<T>` | `SetPatternDefault<T, ...>` | Subset (unordered, allows extras) |
 | `Dictionary<K,V>`, `IDictionary<K,V>` | `DictionaryPatternDefault<K,V, ...>` | Key-value pairs (allows extra keys) |
 | Nested pattern-capable types targeted with `[AutoPatternFor]` | `RecordNamePattern?` / `Record_TypeArgPattern?` | Nested pattern matching |
-| Interface / abstract properties with known concrete generated patterns | Generated polymorphic matcher | Runtime type-aware nested pattern matching with fallback to exact value matching |
 | Discriminated unions ([Dunet](https://github.com/domn1995/dunet)) | Variant-specific patterns | Variant-aware matching |
 
 ## Pattern Types Reference

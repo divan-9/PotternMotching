@@ -42,8 +42,6 @@ internal static class PatternCodeGenerator
             sb.AppendLine();
         }
 
-        GeneratePolymorphicMatcherTypes(sb, analysis.Properties, patternName);
-
         // Class declaration
         sb.Append($"public sealed record {patternName}(");
 
@@ -54,7 +52,7 @@ internal static class PatternCodeGenerator
             for (int i = 0; i < analysis.Properties.Length; i++)
             {
                 var property = analysis.Properties[i];
-                var wrapperType = GetPatternWrapperType(property, patternName);
+                var wrapperType = GetPatternWrapperType(property);
                 var propertyName = CapitalizeFirstLetter(property.PropertyName);
 
                 sb.Append($"    {wrapperType} {propertyName} = default");
@@ -197,7 +195,7 @@ internal static class PatternCodeGenerator
         return $"ValuePattern<{property.PropertyType}>";
     }
 
-    private static string GetPatternWrapperType(PropertyAnalysisResult property, string ownerPatternName)
+    private static string GetPatternWrapperType(PropertyAnalysisResult property)
     {
         return property.WrapperKind switch
         {
@@ -220,9 +218,6 @@ internal static class PatternCodeGenerator
                 // Wrap nested patterns in PatternDefault for consistency and null matching support
                 // For nested types, the pattern type IS the matcher
                 $"PatternDefault<{property.PropertyType}, {property.NestedPatternType!}>",
-
-            PatternWrapperKind.Polymorphic =>
-                GetPolymorphicMatcherTypeName(property, ownerPatternName),
 
             _ => throw new InvalidOperationException($"Unknown wrapper kind: {property.WrapperKind}")
         };
@@ -251,9 +246,6 @@ internal static class PatternCodeGenerator
 
             PatternWrapperKind.Nested =>
                 // Nested patterns now wrapped in PatternDefault, no null check needed
-                $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
-
-            PatternWrapperKind.Polymorphic =>
                 $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
 
             _ => throw new InvalidOperationException($"Unknown wrapper kind: {property.WrapperKind}")
@@ -299,71 +291,6 @@ internal static class PatternCodeGenerator
         return EscapeIdentifierIfNeeded(lowercased);
     }
 
-    private static string GetPolymorphicMatcherTypeName(PropertyAnalysisResult property, string ownerPatternName)
-    {
-        return $"{ownerPatternName}_{CapitalizeFirstLetter(property.PropertyName)}Matcher";
-    }
-
-    private static void GeneratePolymorphicMatcherTypes(
-        StringBuilder sb,
-        ImmutableArray<PropertyAnalysisResult> properties,
-        string ownerPatternName)
-    {
-        foreach (var property in properties.Where(static p => p.WrapperKind == PatternWrapperKind.Polymorphic))
-        {
-            var matcherTypeName = GetPolymorphicMatcherTypeName(property, ownerPatternName);
-            var propertyType = property.PropertyType;
-
-            sb.AppendLine($"public readonly struct {matcherTypeName} : IPattern<{propertyType}>, IPatternConstructor<{propertyType}>");
-            sb.AppendLine("{");
-            sb.AppendLine($"    private readonly IPattern<{propertyType}>? innerPattern;");
-            sb.AppendLine();
-            sb.AppendLine($"    public {matcherTypeName}(IPattern<{propertyType}> innerPattern)");
-            sb.AppendLine("    {");
-            sb.AppendLine("        this.innerPattern = innerPattern;");
-            sb.AppendLine("    }");
-            sb.AppendLine();
-            sb.AppendLine($"    public static IPattern<{propertyType}> Create({propertyType} value)");
-            sb.AppendLine("    {");
-            sb.AppendLine("        return value switch");
-            sb.AppendLine("        {");
-
-            foreach (var candidate in property.PolymorphicCandidates)
-            {
-                var candidateType = candidate.TypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                var variableName = LowercaseFirstLetter(candidate.TypeSymbol.Name);
-                sb.AppendLine($"            {candidateType} {variableName} => new {matcherTypeName}(new TypePattern<{propertyType}, {candidateType}>({candidate.PatternTypeName}.Create({variableName}))),");
-            }
-
-            sb.AppendLine($"            _ => new {matcherTypeName}(ValuePattern<{propertyType}>.Create(value)),");
-            sb.AppendLine("        };");
-            sb.AppendLine("    }");
-            sb.AppendLine();
-            sb.AppendLine($"    public MatchResult Evaluate({propertyType} value, string path = \"\")");
-            sb.AppendLine("    {");
-            sb.AppendLine("        return this.innerPattern?.Evaluate(value, path) ?? new MatchResult.Success();");
-            sb.AppendLine("    }");
-
-            foreach (var candidate in property.PolymorphicCandidates)
-            {
-                var candidateType = candidate.TypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                sb.AppendLine();
-                sb.AppendLine($"    public static implicit operator {matcherTypeName}({candidate.PatternTypeName} value)");
-                sb.AppendLine("    {");
-                sb.AppendLine($"        return new {matcherTypeName}(new TypePattern<{propertyType}, {candidateType}>(value));");
-                sb.AppendLine("    }");
-                sb.AppendLine();
-                sb.AppendLine($"    public static implicit operator {matcherTypeName}({candidateType} value)");
-                sb.AppendLine("    {");
-                sb.AppendLine($"        return new {matcherTypeName}(new TypePattern<{propertyType}, {candidateType}>({candidate.PatternTypeName}.Create(value)));");
-                sb.AppendLine("    }");
-            }
-
-            sb.AppendLine("}");
-            sb.AppendLine();
-        }
-    }
-
     private static void GenerateImplicitConversion(
         StringBuilder sb,
         INamedTypeSymbol typeSymbol,
@@ -384,7 +311,7 @@ internal static class PatternCodeGenerator
             {
                 var property = properties[i];
                 var propertyName = CapitalizeFirstLetter(property.PropertyName);
-                var conversion = GetPropertyConversion(property, propertyName, patternName);
+                var conversion = GetPropertyConversion(property, propertyName);
 
                 sb.Append($"            {propertyName}: {conversion}");
 
@@ -407,7 +334,7 @@ internal static class PatternCodeGenerator
         sb.AppendLine("    }");
     }
 
-    private static string GetPropertyConversion(PropertyAnalysisResult property, string propertyName, string ownerPatternName)
+    private static string GetPropertyConversion(PropertyAnalysisResult property, string propertyName)
     {
         return property.WrapperKind switch
         {
@@ -427,9 +354,6 @@ internal static class PatternCodeGenerator
                 // PatternDefault<T, TPattern> has implicit conversion from T
                 // The implicit conversion will call TPattern.From(value) automatically
                 $"value.{propertyName}",
-
-            PatternWrapperKind.Polymorphic =>
-                $"new {GetPolymorphicMatcherTypeName(property, ownerPatternName)}({GetPolymorphicMatcherTypeName(property, ownerPatternName)}.Create(value.{propertyName}))",
 
             _ => throw new InvalidOperationException($"Unknown wrapper kind: {property.WrapperKind}")
         };
@@ -505,8 +429,7 @@ internal static class PatternCodeGenerator
         StringBuilder sb,
         VariantAnalysisResult variant,
         string variantFullType,
-        string variantName,
-        string ownerPatternName)
+        string variantName)
     {
         var patternName = $"{variantName}";
 
@@ -522,7 +445,7 @@ internal static class PatternCodeGenerator
             {
                 var property = variant.Properties[i];
                 var propertyName = CapitalizeFirstLetter(property.PropertyName);
-                var conversion = GetPropertyConversion(property, propertyName, ownerPatternName);
+                var conversion = GetPropertyConversion(property, propertyName);
 
                 sb.Append($"                {propertyName}: {conversion}");
 
@@ -573,11 +496,6 @@ internal static class PatternCodeGenerator
         {
             sb.AppendLine($"namespace {namespaceName};");
             sb.AppendLine();
-        }
-
-        foreach (var variant in analysis.Variants)
-        {
-            GeneratePolymorphicMatcherTypes(sb, variant.Properties, $"{patternName}_{variant.VariantName}");
         }
 
         // Union pattern class declaration - abstract base with no parameters
@@ -729,7 +647,7 @@ internal static class PatternCodeGenerator
             for (int i = 0; i < variant.Properties.Length; i++)
             {
                 var property = variant.Properties[i];
-                var wrapperType = GetPatternWrapperType(property, $"{patternName}_{variantName}");
+                var wrapperType = GetPatternWrapperType(property);
                 var propertyName = CapitalizeFirstLetter(property.PropertyName);
 
                 sb.Append($"        {wrapperType} {propertyName} = default");
@@ -838,7 +756,7 @@ internal static class PatternCodeGenerator
 
         // Add implicit conversion operator for variant
         sb.AppendLine();
-        GenerateVariantImplicitConversion(sb, variant, variantFullType, variantName, $"{patternName}_{variantName}");
+        GenerateVariantImplicitConversion(sb, variant, variantFullType, variantName);
 
         sb.AppendLine("    }");
     }

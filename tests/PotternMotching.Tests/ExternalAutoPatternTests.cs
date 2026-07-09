@@ -155,36 +155,6 @@ public class ExternalAutoPatternTests
     }
 
     [Fact]
-    public void ExternalPolymorphicProperty_AcceptsConcreteGeneratedPattern()
-    {
-        var value = new ExternalImpressionRule(
-            Id: "42",
-            FragmentTemplate: new ExternalStringFragmentTemplate("xxxx"));
-
-        var pattern = new ExternalImpressionRulePattern(
-            Id: "42",
-            FragmentTemplate: new ExternalStringFragmentTemplatePattern(Value: "xxxx"));
-
-        var result = pattern.Evaluate(value);
-
-        Assert.IsType<MatchResult.Success>(result);
-    }
-
-    [Fact]
-    public void ExternalPolymorphicProperty_WholeObjectImplicitConversion_Works()
-    {
-        ExternalImpressionRulePattern pattern = new ExternalImpressionRule(
-            Id: "42",
-            FragmentTemplate: new ExternalStringFragmentTemplate("xxxx"));
-
-        var result = pattern.Evaluate(new ExternalImpressionRule(
-            Id: "42",
-            FragmentTemplate: new ExternalStringFragmentTemplate("xxxx")));
-
-        Assert.IsType<MatchResult.Success>(result);
-    }
-
-    [Fact]
     public void ExternalUnion_RootPattern_Works()
     {
         ExternalJobPattern pattern = new ExternalJobPattern.Employed(

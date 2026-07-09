@@ -460,17 +460,6 @@ internal static class TypeAnalyzer
                     nestedPatternType,
                     namedTypeNoArgs);
             }
-
-            var polymorphicCandidates = FindPolymorphicPatternCandidates(namedTypeNoArgs, knownPatternTypes);
-            if (!polymorphicCandidates.IsDefaultOrEmpty)
-            {
-                return new PropertyAnalysisResult(
-                    propertyName,
-                    propertyTypeString,
-                    PatternWrapperKind.Polymorphic,
-                    propertyTypeSymbol: namedTypeNoArgs,
-                    polymorphicCandidates: polymorphicCandidates);
-            }
         }
 
         return new PropertyAnalysisResult(
@@ -487,60 +476,6 @@ internal static class TypeAnalyzer
             var name = i.OriginalDefinition.ToDisplayString();
             return name == interfaceName.Replace("`1", "<T>").Replace("`2", "<TKey, TValue>");
         });
-    }
-
-    private static ImmutableArray<PolymorphicPatternCandidate> FindPolymorphicPatternCandidates(
-        INamedTypeSymbol propertyType,
-        ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes)
-    {
-        if (knownPatternTypes is null || knownPatternTypes.Count == 0)
-        {
-            return ImmutableArray<PolymorphicPatternCandidate>.Empty;
-        }
-
-        if (propertyType.TypeKind != TypeKind.Interface && !propertyType.IsAbstract)
-        {
-            return ImmutableArray<PolymorphicPatternCandidate>.Empty;
-        }
-
-        return [..
-            knownPatternTypes
-                .Where(kvp =>
-                    !SymbolEqualityComparer.Default.Equals(kvp.Key, propertyType) &&
-                    IsAssignableTo(kvp.Key, propertyType))
-                .OrderByDescending(kvp => GetInheritanceDepth(kvp.Key))
-                .ThenBy(kvp => kvp.Key.ToDisplayString())
-                .Select(kvp => new PolymorphicPatternCandidate(kvp.Key, kvp.Value))
-        ];
-    }
-
-    private static bool IsAssignableTo(INamedTypeSymbol candidateType, INamedTypeSymbol targetType)
-    {
-        if (targetType.TypeKind == TypeKind.Interface)
-        {
-            return candidateType.AllInterfaces.Any(i => SymbolEqualityComparer.Default.Equals(i, targetType));
-        }
-
-        for (var current = candidateType; current is not null; current = current.BaseType)
-        {
-            if (SymbolEqualityComparer.Default.Equals(current, targetType))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static int GetInheritanceDepth(INamedTypeSymbol typeSymbol)
-    {
-        var depth = 0;
-        for (var current = typeSymbol.BaseType; current is not null; current = current.BaseType)
-        {
-            depth++;
-        }
-
-        return depth;
     }
 
     private static (bool HasPattern, INamedTypeSymbol? TypeSymbol, string? PatternTypeName) CheckForNestedPattern(

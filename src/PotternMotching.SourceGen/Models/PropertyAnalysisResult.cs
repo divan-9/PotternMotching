@@ -1,6 +1,5 @@
 namespace PotternMotching.SourceGen.Models;
 
-using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
 public sealed class PropertyAnalysisResult
@@ -15,8 +14,7 @@ public sealed class PropertyAnalysisResult
         bool requiresNestedPattern = false,
         INamedTypeSymbol? nestedType = null,
         string? nestedPatternType = null,
-        ITypeSymbol? propertyTypeSymbol = null,
-        ImmutableArray<PolymorphicPatternCandidate> polymorphicCandidates = default)
+        ITypeSymbol? propertyTypeSymbol = null)
     {
         PropertyName = propertyName;
         PropertyType = propertyType;
@@ -28,9 +26,6 @@ public sealed class PropertyAnalysisResult
         NestedType = nestedType;
         NestedPatternType = nestedPatternType;
         PropertyTypeSymbol = propertyTypeSymbol;
-        PolymorphicCandidates = polymorphicCandidates.IsDefault
-            ? ImmutableArray<PolymorphicPatternCandidate>.Empty
-            : polymorphicCandidates;
     }
 
     public string PropertyName { get; }
@@ -43,5 +38,4 @@ public sealed class PropertyAnalysisResult
     public INamedTypeSymbol? NestedType { get; }
     public string? NestedPatternType { get; }
     public ITypeSymbol? PropertyTypeSymbol { get; }
-    public ImmutableArray<PolymorphicPatternCandidate> PolymorphicCandidates { get; }
 }
