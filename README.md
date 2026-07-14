@@ -164,11 +164,33 @@ var pattern = new ExternalUserDtoPattern(
 );
 ```
 
+Closed generic external targets are also supported:
+
+```csharp
+using PotternMotching;
+using Shared.Contracts;
+
+namespace MyProject.Tests.Patterns;
+
+[AutoPatternFor(typeof(Result<string>))]
+internal static class GenericPatterns;
+```
+
+```csharp
+using MyProject.Tests.Patterns;
+
+var pattern = new Result_StringPattern(
+    Value: "ok"
+);
+```
+
 Notes:
-- `[AutoPatternFor]` supports **records**, **classes**, and **Dunet unions**
+- `[AutoPatternFor]` supports **records**, **classes**, **closed generic constructed types**, and **Dunet unions**
+- open generic targets such as `typeof(Result<>)` are not supported
 - for classes, all public instance properties with a public getter may be matched
 - Dunet union roots generate variant-aware patterns
-- the generated type name is always `{TypeName}Pattern`
+- non-generic generated type names use `{TypeName}Pattern`
+- closed generic generated type names use `{TypeName}_{TypeArg1}_{TypeArg2}...Pattern`
 - the generated type is emitted into the **marker type namespace**
 - nested types are matched as nested patterns only when a pattern is already known; otherwise they fall back to exact value matching
 
@@ -210,7 +232,7 @@ The source generator automatically maps types to appropriate pattern wrappers:
 | `T[]`, `List<T>`, `IEnumerable<T>` | `SequencePatternDefault<T, ...>` | Exact sequence (order + length) |
 | `HashSet<T>`, `ISet<T>` | `SetPatternDefault<T, ...>` | Subset (unordered, allows extras) |
 | `Dictionary<K,V>`, `IDictionary<K,V>` | `DictionaryPatternDefault<K,V, ...>` | Key-value pairs (allows extra keys) |
-| Nested pattern-capable types targeted with `[AutoPatternFor]` | `RecordNamePattern?` | Nested pattern matching |
+| Nested pattern-capable types targeted with `[AutoPatternFor]` | `RecordNamePattern?` / `Record_TypeArgPattern?` | Nested pattern matching |
 | Discriminated unions ([Dunet](https://github.com/domn1995/dunet)) | Variant-specific patterns | Variant-aware matching |
 
 ## Pattern Types Reference

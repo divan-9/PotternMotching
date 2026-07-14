@@ -11,6 +11,8 @@ using PotternMotching.TestExternalModels;
 [AutoPatternFor(typeof(ExternalJobApplication))]
 [AutoPatternFor(typeof(ExternalCompany))]
 [AutoPatternFor(typeof(ExternalContent))]
+[AutoPatternFor(typeof(ExternalGenericBox<ExternalAddress>))]
+[AutoPatternFor(typeof(ExternalGenericEnvelope<ExternalAddress>))]
 [AutoPatternFor(typeof(ExternalNullableCollection))]
 [AutoPatternFor(typeof(ExternalNullableElements))]
 [AutoPatternFor(typeof(ExternalNullableSet))]

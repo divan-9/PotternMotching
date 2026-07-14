@@ -123,6 +123,38 @@ public class ExternalAutoPatternTests
     }
 
     [Fact]
+    public void ExternalClosedGenericRecord_GeneratesPattern()
+    {
+        var value = new ExternalGenericBox<ExternalAddress>(
+            Value: new ExternalAddress("Seattle", "98101"));
+
+        var pattern = new ExternalGenericBox_ExternalAddressPattern(
+            Value: new ExternalAddressPattern(City: "Seattle"));
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void ExternalClosedGenericRecord_NestedPattern_UsesConstructedGenericPattern()
+    {
+        var value = new ExternalGenericEnvelope<ExternalAddress>(
+            Id: "42",
+            Box: new ExternalGenericBox<ExternalAddress>(
+                Value: new ExternalAddress("Seattle", "98101")));
+
+        var pattern = new ExternalGenericEnvelope_ExternalAddressPattern(
+            Id: "42",
+            Box: new ExternalGenericBox_ExternalAddressPattern(
+                Value: new ExternalAddressPattern(City: "Seattle")));
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
     public void ExternalUnion_RootPattern_Works()
     {
         ExternalJobPattern pattern = new ExternalJobPattern.Employed(

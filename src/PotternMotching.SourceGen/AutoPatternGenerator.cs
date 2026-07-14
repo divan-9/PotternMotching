@@ -148,7 +148,7 @@ public class AutoPatternGenerator : IIncrementalGenerator
                 sourceSymbol,
                 targetSymbol,
                 GetNamespace(sourceSymbol.ContainingNamespace),
-                $"{targetSymbol.Name}Pattern"));
+                GetGeneratedPatternName(targetSymbol)));
         }
 
         return (requests.ToImmutable(), diagnostics.ToImmutable());
@@ -203,6 +203,43 @@ public class AutoPatternGenerator : IIncrementalGenerator
         return namespaceSymbol.IsGlobalNamespace
             ? string.Empty
             : namespaceSymbol.ToDisplayString();
+    }
+
+    private static string GetGeneratedPatternName(INamedTypeSymbol targetSymbol)
+    {
+        if (!targetSymbol.IsGenericType)
+        {
+            return $"{targetSymbol.Name}Pattern";
+        }
+
+        var typeArguments = string.Join("_", targetSymbol.TypeArguments.Select(GetTypeNameComponent));
+        return $"{targetSymbol.Name}_{typeArguments}Pattern";
+    }
+
+    private static string GetTypeNameComponent(ITypeSymbol typeSymbol)
+    {
+        return typeSymbol switch
+        {
+            IArrayTypeSymbol arrayType => $"{GetTypeNameComponent(arrayType.ElementType)}Array",
+            IPointerTypeSymbol pointerType => $"{GetTypeNameComponent(pointerType.PointedAtType)}Pointer",
+            INamedTypeSymbol namedType => GetNamedTypeNameComponent(namedType),
+            _ => typeSymbol.Name,
+        };
+    }
+
+    private static string GetNamedTypeNameComponent(INamedTypeSymbol typeSymbol)
+    {
+        var containingTypePrefix = typeSymbol.ContainingType is null
+            ? string.Empty
+            : $"{GetNamedTypeNameComponent(typeSymbol.ContainingType)}_";
+
+        if (!typeSymbol.IsGenericType)
+        {
+            return containingTypePrefix + typeSymbol.Name;
+        }
+
+        var typeArguments = string.Join("_", typeSymbol.TypeArguments.Select(GetTypeNameComponent));
+        return $"{containingTypePrefix}{typeSymbol.Name}_{typeArguments}";
     }
 
     private static string GetGeneratedTypeFullName(string generatedNamespace, string generatedPatternName)

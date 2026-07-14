@@ -465,7 +465,8 @@ internal static class TypeAnalyzer
         return new PropertyAnalysisResult(
             propertyName,
             propertyTypeString,
-            PatternWrapperKind.Value);
+            PatternWrapperKind.Value,
+            propertyTypeSymbol: propertyType);
     }
 
     private static bool ImplementsInterface(INamedTypeSymbol type, string interfaceName)
@@ -518,7 +519,20 @@ internal static class TypeAnalyzer
 
     private static bool IsUnsupportedExternalTarget(INamedTypeSymbol typeSymbol)
     {
-        return typeSymbol.IsGenericType || typeSymbol.IsUnboundGenericType;
+        return typeSymbol.IsUnboundGenericType ||
+               typeSymbol.TypeArguments.Any(ContainsOpenTypeComponent);
+    }
+
+    private static bool ContainsOpenTypeComponent(ITypeSymbol typeSymbol)
+    {
+        return typeSymbol switch
+        {
+            ITypeParameterSymbol => true,
+            IArrayTypeSymbol arrayType => ContainsOpenTypeComponent(arrayType.ElementType),
+            IPointerTypeSymbol pointerType => ContainsOpenTypeComponent(pointerType.PointedAtType),
+            INamedTypeSymbol namedType => namedType.IsUnboundGenericType || namedType.TypeArguments.Any(ContainsOpenTypeComponent),
+            _ => false,
+        };
     }
 
     private static TypeAnalysisResult AnalyzeUnion(
