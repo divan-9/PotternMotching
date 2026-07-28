@@ -110,3 +110,20 @@ public record ExternalNullableSet(
 public record ExternalNullableScalar(
     string Id,
     string? RuleSetId);
+
+public record ExternalMediaOptions(
+    long Width,
+    long Height,
+    long MaxSizeInBytes);
+
+[Union]
+public partial record ExternalFieldOptions
+{
+    public partial record Image(
+        string Name,
+        ExternalMediaOptions? Options);
+
+    public partial record Video(
+        string Name,
+        ExternalMediaOptions? Options);
+}

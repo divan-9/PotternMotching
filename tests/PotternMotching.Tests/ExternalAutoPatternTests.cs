@@ -464,4 +464,56 @@ public class ExternalAutoPatternTests
 
         Assert.IsType<MatchResult.Success>(result);
     }
+
+    [Fact]
+    public void NullableNestedPattern_NullCast_DoesNotThrowAndMatchesNull()
+    {
+        var value = new ExternalFieldOptions.Image(
+            Name: "hero",
+            Options: null);
+
+        var exception = Record.Exception(() =>
+        {
+            var pattern = new ExternalFieldOptionsPattern.Image(
+                Name: "hero",
+                Options: (ExternalMediaOptions?)null);
+
+            var result = pattern.Evaluate(value);
+            Assert.IsType<MatchResult.Success>(result);
+        });
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void NullableNestedPattern_ValuePatternExactNull_MatchesNull()
+    {
+        var value = new ExternalFieldOptions.Video(
+            Name: "clip",
+            Options: null);
+
+        var pattern = new ExternalFieldOptionsPattern.Video(
+            Name: "clip",
+            Options: ValuePattern.Exact<ExternalMediaOptions?>(null));
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void NullableNestedPattern_ValuePatternNull_MatchesNull()
+    {
+        var value = new ExternalFieldOptions.Video(
+            Name: "clip",
+            Options: null);
+
+        var pattern = new ExternalFieldOptionsPattern.Video(
+            Name: "clip",
+            Options: ValuePattern.Null<ExternalMediaOptions?>());
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
 }

@@ -51,4 +51,9 @@ public static class ValuePattern
     {
         return new ValuePattern<T>.Exact(value);
     }
+
+    public static ValuePattern<T>.Exact Null<T>()
+    {
+        return new ValuePattern<T>.Exact(default!);
+    }
 }

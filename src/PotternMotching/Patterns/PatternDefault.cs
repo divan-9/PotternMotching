@@ -1,5 +1,7 @@
 namespace PotternMotching.Patterns;
 
+using System.Diagnostics.CodeAnalysis;
+
 /// <summary>
 /// A wrapper type that provides optional pattern matching with implicit conversions.
 /// </summary>
@@ -50,6 +52,11 @@ public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>, IPatter
     public static IPattern<T> From(
         T value)
     {
+        if (IsNull(value))
+        {
+            return new PatternDefault<T, TPatternDefault>(ValuePattern.Exact(value));
+        }
+
         return new PatternDefault<T, TPatternDefault>(TPatternDefault.Create(value));
     }
 
@@ -73,7 +80,7 @@ public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>, IPatter
     public static implicit operator PatternDefault<T, TPatternDefault>(
         T value)
     {
-        return new PatternDefault<T, TPatternDefault>(TPatternDefault.Create(value));
+        return (PatternDefault<T, TPatternDefault>)From(value);
     }
 
     /// <summary>
@@ -84,5 +91,20 @@ public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>, IPatter
         TPatternDefault value)
     {
         return new PatternDefault<T, TPatternDefault>(value);
+    }
+
+    /// <summary>
+    /// Implicitly converts a value pattern to a pattern default.
+    /// </summary>
+    /// <param name="value">The value pattern to convert.</param>
+    public static implicit operator PatternDefault<T, TPatternDefault>(
+        ValuePattern<T> value)
+    {
+        return new PatternDefault<T, TPatternDefault>(value);
+    }
+
+    private static bool IsNull([NotNullWhen(false)] T value)
+    {
+        return value is null;
     }
 }

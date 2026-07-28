@@ -62,7 +62,7 @@ public class AutoPatternGeneratorNullablePropertyTests
     }
 
     [Fact]
-    public void NullLiteralAnalyzer_DoesNotWarnForExplicitNullableCast()
+    public void NullLiteralAnalyzer_WarnsForExplicitNullableCast_AndSuggestsValuePatternNull()
     {
         var diagnostics = SourceGeneratorTestHelper.RunAnalyzer("""
             using PotternMotching;
@@ -81,11 +81,12 @@ public class AutoPatternGeneratorNullablePropertyTests
             """,
             new PatternDefaultNullLiteralAnalyzer());
 
-        Assert.DoesNotContain(diagnostics, d => d.Id == "PM0011");
+        var diagnostic = Assert.Single(diagnostics, d => d.Id == "PM0011");
+        Assert.Contains("ValuePattern.Null<string?>()", diagnostic.GetMessage());
     }
 
     [Fact]
-    public void NullLiteralAnalyzer_WarnsForBareNullLiteral()
+    public void NullLiteralAnalyzer_WarnsForBareNullLiteral_AndSuggestsValuePatternNull()
     {
         var diagnostics = SourceGeneratorTestHelper.RunAnalyzer("""
             using PotternMotching;
@@ -104,6 +105,7 @@ public class AutoPatternGeneratorNullablePropertyTests
             """,
             new PatternDefaultNullLiteralAnalyzer());
 
-        Assert.Contains(diagnostics, d => d.Id == "PM0011");
+        var diagnostic = Assert.Single(diagnostics, d => d.Id == "PM0011");
+        Assert.Contains("ValuePattern.Null<string?>()", diagnostic.GetMessage());
     }
 }

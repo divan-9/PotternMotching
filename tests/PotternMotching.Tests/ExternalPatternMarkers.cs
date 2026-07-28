@@ -18,4 +18,6 @@ using PotternMotching.TestExternalModels;
 [AutoPatternFor(typeof(ExternalNullableElements))]
 [AutoPatternFor(typeof(ExternalNullableSet))]
 [AutoPatternFor(typeof(ExternalNullableScalar))]
+[AutoPatternFor(typeof(ExternalMediaOptions))]
+[AutoPatternFor(typeof(ExternalFieldOptions))]
 internal static class ExternalPatternMarkers;
