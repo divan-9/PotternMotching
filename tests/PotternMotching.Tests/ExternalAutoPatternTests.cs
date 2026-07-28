@@ -244,6 +244,26 @@ public class ExternalAutoPatternTests
     }
 
     [Fact]
+    public void ExternalUnion_RootTypedCollectionSpread_Works()
+    {
+        var value = new ExternalJobBoard(
+            Name: "Tech Corp",
+            Jobs:
+            [
+                new ExternalJob.Employed("Tech Corp", "Engineer"),
+                new ExternalJob.Unemployed(),
+            ]);
+
+        var pattern = new ExternalJobBoardPattern(
+            Name: "Tech Corp",
+            Jobs: [.. value.Jobs]);
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
     public void ExternalUnion_WithKeywordVariantNames_Works()
     {
         ExternalContentPattern pattern = new ExternalContent.String(Value: "hello");

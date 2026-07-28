@@ -10,6 +10,7 @@ using PotternMotching.TestExternalModels;
 [AutoPatternFor(typeof(ExternalJob))]
 [AutoPatternFor(typeof(ExternalJobApplication))]
 [AutoPatternFor(typeof(ExternalCompany))]
+[AutoPatternFor(typeof(ExternalJobBoard))]
 [AutoPatternFor(typeof(ExternalContent))]
 [AutoPatternFor(typeof(ExternalGenericBox<ExternalAddress>))]
 [AutoPatternFor(typeof(ExternalGenericEnvelope<ExternalAddress>))]

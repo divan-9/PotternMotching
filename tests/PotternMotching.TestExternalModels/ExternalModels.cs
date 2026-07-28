@@ -55,6 +55,10 @@ public record ExternalCompany(
     string Name,
     List<ExternalJob.Employed> Employees);
 
+public record ExternalJobBoard(
+    string Name,
+    IReadOnlyCollection<ExternalJob> Jobs);
+
 [Union]
 public partial record ExternalContent
 {
