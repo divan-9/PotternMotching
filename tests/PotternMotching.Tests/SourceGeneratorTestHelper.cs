@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
 using PotternMotching.SourceGen;
 
 internal static class SourceGeneratorTestHelper
@@ -32,7 +33,15 @@ internal static class SourceGeneratorTestHelper
         return new GeneratorTestResult(
             runResult.Diagnostics,
             outputCompilation.GetDiagnostics().AddRange(outputDiagnostics),
-            generatedSources);
+            generatedSources,
+            outputCompilation);
+    }
+
+    public static ImmutableArray<Diagnostic> RunAnalyzer(string source, DiagnosticAnalyzer analyzer, string assemblyName = "PotternMotching.SourceGen.Tests")
+    {
+        var generatorResult = RunGenerator(source, assemblyName);
+        var compilationWithAnalyzers = generatorResult.OutputCompilation.WithAnalyzers(ImmutableArray.Create(analyzer));
+        return compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync().GetAwaiter().GetResult().ToImmutableArray();
     }
 
     private static MetadataReference[] GetMetadataReferences()
@@ -54,4 +63,5 @@ internal static class SourceGeneratorTestHelper
 internal sealed record GeneratorTestResult(
     ImmutableArray<Diagnostic> GeneratorDiagnostics,
     ImmutableArray<Diagnostic> OutputDiagnostics,
-    ImmutableArray<GeneratedSourceResult> GeneratedSources);
+    ImmutableArray<GeneratedSourceResult> GeneratedSources,
+    Compilation OutputCompilation);

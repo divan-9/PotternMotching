@@ -60,6 +60,11 @@ public sealed class PatternDefaultNullLiteralAnalyzer : DiagnosticAnalyzer
             return;
         }
 
+        if (HasExplicitNullableCast(nullLiteral, context.SemanticModel))
+        {
+            return;
+        }
+
         var argumentName = parameter.Name;
         var nullableTypeName = candidateType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
@@ -68,6 +73,24 @@ public sealed class PatternDefaultNullLiteralAnalyzer : DiagnosticAnalyzer
             nullLiteral.GetLocation(),
             argumentName,
             nullableTypeName));
+    }
+
+    private static bool HasExplicitNullableCast(
+        LiteralExpressionSyntax nullLiteral,
+        SemanticModel semanticModel)
+    {
+        if (nullLiteral.Parent is not CastExpressionSyntax castExpression || castExpression.Expression != nullLiteral)
+        {
+            return false;
+        }
+
+        var castType = semanticModel.GetTypeInfo(castExpression.Type).Type;
+        if (castType is not null && IsNullableType(castType))
+        {
+            return true;
+        }
+
+        return castExpression.Type.ToString().EndsWith("?", StringComparison.Ordinal);
     }
 
     private static IParameterSymbol? ResolveParameter(ArgumentSyntax argument, SemanticModel semanticModel)

@@ -102,3 +102,7 @@ public record ExternalNullableElements(
 public record ExternalNullableSet(
     string Id,
     HashSet<string>? Flags);
+
+public record ExternalNullableScalar(
+    string Id,
+    string? RuleSetId);

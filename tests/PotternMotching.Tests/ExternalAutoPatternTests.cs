@@ -428,4 +428,20 @@ public class ExternalAutoPatternTests
 
         Assert.Null(exception);
     }
+
+    [Fact]
+    public void NullableScalar_NullLiteralInConstructor_MatchesNull()
+    {
+        var value = new ExternalNullableScalar(
+            Id: "42",
+            RuleSetId: null);
+
+        var pattern = new ExternalNullableScalarPattern(
+            Id: "42",
+            RuleSetId: (string?)null);
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
 }
