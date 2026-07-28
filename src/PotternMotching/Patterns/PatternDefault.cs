@@ -94,13 +94,23 @@ public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>, IPatter
     }
 
     /// <summary>
-    /// Implicitly converts a value pattern to a pattern default.
+    /// Implicitly converts an exact value pattern to a pattern default.
     /// </summary>
-    /// <param name="value">The value pattern to convert.</param>
+    /// <param name="value">The exact value pattern to convert.</param>
     public static implicit operator PatternDefault<T, TPatternDefault>(
-        ValuePattern<T> value)
+        ValuePattern<T>.Exact value)
     {
         return new PatternDefault<T, TPatternDefault>(value);
+    }
+
+    /// <summary>
+    /// Implicitly converts a null marker to a pattern default.
+    /// </summary>
+    /// <param name="value">The null marker to convert.</param>
+    public static implicit operator PatternDefault<T, TPatternDefault>(
+        ValuePattern.NullPatternToken value)
+    {
+        return new PatternDefault<T, TPatternDefault>(ValuePattern.Exact<T>(default!));
     }
 
     private static bool IsNull([NotNullWhen(false)] T value)

@@ -46,14 +46,16 @@ public partial record ValuePattern<T> : IPattern<T>, IPatternConstructor<T>
 
 public static class ValuePattern
 {
+    public readonly record struct NullPatternToken;
+
     public static ValuePattern<T>.Exact Exact<T>(
         T value)
     {
         return new ValuePattern<T>.Exact(value);
     }
 
-    public static ValuePattern<T>.Exact Null<T>()
+    public static NullPatternToken Null()
     {
-        return new ValuePattern<T>.Exact(default!);
+        return default;
     }
 }

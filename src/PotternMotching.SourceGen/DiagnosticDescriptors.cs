@@ -89,7 +89,7 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor NullLiteralRequiresNullableCast = new(
         id: "PM0011",
         title: "Use ValuePattern.Null for exact null matching",
-        messageFormat: "Use ValuePattern.Null<{1}>() for exact null matching of parameter '{0}'",
+        messageFormat: "Use ValuePattern.Null() for exact null matching of parameter '{0}'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);

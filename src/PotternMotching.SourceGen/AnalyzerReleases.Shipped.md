@@ -17,5 +17,5 @@ PM0007 | PotternMotching.SourceGen | Error | External target type could not be r
 PM0008 | PotternMotching.SourceGen | Error | External target type must be a class or record
 PM0009 | PotternMotching.SourceGen | Error | Generated pattern name collision
 PM0010 | PotternMotching.SourceGen | Error | Unsupported external target type
-PM0011 | PotternMotching.SourceGen | Warning | Use ValuePattern.Null for exact null matching
+PM0011 | PotternMotching.SourceGen | Warning | Use ValuePattern.Null() for exact null matching
 PM9999 | PotternMotching.SourceGen | Warning | Debug property type detected

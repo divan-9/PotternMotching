@@ -82,7 +82,7 @@ public class AutoPatternGeneratorNullablePropertyTests
             new PatternDefaultNullLiteralAnalyzer());
 
         var diagnostic = Assert.Single(diagnostics, d => d.Id == "PM0011");
-        Assert.Contains("ValuePattern.Null<string?>()", diagnostic.GetMessage());
+        Assert.Contains("ValuePattern.Null()", diagnostic.GetMessage());
     }
 
     [Fact]
@@ -106,6 +106,6 @@ public class AutoPatternGeneratorNullablePropertyTests
             new PatternDefaultNullLiteralAnalyzer());
 
         var diagnostic = Assert.Single(diagnostics, d => d.Id == "PM0011");
-        Assert.Contains("ValuePattern.Null<string?>()", diagnostic.GetMessage());
+        Assert.Contains("ValuePattern.Null()", diagnostic.GetMessage());
     }
 }

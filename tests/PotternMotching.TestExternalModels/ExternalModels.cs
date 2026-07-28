@@ -111,6 +111,10 @@ public record ExternalNullableScalar(
     string Id,
     string? RuleSetId);
 
+public record ExternalNullableUnknown(
+    string Id,
+    ExternalUnknown? Unknown);
+
 public record ExternalMediaOptions(
     long Width,
     long Height,

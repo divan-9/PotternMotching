@@ -466,6 +466,38 @@ public class ExternalAutoPatternTests
     }
 
     [Fact]
+    public void NullableUnknownValuePatternExactNull_MatchesNull()
+    {
+        var value = new ExternalNullableUnknown(
+            Id: "42",
+            Unknown: null);
+
+        var pattern = new ExternalNullableUnknownPattern(
+            Id: "42",
+            Unknown: ValuePattern.Exact<ExternalUnknown?>(null));
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void NullableUnknownValuePatternNull_MatchesNull()
+    {
+        var value = new ExternalNullableUnknown(
+            Id: "42",
+            Unknown: null);
+
+        var pattern = new ExternalNullableUnknownPattern(
+            Id: "42",
+            Unknown: ValuePattern.Null());
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
     public void NullableNestedPattern_NullCast_DoesNotThrowAndMatchesNull()
     {
         var value = new ExternalFieldOptions.Image(
@@ -510,7 +542,7 @@ public class ExternalAutoPatternTests
 
         var pattern = new ExternalFieldOptionsPattern.Video(
             Name: "clip",
-            Options: ValuePattern.Null<ExternalMediaOptions?>());
+            Options: ValuePattern.Null());
 
         var result = pattern.Evaluate(value);
 
