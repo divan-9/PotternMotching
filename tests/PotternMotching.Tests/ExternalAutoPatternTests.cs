@@ -63,6 +63,51 @@ public class ExternalAutoPatternTests
     }
 
     [Fact]
+    public void AssertPattern_AllowsNullableReferenceTarget()
+    {
+        ExternalAddress? value = new ExternalAddress("Seattle", "98101");
+
+        value.AssertPattern(new ExternalAddressPattern(City: "Seattle"));
+    }
+
+    [Fact]
+    public void AssertPattern_NullNullableReferenceTarget_ThrowsHelpfulFailure()
+    {
+        ExternalAddress? value = null;
+
+        var exception = Assert.Throws<AssertionFailedException>(() =>
+            value.AssertPattern(new ExternalAddressPattern(City: "Seattle")));
+
+        Assert.Contains("Actual value is null", exception.Message);
+    }
+
+    [Fact]
+    public void AssertNull_AllowsNullableReferenceTarget()
+    {
+        ExternalAddress? value = null;
+
+        value.AssertNull();
+    }
+
+    [Fact]
+    public void AssertNull_AllowsNullableValueTarget()
+    {
+        int? value = null;
+
+        value.AssertNull();
+    }
+
+    [Fact]
+    public void AssertNull_NonNullValue_ThrowsHelpfulFailure()
+    {
+        ExternalAddress? value = new ExternalAddress("Seattle", "98101");
+
+        var exception = Assert.Throws<AssertionFailedException>(() => value.AssertNull());
+
+        Assert.Contains("Expected null", exception.Message);
+    }
+
+    [Fact]
     public void ExternalRecord_NestedUnknownRecord_FallsBackToValueMatching()
     {
         var value = new ExternalWrappedUnknown(
@@ -491,6 +536,22 @@ public class ExternalAutoPatternTests
         var pattern = new ExternalNullableUnknownPattern(
             Id: "42",
             Unknown: ValuePattern.Null());
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void ValuePatternBetween_WorksInGeneratedPattern()
+    {
+        var value = new ExternalMeasurement(
+            Id: "42",
+            Value: 10.25);
+
+        var pattern = new ExternalMeasurementPattern(
+            Id: "42",
+            Value: ValuePattern.Between(10.0, 10.5));
 
         var result = pattern.Evaluate(value);
 

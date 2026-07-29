@@ -45,10 +45,15 @@ public static class Ossertions
     /// </code>
     /// </example>
     public static void AssertPattern<T>(
-        this T target,
+        this T? target,
         IPattern<T> pattern,
         [CallerArgumentExpression(nameof(target))] string? path = null)
     {
+        if (target is null)
+        {
+            throw new AssertionFailedException($"\n\t\tFAILURE: {(path ?? string.Empty)}: Actual value is null");
+        }
+
         var result = pattern.Evaluate(
             value: target,
             path: path ?? string.Empty);
@@ -93,6 +98,42 @@ public static class Ossertions
         [CallerArgumentExpression(nameof(target))] string? path = null)
     {
         target.AssertPattern(ValuePattern.Exact(example), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target reference value is null.
+    /// </summary>
+    /// <typeparam name="T">The reference type being asserted.</typeparam>
+    /// <param name="target">The actual value being asserted.</param>
+    /// <param name="path">The expression path of the target value.</param>
+    /// <exception cref="AssertionFailedException">Thrown when the target value is not null.</exception>
+    public static void AssertNull<T>(
+        this T? target,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+        where T : class
+    {
+        if (target is not null)
+        {
+            throw new AssertionFailedException($"\n\t\tFAILURE: {(path ?? string.Empty)}: Expected null but got {target}");
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the target nullable value is null.
+    /// </summary>
+    /// <typeparam name="T">The underlying value type being asserted.</typeparam>
+    /// <param name="target">The actual value being asserted.</param>
+    /// <param name="path">The expression path of the target value.</param>
+    /// <exception cref="AssertionFailedException">Thrown when the target value is not null.</exception>
+    public static void AssertNull<T>(
+        this T? target,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+        where T : struct
+    {
+        if (target is not null)
+        {
+            throw new AssertionFailedException($"\n\t\tFAILURE: {(path ?? string.Empty)}: Expected null but got {target}");
+        }
     }
 
     /// <summary>

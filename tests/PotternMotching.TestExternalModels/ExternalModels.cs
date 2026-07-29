@@ -115,6 +115,10 @@ public record ExternalNullableUnknown(
     string Id,
     ExternalUnknown? Unknown);
 
+public record ExternalMeasurement(
+    string Id,
+    double Value);
+
 public record ExternalMediaOptions(
     long Width,
     long Height,
