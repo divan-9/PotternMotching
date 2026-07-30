@@ -1,5 +1,7 @@
 namespace PotternMotching.Patterns;
 
+using System.Diagnostics.CodeAnalysis;
+
 /// <summary>
 /// A wrapper type that provides optional pattern matching with implicit conversions.
 /// </summary>
@@ -50,6 +52,11 @@ public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>, IPatter
     public static IPattern<T> From(
         T value)
     {
+        if (IsNull(value))
+        {
+            return new PatternDefault<T, TPatternDefault>(ValuePattern.Exact(value));
+        }
+
         return new PatternDefault<T, TPatternDefault>(TPatternDefault.Create(value));
     }
 
@@ -73,7 +80,7 @@ public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>, IPatter
     public static implicit operator PatternDefault<T, TPatternDefault>(
         T value)
     {
-        return new PatternDefault<T, TPatternDefault>(TPatternDefault.Create(value));
+        return (PatternDefault<T, TPatternDefault>)From(value);
     }
 
     /// <summary>
@@ -84,5 +91,30 @@ public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>, IPatter
         TPatternDefault value)
     {
         return new PatternDefault<T, TPatternDefault>(value);
+    }
+
+    /// <summary>
+    /// Implicitly converts an exact value pattern to a pattern default.
+    /// </summary>
+    /// <param name="value">The exact value pattern to convert.</param>
+    public static implicit operator PatternDefault<T, TPatternDefault>(
+        ValuePattern<T>.Exact value)
+    {
+        return new PatternDefault<T, TPatternDefault>(value);
+    }
+
+    /// <summary>
+    /// Implicitly converts a null marker to a pattern default.
+    /// </summary>
+    /// <param name="value">The null marker to convert.</param>
+    public static implicit operator PatternDefault<T, TPatternDefault>(
+        ValuePattern.NullPatternToken value)
+    {
+        return new PatternDefault<T, TPatternDefault>(ValuePattern.Exact<T>(default!));
+    }
+
+    private static bool IsNull([NotNullWhen(false)] T value)
+    {
+        return value is null;
     }
 }

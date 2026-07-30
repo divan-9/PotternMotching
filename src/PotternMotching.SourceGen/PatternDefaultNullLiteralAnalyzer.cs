@@ -61,13 +61,11 @@ public sealed class PatternDefaultNullLiteralAnalyzer : DiagnosticAnalyzer
         }
 
         var argumentName = parameter.Name;
-        var nullableTypeName = candidateType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
         context.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.NullLiteralRequiresNullableCast,
             nullLiteral.GetLocation(),
-            argumentName,
-            nullableTypeName));
+            argumentName));
     }
 
     private static IParameterSymbol? ResolveParameter(ArgumentSyntax argument, SemanticModel semanticModel)

@@ -147,4 +147,78 @@ public class ValuePatternTests
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Contains(".Property.Nested", failure.Reasons[0]);
     }
+
+    [Fact]
+    public void EvaluateLt_MatchingValue_ReturnsSuccess()
+    {
+        var matcher = ValuePattern.Lt(10.0);
+
+        var result = matcher.Evaluate(9.5);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void EvaluateGt_MatchingValue_ReturnsSuccess()
+    {
+        var matcher = ValuePattern.Gt(10.0);
+
+        var result = matcher.Evaluate(10.5);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void EvaluateBetween_MatchingValue_ReturnsSuccess()
+    {
+        var matcher = ValuePattern.Between(10.0, 11.0);
+
+        var result = matcher.Evaluate(10.5);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void EvaluateLt_Mismatch_ReturnsFailureWithCorrectMessage()
+    {
+        var matcher = ValuePattern.Lt(10.0);
+
+        var result = matcher.Evaluate(10.0, ".Value");
+
+        var failure = Assert.IsType<MatchResult.Failure>(result);
+        Assert.Single(failure.Reasons);
+        Assert.Contains(".Value", failure.Reasons[0]);
+        Assert.Contains("[ValuePattern.Lt]", failure.Reasons[0]);
+        Assert.Contains("10", failure.Reasons[0]);
+    }
+
+    [Fact]
+    public void EvaluateGt_Mismatch_ReturnsFailureWithCorrectMessage()
+    {
+        var matcher = ValuePattern.Gt(10.0);
+
+        var result = matcher.Evaluate(10.0, ".Value");
+
+        var failure = Assert.IsType<MatchResult.Failure>(result);
+        Assert.Single(failure.Reasons);
+        Assert.Contains(".Value", failure.Reasons[0]);
+        Assert.Contains("[ValuePattern.Gt]", failure.Reasons[0]);
+        Assert.Contains("10", failure.Reasons[0]);
+    }
+
+    [Fact]
+    public void EvaluateBetween_Mismatch_ReturnsFailureWithCorrectMessage()
+    {
+        var matcher = ValuePattern.Between(10.0, 11.0);
+
+        var result = matcher.Evaluate(11.5, ".Value");
+
+        var failure = Assert.IsType<MatchResult.Failure>(result);
+        Assert.Single(failure.Reasons);
+        Assert.Contains(".Value", failure.Reasons[0]);
+        Assert.Contains("[ValuePattern.Between]", failure.Reasons[0]);
+        Assert.Contains("10", failure.Reasons[0]);
+        Assert.Contains("11", failure.Reasons[0]);
+        Assert.Contains("11.5", failure.Reasons[0]);
+    }
 }

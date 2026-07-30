@@ -64,8 +64,8 @@ internal static class DiagnosticDescriptors
 
     public static readonly DiagnosticDescriptor ExternalTargetMustBeClassOrRecord = new(
         id: "PM0008",
-        title: "External target type must be a class or record",
-        messageFormat: "Target type '{0}' must be a class or record to use [AutoPatternFor]",
+        title: "External target type must be a class, struct, or record",
+        messageFormat: "Target type '{0}' must be a class, struct, or record to use [AutoPatternFor]",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -88,10 +88,18 @@ internal static class DiagnosticDescriptors
 
     public static readonly DiagnosticDescriptor NullLiteralRequiresNullableCast = new(
         id: "PM0011",
-        title: "Null literal requires nullable cast",
-        messageFormat: "Null literal for parameter '{0}' requires a cast to nullable type '{1}'",
+        title: "Use ValuePattern.Null for exact null matching",
+        messageFormat: "Use ValuePattern.Null() for exact null matching of parameter '{0}'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor GeneratedPatternParameterNameCollision = new(
+        id: "PM0012",
+        title: "Generated pattern parameter name collision",
+        messageFormat: "Generated pattern parameter name '{0}' conflicts between target properties on type '{1}'",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor DebugPropertyType = new(

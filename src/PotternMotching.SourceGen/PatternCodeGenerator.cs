@@ -23,6 +23,7 @@ internal static class PatternCodeGenerator
         var patternName = generatedPatternName ?? $"{typeName}Pattern";
         var namespaceName = generatedNamespace ?? typeSymbol.ContainingNamespace.ToDisplayString();
         var isGlobalNamespace = string.IsNullOrEmpty(namespaceName);
+        var accessibility = GetGeneratedTypeAccessibility(typeSymbol);
 
         var sb = new StringBuilder();
 
@@ -43,7 +44,7 @@ internal static class PatternCodeGenerator
         }
 
         // Class declaration
-        sb.Append($"public sealed record {patternName}(");
+        sb.Append($"{accessibility} sealed record {patternName}(");
 
         // Parameters
         if (analysis.Properties.Length > 0)
@@ -53,7 +54,7 @@ internal static class PatternCodeGenerator
             {
                 var property = analysis.Properties[i];
                 var wrapperType = GetPatternWrapperType(property);
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
+                var propertyName = GetPatternPropertyName(property);
 
                 sb.Append($"    {wrapperType} {propertyName} = default");
 
@@ -89,8 +90,8 @@ internal static class PatternCodeGenerator
             for (int i = 0; i < analysis.Properties.Length; i++)
             {
                 var property = analysis.Properties[i];
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
-                var evaluation = GetPropertyEvaluation(property, propertyName);
+                var patternPropertyName = GetPatternPropertyName(property);
+                var evaluation = GetPropertyEvaluation(property, patternPropertyName);
 
                 sb.Append($"            {evaluation}");
 
@@ -159,6 +160,51 @@ internal static class PatternCodeGenerator
         return $"PatternDefault<{property.ElementType}, ValuePattern<{property.ElementType}>>";
     }
 
+    private static bool IsNullableReferenceType(PropertyAnalysisResult property)
+    {
+        return property.PropertyTypeSymbol?.IsReferenceType == true &&
+            property.PropertyTypeSymbol.NullableAnnotation == NullableAnnotation.Annotated;
+    }
+
+    private static bool IsNullableValueType(PropertyAnalysisResult property)
+    {
+        return property.PropertyTypeSymbol is INamedTypeSymbol namedType &&
+            namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
+    }
+
+    private static string GetNullableValueUnderlyingType(PropertyAnalysisResult property)
+    {
+        return property.NestedType?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ??
+            property.PropertyType.TrimEnd('?');
+    }
+
+    private static string GetNonNullableReferenceType(PropertyAnalysisResult property)
+    {
+        return property.PropertyType.EndsWith("?", StringComparison.Ordinal)
+            ? property.PropertyType.Substring(0, property.PropertyType.Length - 1)
+            : property.PropertyType;
+    }
+
+    private static string GetDictionaryPatternDefaultType(PropertyAnalysisResult property)
+    {
+        return IsReadOnlyDictionaryProperty(property)
+            ? "ReadOnlyDictionaryPatternDefault"
+            : "DictionaryPatternDefault";
+    }
+
+    private static bool IsReadOnlyDictionaryProperty(PropertyAnalysisResult property)
+    {
+        return property.PropertyTypeSymbol is INamedTypeSymbol namedType &&
+            IsOrImplementsGeneric(namedType, "System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>") &&
+            !IsOrImplementsGeneric(namedType, "System.Collections.Generic.IDictionary<TKey, TValue>");
+    }
+
+    private static bool IsOrImplementsGeneric(INamedTypeSymbol namedType, string originalDefinition)
+    {
+        return namedType.OriginalDefinition.ToDisplayString() == originalDefinition ||
+            namedType.AllInterfaces.Any(i => i.OriginalDefinition.ToDisplayString() == originalDefinition);
+    }
+
     private static string GetDictionaryValueMatcherType(PropertyAnalysisResult property)
     {
         // For dictionary values, determine the appropriate pattern type
@@ -211,8 +257,16 @@ internal static class PatternCodeGenerator
                 $"SequencePatternDefault<{property.ElementType}, {GetDefaultItemMatcherType(property)}>",
 
             PatternWrapperKind.Dictionary =>
-                // Use DictionaryPatternDefault for proper dictionary matching
-                $"DictionaryPatternDefault<{property.KeyType}, {property.ValueType}, {GetDictionaryValueMatcherType(property)}>",
+                // Use DictionaryPatternDefault or ReadOnlyDictionaryPatternDefault for proper dictionary matching.
+                $"{GetDictionaryPatternDefaultType(property)}<{property.KeyType}, {property.ValueType}, {GetDictionaryValueMatcherType(property)}>",
+
+            PatternWrapperKind.Nested when IsNullableValueType(property) =>
+                // Nullable nested value-type properties use an adapter so non-null nested patterns can match nullable values.
+                $"NullableValuePatternDefault<{GetNullableValueUnderlyingType(property)}, {property.NestedPatternType!}>",
+
+            PatternWrapperKind.Nested when IsNullableReferenceType(property) =>
+                // Nullable nested properties use an adapter so non-null nested patterns can match nullable values.
+                $"NullablePatternDefault<{GetNonNullableReferenceType(property)}, {property.NestedPatternType!}>",
 
             PatternWrapperKind.Nested =>
                 // Wrap nested patterns in PatternDefault for consistency and null matching support
@@ -223,33 +277,64 @@ internal static class PatternCodeGenerator
         };
     }
 
-    private static string GetPropertyEvaluation(PropertyAnalysisResult property, string propertyName)
+    private static string GetPropertyEvaluation(PropertyAnalysisResult property, string patternPropertyName)
     {
-        var pathExpression = $"$\"{{path}}.{propertyName}\"";
+        var sourcePropertyName = GetSourcePropertyName(property);
+        var pathExpression = $"$\"{{path}}.{property.PropertyName}\"";
 
         return property.WrapperKind switch
         {
             PatternWrapperKind.Value =>
-                $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
+                $"this.{patternPropertyName}.Evaluate(value.{sourcePropertyName}, {pathExpression})",
 
             PatternWrapperKind.Set =>
                 // Use ! — source property may be nullable (HashSet<T>?) but runtime handles null gracefully.
-                $"this.{propertyName}.Evaluate(value.{propertyName}!, {pathExpression})",
+                $"this.{patternPropertyName}.Evaluate(value.{sourcePropertyName}!, {pathExpression})",
 
             PatternWrapperKind.Sequence =>
                 // Use ! — source property may be nullable (List<T>?, T[]?) but runtime handles null gracefully.
-                $"this.{propertyName}.Evaluate(value.{propertyName}!, {pathExpression})",
+                $"this.{patternPropertyName}.Evaluate(value.{sourcePropertyName}!, {pathExpression})",
 
             PatternWrapperKind.Dictionary =>
                 // Use ! — source property may be nullable (Dictionary<K,V>?) but runtime handles null gracefully.
-                $"this.{propertyName}.Evaluate(value.{propertyName}!, {pathExpression})",
+                $"this.{patternPropertyName}.Evaluate(value.{sourcePropertyName}!, {pathExpression})",
 
             PatternWrapperKind.Nested =>
                 // Nested patterns now wrapped in PatternDefault, no null check needed
-                $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
+                $"this.{patternPropertyName}.Evaluate(value.{sourcePropertyName}, {pathExpression})",
 
             _ => throw new InvalidOperationException($"Unknown wrapper kind: {property.WrapperKind}")
         };
+    }
+
+    private static string GetPatternPropertyName(PropertyAnalysisResult property)
+    {
+        return EscapeIdentifierIfNeeded(CapitalizeFirstLetter(property.PropertyName));
+    }
+
+    private static string GetGeneratedTypeAccessibility(INamedTypeSymbol typeSymbol)
+    {
+        return IsEffectivelyPublic(typeSymbol)
+            ? "public"
+            : "internal";
+    }
+
+    private static bool IsEffectivelyPublic(INamedTypeSymbol typeSymbol)
+    {
+        for (INamedTypeSymbol? current = typeSymbol; current is not null; current = current.ContainingType)
+        {
+            if (current.DeclaredAccessibility != Accessibility.Public)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string GetSourcePropertyName(PropertyAnalysisResult property)
+    {
+        return EscapeIdentifierIfNeeded(property.PropertyName);
     }
 
     private static string CapitalizeFirstLetter(string str)
@@ -310,10 +395,11 @@ internal static class PatternCodeGenerator
             for (int i = 0; i < properties.Length; i++)
             {
                 var property = properties[i];
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
-                var conversion = GetPropertyConversion(property, propertyName);
+                var patternPropertyName = GetPatternPropertyName(property);
+                var sourcePropertyName = GetSourcePropertyName(property);
+                var conversion = GetPropertyConversion(property, sourcePropertyName);
 
-                sb.Append($"            {propertyName}: {conversion}");
+                sb.Append($"            {patternPropertyName}: {conversion}");
 
                 if (i < properties.Length - 1)
                 {
@@ -419,7 +505,7 @@ internal static class PatternCodeGenerator
     {
         var valueMatcherType = GetDictionaryValueMatcherType(property);
 
-        var fullType = $"DictionaryPatternDefault<{property.KeyType}, {property.ValueType}, {valueMatcherType}>";
+        var fullType = $"{GetDictionaryPatternDefaultType(property)}<{property.KeyType}, {property.ValueType}, {valueMatcherType}>";
 
         // Null-guard: when the source property is nullable (e.g. Dictionary<K,V>?), pass null → default.
         return $"value.{propertyName} != null ? new {fullType}({fullType}.From(value.{propertyName})) : default";
@@ -444,10 +530,11 @@ internal static class PatternCodeGenerator
             for (int i = 0; i < variant.Properties.Length; i++)
             {
                 var property = variant.Properties[i];
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
-                var conversion = GetPropertyConversion(property, propertyName);
+                var patternPropertyName = GetPatternPropertyName(property);
+                var sourcePropertyName = GetSourcePropertyName(property);
+                var conversion = GetPropertyConversion(property, sourcePropertyName);
 
-                sb.Append($"                {propertyName}: {conversion}");
+                sb.Append($"                {patternPropertyName}: {conversion}");
 
                 if (i < variant.Properties.Length - 1)
                 {
@@ -478,6 +565,7 @@ internal static class PatternCodeGenerator
         var patternName = generatedPatternName ?? $"{typeName}Pattern";
         var namespaceName = generatedNamespace ?? typeSymbol.ContainingNamespace.ToDisplayString();
         var isGlobalNamespace = string.IsNullOrEmpty(namespaceName);
+        var accessibility = GetGeneratedTypeAccessibility(typeSymbol);
 
         var sb = new StringBuilder();
 
@@ -501,7 +589,7 @@ internal static class PatternCodeGenerator
         // Union pattern class declaration - abstract base with no parameters
         var unionFullType = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        sb.AppendLine($"public abstract partial record {patternName} : IPattern<{unionFullType}>, IPatternConstructor<{unionFullType}>");
+        sb.AppendLine($"{accessibility} abstract partial record {patternName} : IPattern<{unionFullType}>, IPatternConstructor<{unionFullType}>");
         sb.AppendLine("{");
         sb.AppendLine($"    private {patternName}() {{ }}");
         sb.AppendLine();
@@ -547,6 +635,14 @@ internal static class PatternCodeGenerator
         sb.AppendLine("    }");
         sb.AppendLine();
 
+        // Add implicit conversion operator from union root type to base pattern
+        sb.AppendLine($"    public static implicit operator {patternName}(");
+        sb.AppendLine($"        {unionFullType} value)");
+        sb.AppendLine("    {");
+        sb.AppendLine($"        return ({patternName})From(value);");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+
         // Add implicit conversion operators from each variant type to base pattern
         foreach (var variant in analysis.Variants)
         {
@@ -563,7 +659,7 @@ internal static class PatternCodeGenerator
         foreach (var variant in analysis.Variants)
         {
             sb.AppendLine();
-            GenerateVariantPattern(sb, variant, typeSymbol, analysis.Variants);
+            GenerateVariantPattern(sb, variant, typeSymbol, patternName, analysis.Variants);
         }
 
         sb.AppendLine("}");
@@ -630,12 +726,12 @@ internal static class PatternCodeGenerator
         StringBuilder sb,
         VariantAnalysisResult variant,
         INamedTypeSymbol unionSymbol,
+        string patternName,
         ImmutableArray<VariantAnalysisResult> allVariants)
     {
         var variantName = variant.VariantName;
         var variantFullType = $"{unionSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.{variantName}";
         var unionFullType = unionSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var patternName = $"{unionSymbol.Name}Pattern";
 
         // Variant pattern class declaration - sealed, inherits from parent, implements IPattern<Variant>
         sb.Append($"    public sealed partial record {variantName}(");
@@ -648,7 +744,7 @@ internal static class PatternCodeGenerator
             {
                 var property = variant.Properties[i];
                 var wrapperType = GetPatternWrapperType(property);
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
+                var propertyName = GetPatternPropertyName(property);
 
                 sb.Append($"        {wrapperType} {propertyName} = default");
 
@@ -684,8 +780,8 @@ internal static class PatternCodeGenerator
             for (int i = 0; i < variant.Properties.Length; i++)
             {
                 var property = variant.Properties[i];
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
-                var evaluation = GetPropertyEvaluation(property, propertyName);
+                var patternPropertyName = GetPatternPropertyName(property);
+                var evaluation = GetPropertyEvaluation(property, patternPropertyName);
 
                 sb.Append($"                {evaluation}");
 

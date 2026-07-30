@@ -96,7 +96,7 @@ internal static class TypeAnalyzer
     {
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
 
-        if (typeSymbol.TypeKind != TypeKind.Class)
+        if (typeSymbol.TypeKind is not (TypeKind.Class or TypeKind.Struct))
         {
             diagnostics.Add(Diagnostic.Create(
                 DiagnosticDescriptors.ExternalTargetMustBeClassOrRecord,
@@ -110,7 +110,8 @@ internal static class TypeAnalyzer
                 diagnostics.ToImmutable());
         }
 
-        if (IsUnsupportedExternalTarget(typeSymbol))
+        if (IsUnsupportedExternalTarget(typeSymbol) ||
+            IsLessAccessibleThanInternal(typeSymbol))
         {
             diagnostics.Add(Diagnostic.Create(
                 DiagnosticDescriptors.UnsupportedExternalTarget,
@@ -122,6 +123,11 @@ internal static class TypeAnalyzer
                 false,
                 ImmutableArray<PropertyAnalysisResult>.Empty,
                 diagnostics.ToImmutable());
+        }
+
+        if (typeSymbol.TypeKind == TypeKind.Struct)
+        {
+            return AnalyzeStructType(typeSymbol, diagnostics, knownPatternTypes);
         }
 
         if (IsUnionType(typeSymbol))
@@ -174,14 +180,42 @@ internal static class TypeAnalyzer
             properties.Add(AnalyzeProperty(parameter, diagnostics, enableDebug, knownPatternTypes));
         }
 
+        var analyzedProperties = properties.ToImmutable();
+        var hasParameterNameCollision = AddPatternParameterNameCollisionDiagnostics(
+            typeSymbol: typeSymbol,
+            properties: analyzedProperties,
+            diagnostics: diagnostics);
+
         return new TypeAnalysisResult(
             typeSymbol,
-            true,
-            properties.ToImmutable(),
+            !hasParameterNameCollision,
+            analyzedProperties,
             diagnostics.ToImmutable());
     }
 
     private static TypeAnalysisResult AnalyzeClassLikeType(
+        INamedTypeSymbol typeSymbol,
+        ImmutableArray<Diagnostic>.Builder diagnostics,
+        ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes)
+    {
+        return AnalyzePublicReadablePropertiesType(
+            typeSymbol: typeSymbol,
+            diagnostics: diagnostics,
+            knownPatternTypes: knownPatternTypes);
+    }
+
+    private static TypeAnalysisResult AnalyzeStructType(
+        INamedTypeSymbol typeSymbol,
+        ImmutableArray<Diagnostic>.Builder diagnostics,
+        ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes)
+    {
+        return AnalyzePublicReadablePropertiesType(
+            typeSymbol: typeSymbol,
+            diagnostics: diagnostics,
+            knownPatternTypes: knownPatternTypes);
+    }
+
+    private static TypeAnalysisResult AnalyzePublicReadablePropertiesType(
         INamedTypeSymbol typeSymbol,
         ImmutableArray<Diagnostic>.Builder diagnostics,
         ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes)
@@ -194,10 +228,16 @@ internal static class TypeAnalyzer
             properties.Add(AnalyzeProperty(propertySymbol, diagnostics, enableDebug, knownPatternTypes));
         }
 
+        var analyzedProperties = properties.ToImmutable();
+        var hasParameterNameCollision = AddPatternParameterNameCollisionDiagnostics(
+            typeSymbol: typeSymbol,
+            properties: analyzedProperties,
+            diagnostics: diagnostics);
+
         return new TypeAnalysisResult(
             typeSymbol,
-            true,
-            properties.ToImmutable(),
+            !hasParameterNameCollision,
+            analyzedProperties,
             diagnostics.ToImmutable());
     }
 
@@ -225,14 +265,20 @@ internal static class TypeAnalyzer
         }
 
         var variants = ImmutableArray.CreateBuilder<VariantAnalysisResult>();
+        var hasParameterNameCollision = false;
         foreach (var variantType in variantTypes)
         {
-            variants.Add(AnalyzeVariant(variantType, diagnostics, knownPatternTypes));
+            var variant = AnalyzeVariant(variantType, diagnostics, knownPatternTypes);
+            variants.Add(variant);
+            hasParameterNameCollision |= AddPatternParameterNameCollisionDiagnostics(
+                typeSymbol: variantType,
+                properties: variant.Properties,
+                diagnostics: diagnostics);
         }
 
         return new TypeAnalysisResult(
             typeSymbol,
-            true,
+            !hasParameterNameCollision,
             ImmutableArray<PropertyAnalysisResult>.Empty,
             diagnostics.ToImmutable(),
             isUnion: true,
@@ -367,48 +413,72 @@ internal static class TypeAnalyzer
                 elementType as INamedTypeSymbol);
         }
 
+        if (propertyType is INamedTypeSymbol nullableValueType &&
+            nullableValueType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
+        {
+            var underlyingType = nullableValueType.TypeArguments[0];
+            var (isNested, nestedType, nestedPatternType) = CheckForNestedPattern(underlyingType, knownPatternTypes);
+
+            if (isNested)
+            {
+                return new PropertyAnalysisResult(
+                    propertyName,
+                    propertyTypeString,
+                    PatternWrapperKind.Nested,
+                    null,
+                    null,
+                    null,
+                    false,
+                    nestedType,
+                    nestedPatternType,
+                    nullableValueType);
+            }
+        }
+
         if (propertyType is INamedTypeSymbol namedType && namedType.TypeArguments.Length > 0)
         {
             var typeFullName = namedType.OriginalDefinition.ToDisplayString();
 
             if (typeFullName == "System.Collections.Generic.HashSet<T>")
             {
-                var elementType = namedType.TypeArguments[0];
-                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(elementType, knownPatternTypes);
+                var setElementType = namedType.TypeArguments[0];
+                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(setElementType, knownPatternTypes);
 
                 return new PropertyAnalysisResult(
                     propertyName,
                     propertyTypeString,
                     PatternWrapperKind.Set,
-                    GetTypeArgumentDisplayString(elementType),
+                    GetTypeArgumentDisplayString(setElementType),
                     null,
                     null,
                     requiresPattern,
                     nestedTypeSymbol,
                     nestedPatternType,
-                    elementType as INamedTypeSymbol);
+                    setElementType as INamedTypeSymbol);
             }
 
             if (ImplementsInterface(namedType, "System.Collections.Generic.ISet`1"))
             {
-                var elementType = namedType.TypeArguments[0];
-                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(elementType, knownPatternTypes);
+                var setElementType = namedType.TypeArguments[0];
+                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(setElementType, knownPatternTypes);
 
                 return new PropertyAnalysisResult(
                     propertyName,
                     propertyTypeString,
                     PatternWrapperKind.Set,
-                    GetTypeArgumentDisplayString(elementType),
+                    GetTypeArgumentDisplayString(setElementType),
                     null,
                     null,
                     requiresPattern,
                     nestedTypeSymbol,
                     nestedPatternType,
-                    elementType as INamedTypeSymbol);
+                    setElementType as INamedTypeSymbol);
             }
 
             if (typeFullName == "System.Collections.Generic.Dictionary<TKey, TValue>" ||
-                ImplementsInterface(namedType, "System.Collections.Generic.IDictionary`2"))
+                typeFullName == "System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>" ||
+                ImplementsInterface(namedType, "System.Collections.Generic.IDictionary`2") ||
+                ImplementsInterface(namedType, "System.Collections.Generic.IReadOnlyDictionary`2"))
             {
                 if (namedType.TypeArguments.Length >= 2)
                 {
@@ -420,26 +490,27 @@ internal static class TypeAnalyzer
                         PatternWrapperKind.Dictionary,
                         null,
                         GetTypeArgumentDisplayString(keyType),
-                        GetTypeArgumentDisplayString(valueType));
+                        GetTypeArgumentDisplayString(valueType),
+                        propertyTypeSymbol: namedType);
                 }
             }
 
-            if (ImplementsInterface(namedType, "System.Collections.Generic.IEnumerable`1"))
+            if (TryGetEnumerableElementType(namedType, out var enumerableElementType) &&
+                enumerableElementType is not null)
             {
-                var elementType = namedType.TypeArguments[0];
-                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(elementType, knownPatternTypes);
+                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(enumerableElementType, knownPatternTypes);
 
                 return new PropertyAnalysisResult(
                     propertyName,
                     propertyTypeString,
                     PatternWrapperKind.Sequence,
-                    GetTypeArgumentDisplayString(elementType),
+                    GetTypeArgumentDisplayString(enumerableElementType),
                     null,
                     null,
                     requiresPattern,
                     nestedTypeSymbol,
                     nestedPatternType,
-                    elementType as INamedTypeSymbol);
+                    enumerableElementType as INamedTypeSymbol);
             }
         }
 
@@ -467,6 +538,61 @@ internal static class TypeAnalyzer
             propertyTypeString,
             PatternWrapperKind.Value,
             propertyTypeSymbol: propertyType);
+    }
+
+    private static bool AddPatternParameterNameCollisionDiagnostics(
+        INamedTypeSymbol typeSymbol,
+        ImmutableArray<PropertyAnalysisResult> properties,
+        ImmutableArray<Diagnostic>.Builder diagnostics)
+    {
+        var groups = properties
+            .GroupBy(property => GetPatternParameterName(property.PropertyName), StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .ToList();
+
+        foreach (var group in groups)
+        {
+            diagnostics.Add(Diagnostic.Create(
+                DiagnosticDescriptors.GeneratedPatternParameterNameCollision,
+                typeSymbol.Locations.FirstOrDefault(),
+                group.Key,
+                typeSymbol.ToDisplayString()));
+        }
+
+        return groups.Count > 0;
+    }
+
+    private static string GetPatternParameterName(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+        {
+            return propertyName;
+        }
+
+        return char.ToUpper(propertyName[0]) + propertyName.Substring(1);
+    }
+
+    private static bool TryGetEnumerableElementType(
+        INamedTypeSymbol type,
+        out ITypeSymbol? elementType)
+    {
+        if (type.OriginalDefinition.ToDisplayString() == "System.Collections.Generic.IEnumerable<T>")
+        {
+            elementType = type.TypeArguments[0];
+            return true;
+        }
+
+        var enumerableInterface = type.AllInterfaces.FirstOrDefault(i =>
+            i.OriginalDefinition.ToDisplayString() == "System.Collections.Generic.IEnumerable<T>");
+
+        if (enumerableInterface is null)
+        {
+            elementType = null;
+            return false;
+        }
+
+        elementType = enumerableInterface.TypeArguments[0];
+        return true;
     }
 
     private static bool ImplementsInterface(INamedTypeSymbol type, string interfaceName)
@@ -519,8 +645,24 @@ internal static class TypeAnalyzer
 
     private static bool IsUnsupportedExternalTarget(INamedTypeSymbol typeSymbol)
     {
-        return typeSymbol.IsUnboundGenericType ||
+        return typeSymbol.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T ||
+               typeSymbol.IsUnboundGenericType ||
                typeSymbol.TypeArguments.Any(ContainsOpenTypeComponent);
+    }
+
+    private static bool IsLessAccessibleThanInternal(INamedTypeSymbol typeSymbol)
+    {
+        for (INamedTypeSymbol? current = typeSymbol; current is not null; current = current.ContainingType)
+        {
+            if (current.DeclaredAccessibility is Accessibility.Private or
+                Accessibility.Protected or
+                Accessibility.ProtectedAndInternal)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool ContainsOpenTypeComponent(ITypeSymbol typeSymbol)

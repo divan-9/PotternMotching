@@ -3,7 +3,7 @@ namespace PotternMotching.SourceGen.Models;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
-public sealed class TypeAnalysisResult
+internal sealed class TypeAnalysisResult
 {
     public TypeAnalysisResult(
         INamedTypeSymbol typeSymbol,

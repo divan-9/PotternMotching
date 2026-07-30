@@ -2,7 +2,7 @@ namespace PotternMotching.SourceGen.Models;
 
 using Microsoft.CodeAnalysis;
 
-public sealed class PropertyAnalysisResult
+internal sealed class PropertyAnalysisResult
 {
     public PropertyAnalysisResult(
         string propertyName,
