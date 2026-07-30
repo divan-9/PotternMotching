@@ -53,7 +53,7 @@ internal static class PatternCodeGenerator
             {
                 var property = analysis.Properties[i];
                 var wrapperType = GetPatternWrapperType(property);
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
+                var propertyName = GetPatternPropertyName(property);
 
                 sb.Append($"    {wrapperType} {propertyName} = default");
 
@@ -89,8 +89,8 @@ internal static class PatternCodeGenerator
             for (int i = 0; i < analysis.Properties.Length; i++)
             {
                 var property = analysis.Properties[i];
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
-                var evaluation = GetPropertyEvaluation(property, propertyName);
+                var patternPropertyName = GetPatternPropertyName(property);
+                var evaluation = GetPropertyEvaluation(property, patternPropertyName);
 
                 sb.Append($"            {evaluation}");
 
@@ -223,33 +223,44 @@ internal static class PatternCodeGenerator
         };
     }
 
-    private static string GetPropertyEvaluation(PropertyAnalysisResult property, string propertyName)
+    private static string GetPropertyEvaluation(PropertyAnalysisResult property, string patternPropertyName)
     {
-        var pathExpression = $"$\"{{path}}.{propertyName}\"";
+        var sourcePropertyName = GetSourcePropertyName(property);
+        var pathExpression = $"$\"{{path}}.{property.PropertyName}\"";
 
         return property.WrapperKind switch
         {
             PatternWrapperKind.Value =>
-                $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
+                $"this.{patternPropertyName}.Evaluate(value.{sourcePropertyName}, {pathExpression})",
 
             PatternWrapperKind.Set =>
                 // Use ! — source property may be nullable (HashSet<T>?) but runtime handles null gracefully.
-                $"this.{propertyName}.Evaluate(value.{propertyName}!, {pathExpression})",
+                $"this.{patternPropertyName}.Evaluate(value.{sourcePropertyName}!, {pathExpression})",
 
             PatternWrapperKind.Sequence =>
                 // Use ! — source property may be nullable (List<T>?, T[]?) but runtime handles null gracefully.
-                $"this.{propertyName}.Evaluate(value.{propertyName}!, {pathExpression})",
+                $"this.{patternPropertyName}.Evaluate(value.{sourcePropertyName}!, {pathExpression})",
 
             PatternWrapperKind.Dictionary =>
                 // Use ! — source property may be nullable (Dictionary<K,V>?) but runtime handles null gracefully.
-                $"this.{propertyName}.Evaluate(value.{propertyName}!, {pathExpression})",
+                $"this.{patternPropertyName}.Evaluate(value.{sourcePropertyName}!, {pathExpression})",
 
             PatternWrapperKind.Nested =>
                 // Nested patterns now wrapped in PatternDefault, no null check needed
-                $"this.{propertyName}.Evaluate(value.{propertyName}, {pathExpression})",
+                $"this.{patternPropertyName}.Evaluate(value.{sourcePropertyName}, {pathExpression})",
 
             _ => throw new InvalidOperationException($"Unknown wrapper kind: {property.WrapperKind}")
         };
+    }
+
+    private static string GetPatternPropertyName(PropertyAnalysisResult property)
+    {
+        return EscapeIdentifierIfNeeded(CapitalizeFirstLetter(property.PropertyName));
+    }
+
+    private static string GetSourcePropertyName(PropertyAnalysisResult property)
+    {
+        return EscapeIdentifierIfNeeded(property.PropertyName);
     }
 
     private static string CapitalizeFirstLetter(string str)
@@ -310,10 +321,11 @@ internal static class PatternCodeGenerator
             for (int i = 0; i < properties.Length; i++)
             {
                 var property = properties[i];
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
-                var conversion = GetPropertyConversion(property, propertyName);
+                var patternPropertyName = GetPatternPropertyName(property);
+                var sourcePropertyName = GetSourcePropertyName(property);
+                var conversion = GetPropertyConversion(property, sourcePropertyName);
 
-                sb.Append($"            {propertyName}: {conversion}");
+                sb.Append($"            {patternPropertyName}: {conversion}");
 
                 if (i < properties.Length - 1)
                 {
@@ -444,10 +456,11 @@ internal static class PatternCodeGenerator
             for (int i = 0; i < variant.Properties.Length; i++)
             {
                 var property = variant.Properties[i];
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
-                var conversion = GetPropertyConversion(property, propertyName);
+                var patternPropertyName = GetPatternPropertyName(property);
+                var sourcePropertyName = GetSourcePropertyName(property);
+                var conversion = GetPropertyConversion(property, sourcePropertyName);
 
-                sb.Append($"                {propertyName}: {conversion}");
+                sb.Append($"                {patternPropertyName}: {conversion}");
 
                 if (i < variant.Properties.Length - 1)
                 {
@@ -656,7 +669,7 @@ internal static class PatternCodeGenerator
             {
                 var property = variant.Properties[i];
                 var wrapperType = GetPatternWrapperType(property);
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
+                var propertyName = GetPatternPropertyName(property);
 
                 sb.Append($"        {wrapperType} {propertyName} = default");
 
@@ -692,8 +705,8 @@ internal static class PatternCodeGenerator
             for (int i = 0; i < variant.Properties.Length; i++)
             {
                 var property = variant.Properties[i];
-                var propertyName = CapitalizeFirstLetter(property.PropertyName);
-                var evaluation = GetPropertyEvaluation(property, propertyName);
+                var patternPropertyName = GetPatternPropertyName(property);
+                var evaluation = GetPropertyEvaluation(property, patternPropertyName);
 
                 sb.Append($"                {evaluation}");
 
