@@ -6,7 +6,9 @@ using Dunet;
 /// Pattern for matching dictionaries.
 /// </summary>
 [Union]
-public partial record DictionaryPattern<TKey, TValue> : IPattern<IDictionary<TKey, TValue>>
+public partial record DictionaryPattern<TKey, TValue> :
+    IPattern<IDictionary<TKey, TValue>>,
+    IPattern<IReadOnlyDictionary<TKey, TValue>>
     where TKey : notnull
 {
     /// <summary>
@@ -39,6 +41,22 @@ public partial record DictionaryPattern<TKey, TValue> : IPattern<IDictionary<TKe
     public MatchResult Evaluate(
         IDictionary<TKey, TValue> value,
         string path = "")
+    {
+        if (value is null)
+        {
+            return new MatchResult.Failure([
+                $"{path}: [DictionaryPattern] Actual dictionary is null"
+            ]);
+        }
+
+        return this.Match(
+            items => items.EvaluateItems(value, path),
+            exactItems => exactItems.EvaluateExactItems(value, path));
+    }
+
+    MatchResult IPattern<IReadOnlyDictionary<TKey, TValue>>.Evaluate(
+        IReadOnlyDictionary<TKey, TValue> value,
+        string path)
     {
         if (value is null)
         {

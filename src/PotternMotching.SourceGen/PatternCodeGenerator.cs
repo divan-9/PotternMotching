@@ -185,6 +185,26 @@ internal static class PatternCodeGenerator
             : property.PropertyType;
     }
 
+    private static string GetDictionaryPatternDefaultType(PropertyAnalysisResult property)
+    {
+        return IsReadOnlyDictionaryProperty(property)
+            ? "ReadOnlyDictionaryPatternDefault"
+            : "DictionaryPatternDefault";
+    }
+
+    private static bool IsReadOnlyDictionaryProperty(PropertyAnalysisResult property)
+    {
+        return property.PropertyTypeSymbol is INamedTypeSymbol namedType &&
+            IsOrImplementsGeneric(namedType, "System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>") &&
+            !IsOrImplementsGeneric(namedType, "System.Collections.Generic.IDictionary<TKey, TValue>");
+    }
+
+    private static bool IsOrImplementsGeneric(INamedTypeSymbol namedType, string originalDefinition)
+    {
+        return namedType.OriginalDefinition.ToDisplayString() == originalDefinition ||
+            namedType.AllInterfaces.Any(i => i.OriginalDefinition.ToDisplayString() == originalDefinition);
+    }
+
     private static string GetDictionaryValueMatcherType(PropertyAnalysisResult property)
     {
         // For dictionary values, determine the appropriate pattern type
@@ -237,8 +257,8 @@ internal static class PatternCodeGenerator
                 $"SequencePatternDefault<{property.ElementType}, {GetDefaultItemMatcherType(property)}>",
 
             PatternWrapperKind.Dictionary =>
-                // Use DictionaryPatternDefault for proper dictionary matching
-                $"DictionaryPatternDefault<{property.KeyType}, {property.ValueType}, {GetDictionaryValueMatcherType(property)}>",
+                // Use DictionaryPatternDefault or ReadOnlyDictionaryPatternDefault for proper dictionary matching.
+                $"{GetDictionaryPatternDefaultType(property)}<{property.KeyType}, {property.ValueType}, {GetDictionaryValueMatcherType(property)}>",
 
             PatternWrapperKind.Nested when IsNullableValueType(property) =>
                 // Nullable nested value-type properties use an adapter so non-null nested patterns can match nullable values.
@@ -485,7 +505,7 @@ internal static class PatternCodeGenerator
     {
         var valueMatcherType = GetDictionaryValueMatcherType(property);
 
-        var fullType = $"DictionaryPatternDefault<{property.KeyType}, {property.ValueType}, {valueMatcherType}>";
+        var fullType = $"{GetDictionaryPatternDefaultType(property)}<{property.KeyType}, {property.ValueType}, {valueMatcherType}>";
 
         // Null-guard: when the source property is nullable (e.g. Dictionary<K,V>?), pass null → default.
         return $"value.{propertyName} != null ? new {fullType}({fullType}.From(value.{propertyName})) : default";

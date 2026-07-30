@@ -441,42 +441,44 @@ internal static class TypeAnalyzer
 
             if (typeFullName == "System.Collections.Generic.HashSet<T>")
             {
-                var elementType = namedType.TypeArguments[0];
-                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(elementType, knownPatternTypes);
+                var setElementType = namedType.TypeArguments[0];
+                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(setElementType, knownPatternTypes);
 
                 return new PropertyAnalysisResult(
                     propertyName,
                     propertyTypeString,
                     PatternWrapperKind.Set,
-                    GetTypeArgumentDisplayString(elementType),
+                    GetTypeArgumentDisplayString(setElementType),
                     null,
                     null,
                     requiresPattern,
                     nestedTypeSymbol,
                     nestedPatternType,
-                    elementType as INamedTypeSymbol);
+                    setElementType as INamedTypeSymbol);
             }
 
             if (ImplementsInterface(namedType, "System.Collections.Generic.ISet`1"))
             {
-                var elementType = namedType.TypeArguments[0];
-                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(elementType, knownPatternTypes);
+                var setElementType = namedType.TypeArguments[0];
+                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(setElementType, knownPatternTypes);
 
                 return new PropertyAnalysisResult(
                     propertyName,
                     propertyTypeString,
                     PatternWrapperKind.Set,
-                    GetTypeArgumentDisplayString(elementType),
+                    GetTypeArgumentDisplayString(setElementType),
                     null,
                     null,
                     requiresPattern,
                     nestedTypeSymbol,
                     nestedPatternType,
-                    elementType as INamedTypeSymbol);
+                    setElementType as INamedTypeSymbol);
             }
 
             if (typeFullName == "System.Collections.Generic.Dictionary<TKey, TValue>" ||
-                ImplementsInterface(namedType, "System.Collections.Generic.IDictionary`2"))
+                typeFullName == "System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>" ||
+                ImplementsInterface(namedType, "System.Collections.Generic.IDictionary`2") ||
+                ImplementsInterface(namedType, "System.Collections.Generic.IReadOnlyDictionary`2"))
             {
                 if (namedType.TypeArguments.Length >= 2)
                 {
@@ -488,26 +490,27 @@ internal static class TypeAnalyzer
                         PatternWrapperKind.Dictionary,
                         null,
                         GetTypeArgumentDisplayString(keyType),
-                        GetTypeArgumentDisplayString(valueType));
+                        GetTypeArgumentDisplayString(valueType),
+                        propertyTypeSymbol: namedType);
                 }
             }
 
-            if (ImplementsInterface(namedType, "System.Collections.Generic.IEnumerable`1"))
+            if (TryGetEnumerableElementType(namedType, out var enumerableElementType) &&
+                enumerableElementType is not null)
             {
-                var elementType = namedType.TypeArguments[0];
-                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(elementType, knownPatternTypes);
+                var (requiresPattern, nestedTypeSymbol, nestedPatternType) = CheckForNestedPattern(enumerableElementType, knownPatternTypes);
 
                 return new PropertyAnalysisResult(
                     propertyName,
                     propertyTypeString,
                     PatternWrapperKind.Sequence,
-                    GetTypeArgumentDisplayString(elementType),
+                    GetTypeArgumentDisplayString(enumerableElementType),
                     null,
                     null,
                     requiresPattern,
                     nestedTypeSymbol,
                     nestedPatternType,
-                    elementType as INamedTypeSymbol);
+                    enumerableElementType as INamedTypeSymbol);
             }
         }
 
@@ -567,6 +570,29 @@ internal static class TypeAnalyzer
         }
 
         return char.ToUpper(propertyName[0]) + propertyName.Substring(1);
+    }
+
+    private static bool TryGetEnumerableElementType(
+        INamedTypeSymbol type,
+        out ITypeSymbol? elementType)
+    {
+        if (type.OriginalDefinition.ToDisplayString() == "System.Collections.Generic.IEnumerable<T>")
+        {
+            elementType = type.TypeArguments[0];
+            return true;
+        }
+
+        var enumerableInterface = type.AllInterfaces.FirstOrDefault(i =>
+            i.OriginalDefinition.ToDisplayString() == "System.Collections.Generic.IEnumerable<T>");
+
+        if (enumerableInterface is null)
+        {
+            elementType = null;
+            return false;
+        }
+
+        elementType = enumerableInterface.TypeArguments[0];
+        return true;
     }
 
     private static bool ImplementsInterface(INamedTypeSymbol type, string interfaceName)
