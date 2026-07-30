@@ -15,6 +15,13 @@ using Dunet;
 [Union]
 public abstract partial record MatchResult
 {
+    internal bool IsSuccess()
+    {
+        return this.MatchSuccess(
+            success: _ => true,
+            @else: () => false);
+    }
+
     /// <summary>
     /// Represents a successful pattern match.
     /// </summary>
