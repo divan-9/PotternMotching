@@ -94,6 +94,14 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 
+    public static readonly DiagnosticDescriptor GeneratedPatternParameterNameCollision = new(
+        id: "PM0012",
+        title: "Generated pattern parameter name collision",
+        messageFormat: "Generated pattern parameter name '{0}' conflicts between target properties on type '{1}'",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     public static readonly DiagnosticDescriptor DebugPropertyType = new(
         id: "PM9999",
         title: "Debug: Property type detected",

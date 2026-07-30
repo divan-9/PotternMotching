@@ -175,10 +175,16 @@ internal static class TypeAnalyzer
             properties.Add(AnalyzeProperty(parameter, diagnostics, enableDebug, knownPatternTypes));
         }
 
+        var analyzedProperties = properties.ToImmutable();
+        var hasParameterNameCollision = AddPatternParameterNameCollisionDiagnostics(
+            typeSymbol: typeSymbol,
+            properties: analyzedProperties,
+            diagnostics: diagnostics);
+
         return new TypeAnalysisResult(
             typeSymbol,
-            true,
-            properties.ToImmutable(),
+            !hasParameterNameCollision,
+            analyzedProperties,
             diagnostics.ToImmutable());
     }
 
@@ -195,10 +201,16 @@ internal static class TypeAnalyzer
             properties.Add(AnalyzeProperty(propertySymbol, diagnostics, enableDebug, knownPatternTypes));
         }
 
+        var analyzedProperties = properties.ToImmutable();
+        var hasParameterNameCollision = AddPatternParameterNameCollisionDiagnostics(
+            typeSymbol: typeSymbol,
+            properties: analyzedProperties,
+            diagnostics: diagnostics);
+
         return new TypeAnalysisResult(
             typeSymbol,
-            true,
-            properties.ToImmutable(),
+            !hasParameterNameCollision,
+            analyzedProperties,
             diagnostics.ToImmutable());
     }
 
@@ -226,14 +238,20 @@ internal static class TypeAnalyzer
         }
 
         var variants = ImmutableArray.CreateBuilder<VariantAnalysisResult>();
+        var hasParameterNameCollision = false;
         foreach (var variantType in variantTypes)
         {
-            variants.Add(AnalyzeVariant(variantType, diagnostics, knownPatternTypes));
+            var variant = AnalyzeVariant(variantType, diagnostics, knownPatternTypes);
+            variants.Add(variant);
+            hasParameterNameCollision |= AddPatternParameterNameCollisionDiagnostics(
+                typeSymbol: variantType,
+                properties: variant.Properties,
+                diagnostics: diagnostics);
         }
 
         return new TypeAnalysisResult(
             typeSymbol,
-            true,
+            !hasParameterNameCollision,
             ImmutableArray<PropertyAnalysisResult>.Empty,
             diagnostics.ToImmutable(),
             isUnion: true,
@@ -468,6 +486,38 @@ internal static class TypeAnalyzer
             propertyTypeString,
             PatternWrapperKind.Value,
             propertyTypeSymbol: propertyType);
+    }
+
+    private static bool AddPatternParameterNameCollisionDiagnostics(
+        INamedTypeSymbol typeSymbol,
+        ImmutableArray<PropertyAnalysisResult> properties,
+        ImmutableArray<Diagnostic>.Builder diagnostics)
+    {
+        var groups = properties
+            .GroupBy(property => GetPatternParameterName(property.PropertyName), StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .ToList();
+
+        foreach (var group in groups)
+        {
+            diagnostics.Add(Diagnostic.Create(
+                DiagnosticDescriptors.GeneratedPatternParameterNameCollision,
+                typeSymbol.Locations.FirstOrDefault(),
+                group.Key,
+                typeSymbol.ToDisplayString()));
+        }
+
+        return groups.Count > 0;
+    }
+
+    private static string GetPatternParameterName(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+        {
+            return propertyName;
+        }
+
+        return char.ToUpper(propertyName[0]) + propertyName.Substring(1);
     }
 
     private static bool ImplementsInterface(INamedTypeSymbol type, string interfaceName)

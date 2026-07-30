@@ -5,3 +5,4 @@
 
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
+PM0012 | PotternMotching.SourceGen | Error | Generated pattern parameter name collision

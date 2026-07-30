@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Added unordered exact collection matching via `CollectionPattern.ExactItems(...)` and `AssertExactItems(...)`.
+- Added nullable nested generated pattern defaults so nullable nested properties can use nested patterns, exact nullable values, or `ValuePattern.Null()` without nullable generic warnings.
+- Added `PM0012` diagnostic for generated pattern constructor parameter-name collisions, for example `record Thing(string id, string Id)`.
+
+### Changed
+- `CollectionPattern.Subset(...)` now uses distinct item assignment, so overlapping patterns cannot match the same actual item.
+- Generated pattern accessibility now follows target accessibility: public targets generate public patterns, internal targets generate internal patterns.
+- Integration tests now use `ValuePattern.Null()` for exact null matching to avoid analyzer-warning noise.
+- Public documentation now describes null semantics, source-generator limitations, diagnostics, and release behavior.
+
+### Fixed
+- Collection and dictionary patterns now return `MatchResult.Failure` instead of throwing when explicitly evaluated against null actual values.
+- Generated patterns now preserve original source property names for property access while keeping capitalized pattern constructor parameter names.
+- Closed generic Dunet union variants now inherit from the generated closed generic root pattern type.
+- Public XML documentation warnings have been cleaned up.
+
 ## [0.4.3] - 2026-07-08
 
 ### Added
