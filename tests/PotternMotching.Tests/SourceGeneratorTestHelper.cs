@@ -51,8 +51,10 @@ internal static class SourceGeneratorTestHelper
         _ = typeof(Enumerable);
         _ = typeof(AutoPatternForAttribute);
         _ = typeof(AutoPatternGenerator);
+        _ = typeof(MongoDB.Bson.BsonElement);
 
         LoadReferencedAssemblies(typeof(PotternMotching.TestExternalModels.ExternalJob).Assembly);
+        LoadReferencedAssemblies(typeof(MongoDB.Bson.BsonElement).Assembly);
 
         return AppDomain.CurrentDomain.GetAssemblies()
             .Where(static assembly => !assembly.IsDynamic && !string.IsNullOrWhiteSpace(assembly.Location))

@@ -1,6 +1,6 @@
 # PotternMotching
 
-A fluent pattern matching library for .NET that provides powerful patterns for values, collections, and dictionaries with automatic pattern generation from records and external types.
+A fluent pattern matching library for .NET that provides powerful patterns for values, collections, and dictionaries with automatic pattern generation from records, structs, and external types.
 
 [![NuGet](https://img.shields.io/nuget/v/PotternMotching.svg)](https://www.nuget.org/packages/PotternMotching/)
 [![Build](https://github.com/divan-9/PotternMotching/actions/workflows/build.yml/badge.svg)](https://github.com/divan-9/PotternMotching/actions/workflows/build.yml)
@@ -191,7 +191,8 @@ var pattern = new Result_StringPattern(
 
 ### Generation Rules & Limitations
 
-- `[AutoPatternFor]` supports **records**, **classes**, **closed generic constructed types**, and **Dunet unions**
+- `[AutoPatternFor]` supports **records**, **classes**, **structs**, **closed generic constructed types**, and **Dunet unions**
+- struct targets, including external structs such as `MongoDB.Bson.BsonElement`, are matched through public readable instance properties
 - open generic targets such as `typeof(Result<>)` are not supported
 - private, protected, and private-protected target types are not supported
 - generated pattern accessibility follows the target type: public targets generate public patterns; internal targets generate internal patterns
@@ -250,7 +251,7 @@ Semantics:
 - omitted property = match anything
 - `ValuePattern.Null()` = exact null matching
 - `(T?)null` also works for nullable generated defaults, but `PM0011` suggests `ValuePattern.Null()` for clarity
-- nullable nested pattern properties use `NullablePatternDefault<T, TPattern>`; nested patterns require a non-null actual value
+- nullable nested reference-type properties use `NullablePatternDefault<T, TPattern>`; nullable nested value-type properties use `NullableValuePatternDefault<T, TPattern>`; nested patterns require a non-null actual value
 - null collections or dictionaries fail with a normal `MatchResult.Failure` when a collection/dictionary pattern is explicitly specified
 
 ### Collection Expressions & Implicit Conversions
@@ -279,21 +280,22 @@ The source generator automatically maps types to appropriate pattern wrappers:
 | `HashSet<T>`, `ISet<T>` | `SetPatternDefault<T, ...>` | Subset (unordered, allows extras) |
 | `Dictionary<K,V>`, `IDictionary<K,V>` | `DictionaryPatternDefault<K,V, ...>` | Key-value pairs (allows extra keys) |
 | Nested pattern-capable types targeted with `[AutoPatternFor]` | `PatternDefault<T, TypePattern>` | Nested pattern matching |
-| Nullable nested pattern-capable types | `NullablePatternDefault<T, TypePattern>` | Match anything by default; nested patterns require non-null actual values; `ValuePattern.Null()` matches null |
+| Nullable nested pattern-capable reference types | `NullablePatternDefault<T, TypePattern>` | Match anything by default; nested patterns require non-null actual values; `ValuePattern.Null()` matches null |
+| Nullable nested pattern-capable value types | `NullableValuePatternDefault<T, TypePattern>` | Match anything by default; nested patterns require non-null actual values; `ValuePattern.Null()` matches null |
 | Discriminated unions ([Dunet](https://github.com/domn1995/dunet)) | Variant-specific patterns | Variant-aware matching |
 
 ## Source Generator Diagnostics
 
 | Diagnostic | Severity | Meaning | Typical fix |
 |------------|----------|---------|-------------|
-| `PM0001` | Error | Target must be a record for record-only generation paths | Use a supported record/class target through `[AutoPatternFor]` |
+| `PM0001` | Error | Legacy record-only target validation | Use a supported record, class, or struct target through `[AutoPatternFor]` |
 | `PM0002` | Error | Record inheritance is not supported | Use a record without a custom base type |
-| `PM0003` | Error | A required primary constructor was not found | Use a positional record or supported class properties |
+| `PM0003` | Error | Legacy primary-constructor validation | Use a supported positional record, class properties, or struct properties |
 | `PM0004` | Warning | Nested type pattern was not found | Add `[AutoPatternFor(typeof(NestedType))]` if nested pattern matching is desired |
 | `PM0005` | Error | Dunet union root must be partial | Mark the union root `partial` |
 | `PM0006` | Error | Dunet union root has no variants | Add nested record variants |
 | `PM0007` | Error | `[AutoPatternFor]` target could not be resolved | Check the `typeof(...)` target |
-| `PM0008` | Error | External target is not a class or record | Use a supported class, record, or Dunet union target |
+| `PM0008` | Error | External target is not a class, struct, or record | Use a supported class, struct, record, or Dunet union target |
 | `PM0009` | Error | Generated pattern type name collision | Change marker namespace or remove one colliding target |
 | `PM0010` | Error | Unsupported target, such as open generic or less-than-internal type | Use a closed generic/public/internal target |
 | `PM0011` | Warning | Null literal/cast used for exact null matching | Prefer `ValuePattern.Null()` |

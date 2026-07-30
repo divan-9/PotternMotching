@@ -96,7 +96,7 @@ internal static class TypeAnalyzer
     {
         var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
 
-        if (typeSymbol.TypeKind != TypeKind.Class)
+        if (typeSymbol.TypeKind is not (TypeKind.Class or TypeKind.Struct))
         {
             diagnostics.Add(Diagnostic.Create(
                 DiagnosticDescriptors.ExternalTargetMustBeClassOrRecord,
@@ -123,6 +123,11 @@ internal static class TypeAnalyzer
                 false,
                 ImmutableArray<PropertyAnalysisResult>.Empty,
                 diagnostics.ToImmutable());
+        }
+
+        if (typeSymbol.TypeKind == TypeKind.Struct)
+        {
+            return AnalyzeStructType(typeSymbol, diagnostics, knownPatternTypes);
         }
 
         if (IsUnionType(typeSymbol))
@@ -189,6 +194,28 @@ internal static class TypeAnalyzer
     }
 
     private static TypeAnalysisResult AnalyzeClassLikeType(
+        INamedTypeSymbol typeSymbol,
+        ImmutableArray<Diagnostic>.Builder diagnostics,
+        ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes)
+    {
+        return AnalyzePublicReadablePropertiesType(
+            typeSymbol: typeSymbol,
+            diagnostics: diagnostics,
+            knownPatternTypes: knownPatternTypes);
+    }
+
+    private static TypeAnalysisResult AnalyzeStructType(
+        INamedTypeSymbol typeSymbol,
+        ImmutableArray<Diagnostic>.Builder diagnostics,
+        ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes)
+    {
+        return AnalyzePublicReadablePropertiesType(
+            typeSymbol: typeSymbol,
+            diagnostics: diagnostics,
+            knownPatternTypes: knownPatternTypes);
+    }
+
+    private static TypeAnalysisResult AnalyzePublicReadablePropertiesType(
         INamedTypeSymbol typeSymbol,
         ImmutableArray<Diagnostic>.Builder diagnostics,
         ImmutableDictionary<INamedTypeSymbol, string>? knownPatternTypes)
@@ -386,6 +413,28 @@ internal static class TypeAnalyzer
                 elementType as INamedTypeSymbol);
         }
 
+        if (propertyType is INamedTypeSymbol nullableValueType &&
+            nullableValueType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
+        {
+            var underlyingType = nullableValueType.TypeArguments[0];
+            var (isNested, nestedType, nestedPatternType) = CheckForNestedPattern(underlyingType, knownPatternTypes);
+
+            if (isNested)
+            {
+                return new PropertyAnalysisResult(
+                    propertyName,
+                    propertyTypeString,
+                    PatternWrapperKind.Nested,
+                    null,
+                    null,
+                    null,
+                    false,
+                    nestedType,
+                    nestedPatternType,
+                    nullableValueType);
+            }
+        }
+
         if (propertyType is INamedTypeSymbol namedType && namedType.TypeArguments.Length > 0)
         {
             var typeFullName = namedType.OriginalDefinition.ToDisplayString();
@@ -570,7 +619,8 @@ internal static class TypeAnalyzer
 
     private static bool IsUnsupportedExternalTarget(INamedTypeSymbol typeSymbol)
     {
-        return typeSymbol.IsUnboundGenericType ||
+        return typeSymbol.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T ||
+               typeSymbol.IsUnboundGenericType ||
                typeSymbol.TypeArguments.Any(ContainsOpenTypeComponent);
     }
 

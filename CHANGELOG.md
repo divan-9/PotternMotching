@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Added unordered exact collection matching via `CollectionPattern.ExactItems(...)` and `AssertExactItems(...)`.
 - Added nullable nested generated pattern defaults so nullable nested properties can use nested patterns, exact nullable values, or `ValuePattern.Null()` without nullable generic warnings.
+- Added support for generating patterns for struct targets, including external structs such as `MongoDB.Bson.BsonElement`.
+- Added nullable nested value-type pattern defaults so nullable struct properties can use nested struct patterns or `ValuePattern.Null()`.
 - Added `PM0012` diagnostic for generated pattern constructor parameter-name collisions, for example `record Thing(string id, string Id)`.
 
 ### Changed

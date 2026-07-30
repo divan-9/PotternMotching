@@ -64,8 +64,8 @@ internal static class DiagnosticDescriptors
 
     public static readonly DiagnosticDescriptor ExternalTargetMustBeClassOrRecord = new(
         id: "PM0008",
-        title: "External target type must be a class or record",
-        messageFormat: "Target type '{0}' must be a class or record to use [AutoPatternFor]",
+        title: "External target type must be a class, struct, or record",
+        messageFormat: "Target type '{0}' must be a class, struct, or record to use [AutoPatternFor]",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
