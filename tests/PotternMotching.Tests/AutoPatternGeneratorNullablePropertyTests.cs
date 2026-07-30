@@ -62,6 +62,47 @@ public class AutoPatternGeneratorNullablePropertyTests
     }
 
     [Fact]
+    public void NullableNestedProperty_UsesNullablePatternDefault()
+    {
+        var result = SourceGeneratorTestHelper.RunGenerator("""
+            using PotternMotching;
+            using PotternMotching.Patterns;
+
+            namespace NullablePatternTests;
+
+            public record Options(long Width, long Height);
+            public record Thing(string Id, Options? Options);
+
+            [AutoPatternFor(typeof(Options))]
+            [AutoPatternFor(typeof(Thing))]
+            internal static class PatternMarkers;
+
+            public static class Usage
+            {
+                public static ThingPattern MatchNestedShape() =>
+                    new(Options: new OptionsPattern(Width: 100));
+
+                public static ThingPattern MatchNull() =>
+                    new(Options: ValuePattern.Null());
+
+                public static ThingPattern MatchNullableValue() =>
+                    new(Options: (Options?)null);
+
+                public static ThingPattern MatchExactNullablePattern() =>
+                    new(Options: ValuePattern.Exact<Options?>(null));
+            }
+            """);
+
+        Assert.DoesNotContain(result.OutputDiagnostics, d => d.Severity == DiagnosticSeverity.Error);
+        Assert.DoesNotContain(result.OutputDiagnostics, d => d.Id == "CS8631");
+
+        var generated = Assert.Single(result.GeneratedSources, source => source.HintName.Contains("ThingPattern"));
+        Assert.Contains(
+            "NullablePatternDefault<global::NullablePatternTests.Options, global::NullablePatternTests.OptionsPattern> Options = default",
+            generated.SourceText.ToString());
+    }
+
+    [Fact]
     public void NullLiteralAnalyzer_WarnsForExplicitNullableCast_AndSuggestsValuePatternNull()
     {
         var diagnostics = SourceGeneratorTestHelper.RunAnalyzer("""

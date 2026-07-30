@@ -160,6 +160,19 @@ internal static class PatternCodeGenerator
         return $"PatternDefault<{property.ElementType}, ValuePattern<{property.ElementType}>>";
     }
 
+    private static bool IsNullableReferenceType(PropertyAnalysisResult property)
+    {
+        return property.PropertyTypeSymbol?.IsReferenceType == true &&
+            property.PropertyTypeSymbol.NullableAnnotation == NullableAnnotation.Annotated;
+    }
+
+    private static string GetNonNullableReferenceType(PropertyAnalysisResult property)
+    {
+        return property.PropertyType.EndsWith("?", StringComparison.Ordinal)
+            ? property.PropertyType.Substring(0, property.PropertyType.Length - 1)
+            : property.PropertyType;
+    }
+
     private static string GetDictionaryValueMatcherType(PropertyAnalysisResult property)
     {
         // For dictionary values, determine the appropriate pattern type
@@ -214,6 +227,10 @@ internal static class PatternCodeGenerator
             PatternWrapperKind.Dictionary =>
                 // Use DictionaryPatternDefault for proper dictionary matching
                 $"DictionaryPatternDefault<{property.KeyType}, {property.ValueType}, {GetDictionaryValueMatcherType(property)}>",
+
+            PatternWrapperKind.Nested when IsNullableReferenceType(property) =>
+                // Nullable nested properties use an adapter so non-null nested patterns can match nullable values.
+                $"NullablePatternDefault<{GetNonNullableReferenceType(property)}, {property.NestedPatternType!}>",
 
             PatternWrapperKind.Nested =>
                 // Wrap nested patterns in PatternDefault for consistency and null matching support
