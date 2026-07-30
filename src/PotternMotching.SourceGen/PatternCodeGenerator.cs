@@ -23,6 +23,7 @@ internal static class PatternCodeGenerator
         var patternName = generatedPatternName ?? $"{typeName}Pattern";
         var namespaceName = generatedNamespace ?? typeSymbol.ContainingNamespace.ToDisplayString();
         var isGlobalNamespace = string.IsNullOrEmpty(namespaceName);
+        var accessibility = GetGeneratedTypeAccessibility(typeSymbol);
 
         var sb = new StringBuilder();
 
@@ -43,7 +44,7 @@ internal static class PatternCodeGenerator
         }
 
         // Class declaration
-        sb.Append($"public sealed record {patternName}(");
+        sb.Append($"{accessibility} sealed record {patternName}(");
 
         // Parameters
         if (analysis.Properties.Length > 0)
@@ -256,6 +257,26 @@ internal static class PatternCodeGenerator
     private static string GetPatternPropertyName(PropertyAnalysisResult property)
     {
         return EscapeIdentifierIfNeeded(CapitalizeFirstLetter(property.PropertyName));
+    }
+
+    private static string GetGeneratedTypeAccessibility(INamedTypeSymbol typeSymbol)
+    {
+        return IsEffectivelyPublic(typeSymbol)
+            ? "public"
+            : "internal";
+    }
+
+    private static bool IsEffectivelyPublic(INamedTypeSymbol typeSymbol)
+    {
+        for (INamedTypeSymbol? current = typeSymbol; current is not null; current = current.ContainingType)
+        {
+            if (current.DeclaredAccessibility != Accessibility.Public)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static string GetSourcePropertyName(PropertyAnalysisResult property)
@@ -491,6 +512,7 @@ internal static class PatternCodeGenerator
         var patternName = generatedPatternName ?? $"{typeName}Pattern";
         var namespaceName = generatedNamespace ?? typeSymbol.ContainingNamespace.ToDisplayString();
         var isGlobalNamespace = string.IsNullOrEmpty(namespaceName);
+        var accessibility = GetGeneratedTypeAccessibility(typeSymbol);
 
         var sb = new StringBuilder();
 
@@ -514,7 +536,7 @@ internal static class PatternCodeGenerator
         // Union pattern class declaration - abstract base with no parameters
         var unionFullType = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        sb.AppendLine($"public abstract partial record {patternName} : IPattern<{unionFullType}>, IPatternConstructor<{unionFullType}>");
+        sb.AppendLine($"{accessibility} abstract partial record {patternName} : IPattern<{unionFullType}>, IPatternConstructor<{unionFullType}>");
         sb.AppendLine("{");
         sb.AppendLine($"    private {patternName}() {{ }}");
         sb.AppendLine();

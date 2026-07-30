@@ -110,7 +110,8 @@ internal static class TypeAnalyzer
                 diagnostics.ToImmutable());
         }
 
-        if (IsUnsupportedExternalTarget(typeSymbol))
+        if (IsUnsupportedExternalTarget(typeSymbol) ||
+            IsLessAccessibleThanInternal(typeSymbol))
         {
             diagnostics.Add(Diagnostic.Create(
                 DiagnosticDescriptors.UnsupportedExternalTarget,
@@ -521,6 +522,21 @@ internal static class TypeAnalyzer
     {
         return typeSymbol.IsUnboundGenericType ||
                typeSymbol.TypeArguments.Any(ContainsOpenTypeComponent);
+    }
+
+    private static bool IsLessAccessibleThanInternal(INamedTypeSymbol typeSymbol)
+    {
+        for (INamedTypeSymbol? current = typeSymbol; current is not null; current = current.ContainingType)
+        {
+            if (current.DeclaredAccessibility is Accessibility.Private or
+                Accessibility.Protected or
+                Accessibility.ProtectedAndInternal)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool ContainsOpenTypeComponent(ITypeSymbol typeSymbol)
