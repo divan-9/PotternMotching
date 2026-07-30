@@ -538,7 +538,7 @@ public class ExternalAutoPatternTests
     }
 
     [Fact]
-    public void NullableScalar_NullLiteralInConstructor_MatchesNull()
+    public void NullableScalar_ValuePatternNull_MatchesNull()
     {
         var value = new ExternalNullableScalar(
             Id: "42",
@@ -546,7 +546,7 @@ public class ExternalAutoPatternTests
 
         var pattern = new ExternalNullableScalarPattern(
             Id: "42",
-            RuleSetId: (string?)null);
+            RuleSetId: ValuePattern.Null());
 
         var result = pattern.Evaluate(value);
 
@@ -602,7 +602,7 @@ public class ExternalAutoPatternTests
     }
 
     [Fact]
-    public void NullableNestedPattern_NullCast_DoesNotThrowAndMatchesNull()
+    public void NullableNestedPattern_ValuePatternNull_DoesNotThrowAndMatchesNull()
     {
         var value = new ExternalFieldOptions.Image(
             Name: "hero",
@@ -612,7 +612,7 @@ public class ExternalAutoPatternTests
         {
             var pattern = new ExternalFieldOptionsPattern.Image(
                 Name: "hero",
-                Options: (ExternalMediaOptions?)null);
+                Options: ValuePattern.Null());
 
             var result = pattern.Evaluate(value);
             Assert.IsType<MatchResult.Success>(result);
