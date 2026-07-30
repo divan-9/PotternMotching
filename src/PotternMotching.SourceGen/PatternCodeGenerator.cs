@@ -606,7 +606,7 @@ internal static class PatternCodeGenerator
         foreach (var variant in analysis.Variants)
         {
             sb.AppendLine();
-            GenerateVariantPattern(sb, variant, typeSymbol, analysis.Variants);
+            GenerateVariantPattern(sb, variant, typeSymbol, patternName, analysis.Variants);
         }
 
         sb.AppendLine("}");
@@ -673,12 +673,12 @@ internal static class PatternCodeGenerator
         StringBuilder sb,
         VariantAnalysisResult variant,
         INamedTypeSymbol unionSymbol,
+        string patternName,
         ImmutableArray<VariantAnalysisResult> allVariants)
     {
         var variantName = variant.VariantName;
         var variantFullType = $"{unionSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.{variantName}";
         var unionFullType = unionSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        var patternName = $"{unionSymbol.Name}Pattern";
 
         // Variant pattern class declaration - sealed, inherits from parent, implements IPattern<Variant>
         sb.Append($"    public sealed partial record {variantName}(");
