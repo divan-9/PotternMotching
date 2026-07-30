@@ -74,6 +74,75 @@ internal static class CollectionPatternExtensions
     }
 
     /// <summary>
+    /// Evaluates an exact-items pattern against a collection.
+    /// </summary>
+    /// <remarks>
+    /// All patterns must be matched to distinct collection items, order doesn't matter,
+    /// and the collection must not contain extra or missing items.
+    /// </remarks>
+    internal static MatchResult EvaluateExactItems<T>(
+        this CollectionPattern<T>.ExactItems exactItems,
+        IEnumerable<T> values,
+        string path)
+    {
+        var patterns = exactItems.Patterns;
+        var items = values.Select((item, index) => (item, index)).ToArray();
+
+        if (items.Length != patterns.Length)
+        {
+            return new MatchResult.Failure([
+                $"{path}: [CollectionPattern.ExactItems] Expected {patterns.Length} item(s), got {items.Length}"
+            ]);
+        }
+
+        return MatchPattern(
+            patternIndex: 0,
+            matchedItemsAcc: []);
+
+        MatchResult MatchPattern(
+            int patternIndex,
+            HashSet<int> matchedItemsAcc)
+        {
+            if (patternIndex >= patterns.Length)
+            {
+                return new MatchResult.Success();
+            }
+
+            var pattern = patterns[patternIndex];
+
+            var matchingItems = items
+                .Where(x => !matchedItemsAcc.Contains(x.index))
+                .Where(x => pattern.Evaluate(x.item, $"{path}[?]").IsSuccess())
+                .Select(x => x.index)
+                .ToArray();
+
+            if (matchingItems.Length == 0)
+            {
+                return new MatchResult.Failure([
+                    $"{path}: [CollectionPattern.ExactItems] Could not match pattern[{patternIndex}] ({pattern}) to an unused item"
+                ]);
+            }
+
+            MatchResult result = new MatchResult.Success();
+
+            foreach (var item in matchingItems)
+            {
+                matchedItemsAcc.Add(item);
+                result = MatchPattern(patternIndex + 1, matchedItemsAcc);
+
+                if (result.IsSuccess())
+                {
+                    return result;
+                }
+
+                matchedItemsAcc.Remove(item);
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>
     /// Evaluates an any-element pattern against a collection.
     /// </summary>
     /// <remarks>

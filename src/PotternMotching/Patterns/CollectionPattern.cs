@@ -13,6 +13,7 @@ using Dunet;
 /// <item><see cref="AnyElement"/> - Matches if any element in the collection satisfies a pattern.</item>
 /// <item><see cref="Sequence"/> - Matches collections with exact sequence of elements in order.</item>
 /// <item><see cref="Subset"/> - Matches if all specified patterns can be found in the collection in any order.</item>
+/// <item><see cref="ExactItems"/> - Matches if all specified patterns can be assigned to all items in any order.</item>
 /// <item><see cref="StartsWith"/> - Matches if the collection starts with the specified patterns.</item>
 /// <item><see cref="EndsWith"/> - Matches if the collection ends with the specified patterns.</item>
 /// </list>
@@ -48,6 +49,7 @@ public partial record CollectionPattern<T> : IPattern<IEnumerable<T>>
             anyElement => anyElement.EvaluateAnyElement(value, path),
             sequence => sequence.EvaluateSequence(value, path),
             anyOrder => anyOrder.EvaluateSubset(value, path),
+            exactItems => exactItems.EvaluateExactItems(value, path),
             startsWith => startsWith.EvaluateStartsWith(value, path),
             endsWith => endsWith.EvaluateEndsWith(value, path));
     }
@@ -75,6 +77,14 @@ public partial record CollectionPattern<T> : IPattern<IEnumerable<T>>
     /// </summary>
     /// <param name="Patterns">The array of patterns that must all be found in the collection.</param>
     public partial record Subset(
+        IPattern<T>[] Patterns);
+
+    /// <summary>
+    /// Matches if all specified patterns can be assigned to all collection items in any order.
+    /// The collection must have exactly the same length as the pattern array.
+    /// </summary>
+    /// <param name="Patterns">The array of patterns that must all match distinct collection items.</param>
+    public partial record ExactItems(
         IPattern<T>[] Patterns);
 
     /// <summary>
@@ -147,6 +157,31 @@ public static class CollectionPattern
         T[] example)
     {
         return new CollectionPattern<T>.Subset([.. example.Select(ValuePattern.Exact)]);
+    }
+
+    /// <summary>
+    /// Creates an exact-items pattern from an array of patterns.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    /// <param name="example">The array of patterns that must match all collection items in any order.</param>
+    /// <returns>An exact-items pattern.</returns>
+    [OverloadResolutionPriority(1)]
+    public static CollectionPattern<T>.ExactItems ExactItems<T>(
+        IPattern<T>[] example)
+    {
+        return new CollectionPattern<T>.ExactItems(example);
+    }
+
+    /// <summary>
+    /// Creates an exact-items pattern from an array of values.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    /// <param name="example">The array of values that must match all collection items in any order.</param>
+    /// <returns>An exact-items pattern with exact value matchers.</returns>
+    public static CollectionPattern<T>.ExactItems ExactItems<T>(
+        T[] example)
+    {
+        return new CollectionPattern<T>.ExactItems([.. example.Select(ValuePattern.Exact)]);
     }
 
     /// <summary>

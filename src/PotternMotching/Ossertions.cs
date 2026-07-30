@@ -196,6 +196,57 @@ public static class Ossertions
     }
 
     /// <summary>
+    /// Asserts that the target collection contains exactly the specified patterns in any order.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The expected item patterns.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not contain exactly the expected items.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.ExactItems{T}(IPattern{T}[])"/>.
+    /// It is useful when you want to assert exact unordered collection contents.
+    /// </remarks>
+    [OverloadResolutionPriority(1)]
+    public static void AssertExactItems<T>(
+        this IEnumerable<T> target,
+        IPattern<T>[] example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.ExactItems(example), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target collection contains exactly the specified values in any order.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The expected items.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not contain exactly the expected items.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.ExactItems{T}(T[])"/>.
+    /// It is useful when you want to assert exact unordered collection contents.
+    /// </remarks>
+    public static void AssertExactItems<T>(
+        this IEnumerable<T> target,
+        IEnumerable<T> example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.ExactItems([.. example]), path);
+    }
+
+    /// <summary>
     /// Asserts that the target collection exactly matches the specified example sequence.
     /// </summary>
     /// <typeparam name="T">The type of the collection elements.</typeparam>

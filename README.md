@@ -35,6 +35,11 @@ var sequence = CollectionPattern.Sequence(["a", "b", "c"]);
 sequence.Evaluate(["a", "b", "c"]);  // Success
 sequence.Evaluate(["a", "b"]);       // Failure: wrong length
 
+// Match exact items in any order (no extra or missing items)
+var exactItems = CollectionPattern.ExactItems(["admin", "editor"]);
+exactItems.Evaluate(["editor", "admin"]);  // Success
+exactItems.Evaluate(["admin", "editor", "owner"]);  // Failure: wrong length
+
 // Match prefix
 var prefix = CollectionPattern.StartsWith(["hello", "world"]);
 prefix.Evaluate(["hello", "world", "!"]);  // Success
@@ -255,6 +260,9 @@ CollectionPattern.Subset(items)
 // Exact sequence - same order and length
 CollectionPattern.Sequence(items)
 
+// Exact items - same length, any order
+CollectionPattern.ExactItems(items)
+
 // Collection must start with these items
 CollectionPattern.StartsWith(items)
 
@@ -350,6 +358,14 @@ For subset assertions on collections, use `AssertSubset`:
 var tags = new[] { "important", "backend", "urgent" };
 
 tags.AssertSubset(["important", "urgent"]);
+```
+
+For exact unordered assertions on collections, use `AssertExactItems`:
+
+```csharp
+var values = new[] { 1, 2, 3 };
+
+values.AssertExactItems([3, 1, 2]);
 ```
 
 For exact sequence assertions on collections, use `AssertSequence`:
