@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis;
 
 namespace PotternMotching.SourceGen.Models;
 
-public sealed class VariantAnalysisResult
+internal sealed class VariantAnalysisResult
 {
     public VariantAnalysisResult(
         INamedTypeSymbol variantSymbol,

@@ -25,6 +25,11 @@ public partial record ValuePattern<T> : IPattern<T>, IPatternConstructor<T>
             between => between.EvaluateBetween(value, path));
     }
 
+    /// <summary>
+    /// Creates an exact value pattern from the specified value.
+    /// </summary>
+    /// <param name="value">The expected value.</param>
+    /// <returns>A pattern that matches the specified value using equality comparison.</returns>
     public static IPattern<T> Create(
         T value)
     {
@@ -41,16 +46,33 @@ public partial record ValuePattern<T> : IPattern<T>, IPatternConstructor<T>
     public partial record Exact(
         T Value) : IPattern<T>;
 
+    /// <summary>
+    /// Matches values that are less than the specified value.
+    /// </summary>
+    /// <param name="Value">The exclusive upper bound.</param>
     public partial record Lt(
         T Value) : IPattern<T>;
 
+    /// <summary>
+    /// Matches values that are greater than the specified value.
+    /// </summary>
+    /// <param name="Value">The exclusive lower bound.</param>
     public partial record Gt(
         T Value) : IPattern<T>;
 
+    /// <summary>
+    /// Matches values that are between the specified bounds, inclusive.
+    /// </summary>
+    /// <param name="Min">The inclusive lower bound.</param>
+    /// <param name="Max">The inclusive upper bound.</param>
     public partial record Between(
         T Min,
         T Max) : IPattern<T>;
 
+    /// <summary>
+    /// Converts a value pattern to a default pattern wrapper.
+    /// </summary>
+    /// <param name="matcher">The value pattern to wrap.</param>
     public static implicit operator PatternDefault<T, Exact>(
         ValuePattern<T> matcher)
     {
@@ -58,16 +80,34 @@ public partial record ValuePattern<T> : IPattern<T>, IPatternConstructor<T>
     }
 }
 
+/// <summary>
+/// Factory methods for creating value patterns.
+/// </summary>
 public static class ValuePattern
 {
+    /// <summary>
+    /// Marker value used to request exact null matching in generated pattern defaults.
+    /// </summary>
     public readonly record struct NullPatternToken;
 
+    /// <summary>
+    /// Creates a pattern that matches a value using equality comparison.
+    /// </summary>
+    /// <typeparam name="T">The type of value to match.</typeparam>
+    /// <param name="value">The expected value.</param>
+    /// <returns>An exact value pattern.</returns>
     public static ValuePattern<T>.Exact Exact<T>(
         T value)
     {
         return new ValuePattern<T>.Exact(value);
     }
 
+    /// <summary>
+    /// Creates a pattern that matches values less than the specified value.
+    /// </summary>
+    /// <typeparam name="T">The numeric type to match.</typeparam>
+    /// <param name="value">The exclusive upper bound.</param>
+    /// <returns>A less-than value pattern.</returns>
     public static ValuePattern<T>.Lt Lt<T>(
         T value)
         where T : System.Numerics.INumber<T>
@@ -75,6 +115,12 @@ public static class ValuePattern
         return new ValuePattern<T>.Lt(value);
     }
 
+    /// <summary>
+    /// Creates a pattern that matches values greater than the specified value.
+    /// </summary>
+    /// <typeparam name="T">The numeric type to match.</typeparam>
+    /// <param name="value">The exclusive lower bound.</param>
+    /// <returns>A greater-than value pattern.</returns>
     public static ValuePattern<T>.Gt Gt<T>(
         T value)
         where T : System.Numerics.INumber<T>
@@ -82,6 +128,13 @@ public static class ValuePattern
         return new ValuePattern<T>.Gt(value);
     }
 
+    /// <summary>
+    /// Creates a pattern that matches values between the specified bounds, inclusive.
+    /// </summary>
+    /// <typeparam name="T">The numeric type to match.</typeparam>
+    /// <param name="min">The inclusive lower bound.</param>
+    /// <param name="max">The inclusive upper bound.</param>
+    /// <returns>A between value pattern.</returns>
     public static ValuePattern<T>.Between Between<T>(
         T min,
         T max)
@@ -90,6 +143,10 @@ public static class ValuePattern
         return new ValuePattern<T>.Between(min, max);
     }
 
+    /// <summary>
+    /// Creates a marker that requests exact null matching in generated pattern defaults.
+    /// </summary>
+    /// <returns>A null pattern marker.</returns>
     public static NullPatternToken Null()
     {
         return default;
