@@ -396,6 +396,49 @@ public class ExternalAutoPatternTests
         Assert.IsType<MatchResult.Success>(result);
     }
 
+    [Fact]
+    public void NullableCollection_SpecifiedPatternAgainstNullCollection_ReturnsFailure()
+    {
+        var value = new ExternalNullableCollection(
+            Id: "42",
+            Names: null,
+            Scores: null);
+
+        var pattern = new ExternalNullableCollectionPattern(
+            Id: "42",
+            Names: ["Alice"]);
+
+        var result = pattern.Evaluate(value);
+
+        var failure = Assert.IsType<MatchResult.Failure>(result);
+        Assert.Single(failure.Reasons);
+        Assert.Contains(".Names", failure.Reasons[0]);
+        Assert.Contains("Actual collection is null", failure.Reasons[0]);
+    }
+
+    [Fact]
+    public void NullableCollection_SpecifiedPatternAgainstNullDictionary_ReturnsFailure()
+    {
+        var value = new ExternalNullableCollection(
+            Id: "42",
+            Names: null,
+            Scores: null);
+
+        var pattern = new ExternalNullableCollectionPattern(
+            Id: "42",
+            Scores: DictionaryPattern.Items(new Dictionary<string, int>
+            {
+                ["quality"] = 10,
+            }));
+
+        var result = pattern.Evaluate(value);
+
+        var failure = Assert.IsType<MatchResult.Failure>(result);
+        Assert.Single(failure.Reasons);
+        Assert.Contains(".Scores", failure.Reasons[0]);
+        Assert.Contains("Actual dictionary is null", failure.Reasons[0]);
+    }
+
     /// <summary>
     /// Issue 2: Nullable elements inside a collection (List&lt;string?&gt;).
     /// The generated pattern SHOULD use ValuePattern&lt;string?&gt;

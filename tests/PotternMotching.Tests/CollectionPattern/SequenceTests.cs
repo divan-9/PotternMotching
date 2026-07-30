@@ -26,6 +26,19 @@ public class SequenceTests
     }
 
     [Fact]
+    public void EvaluateSequence_NullCollection_ReturnsFailureWithPath()
+    {
+        var matcher = CollectionPattern.Sequence([ValuePattern.Exact(42)]);
+
+        var result = matcher.Evaluate(null!, ".Items");
+
+        var failure = Assert.IsType<MatchResult.Failure>(result);
+        Assert.Single(failure.Reasons);
+        Assert.Contains(".Items", failure.Reasons[0]);
+        Assert.Contains("Actual collection is null", failure.Reasons[0]);
+    }
+
+    [Fact]
     public void EvaluateSequence_MultipleItemsInExactOrder_ReturnsSuccess()
     {
         var matcher = CollectionPattern.Sequence([

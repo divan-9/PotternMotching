@@ -37,6 +37,13 @@ public partial record CollectionPattern<T> : IPattern<IEnumerable<T>>
         IEnumerable<T> value,
         string path = "")
     {
+        if (value is null)
+        {
+            return new MatchResult.Failure([
+                $"{path}: [CollectionPattern] Actual collection is null"
+            ]);
+        }
+
         return this.Match(
             anyElement => anyElement.EvaluateAnyElement(value, path),
             sequence => sequence.EvaluateSequence(value, path),

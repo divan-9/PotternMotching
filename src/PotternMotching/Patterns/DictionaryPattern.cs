@@ -34,6 +34,13 @@ public partial record DictionaryPattern<TKey, TValue> : IPattern<IDictionary<TKe
         IDictionary<TKey, TValue> value,
         string path = "")
     {
+        if (value is null)
+        {
+            return new MatchResult.Failure([
+                $"{path}: [DictionaryPattern] Actual dictionary is null"
+            ]);
+        }
+
         return this.Match(
             items => items.EvaluateItems(value, path),
             exactItems => exactItems.EvaluateExactItems(value, path));
