@@ -63,6 +63,51 @@ public class ExternalAutoPatternTests
     }
 
     [Fact]
+    public void AssertPattern_AllowsNullableReferenceTarget()
+    {
+        ExternalAddress? value = new ExternalAddress("Seattle", "98101");
+
+        value.AssertPattern(new ExternalAddressPattern(City: "Seattle"));
+    }
+
+    [Fact]
+    public void AssertPattern_NullNullableReferenceTarget_ThrowsHelpfulFailure()
+    {
+        ExternalAddress? value = null;
+
+        var exception = Assert.Throws<AssertionFailedException>(() =>
+            value.AssertPattern(new ExternalAddressPattern(City: "Seattle")));
+
+        Assert.Contains("Actual value is null", exception.Message);
+    }
+
+    [Fact]
+    public void AssertNull_AllowsNullableReferenceTarget()
+    {
+        ExternalAddress? value = null;
+
+        value.AssertNull();
+    }
+
+    [Fact]
+    public void AssertNull_AllowsNullableValueTarget()
+    {
+        int? value = null;
+
+        value.AssertNull();
+    }
+
+    [Fact]
+    public void AssertNull_NonNullValue_ThrowsHelpfulFailure()
+    {
+        ExternalAddress? value = new ExternalAddress("Seattle", "98101");
+
+        var exception = Assert.Throws<AssertionFailedException>(() => value.AssertNull());
+
+        Assert.Contains("Expected null", exception.Message);
+    }
+
+    [Fact]
     public void ExternalRecord_NestedUnknownRecord_FallsBackToValueMatching()
     {
         var value = new ExternalWrappedUnknown(
@@ -237,6 +282,26 @@ public class ExternalAutoPatternTests
                 new ExternalJobPattern.Employed(Company: "Tech Corp", Position: "Engineer"),
                 new ExternalJobPattern.Employed(Company: "Tech Corp", Position: "Manager")
             ]);
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void ExternalUnion_RootTypedCollectionSpread_Works()
+    {
+        var value = new ExternalJobBoard(
+            Name: "Tech Corp",
+            Jobs:
+            [
+                new ExternalJob.Employed("Tech Corp", "Engineer"),
+                new ExternalJob.Unemployed(),
+            ]);
+
+        var pattern = new ExternalJobBoardPattern(
+            Name: "Tech Corp",
+            Jobs: [.. value.Jobs]);
 
         var result = pattern.Evaluate(value);
 
@@ -427,5 +492,121 @@ public class ExternalAutoPatternTests
         });
 
         Assert.Null(exception);
+    }
+
+    [Fact]
+    public void NullableScalar_NullLiteralInConstructor_MatchesNull()
+    {
+        var value = new ExternalNullableScalar(
+            Id: "42",
+            RuleSetId: null);
+
+        var pattern = new ExternalNullableScalarPattern(
+            Id: "42",
+            RuleSetId: (string?)null);
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void NullableUnknownValuePatternExactNull_MatchesNull()
+    {
+        var value = new ExternalNullableUnknown(
+            Id: "42",
+            Unknown: null);
+
+        var pattern = new ExternalNullableUnknownPattern(
+            Id: "42",
+            Unknown: ValuePattern.Exact<ExternalUnknown?>(null));
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void NullableUnknownValuePatternNull_MatchesNull()
+    {
+        var value = new ExternalNullableUnknown(
+            Id: "42",
+            Unknown: null);
+
+        var pattern = new ExternalNullableUnknownPattern(
+            Id: "42",
+            Unknown: ValuePattern.Null());
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void ValuePatternBetween_WorksInGeneratedPattern()
+    {
+        var value = new ExternalMeasurement(
+            Id: "42",
+            Value: 10.25);
+
+        var pattern = new ExternalMeasurementPattern(
+            Id: "42",
+            Value: ValuePattern.Between(10.0, 10.5));
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void NullableNestedPattern_NullCast_DoesNotThrowAndMatchesNull()
+    {
+        var value = new ExternalFieldOptions.Image(
+            Name: "hero",
+            Options: null);
+
+        var exception = Record.Exception(() =>
+        {
+            var pattern = new ExternalFieldOptionsPattern.Image(
+                Name: "hero",
+                Options: (ExternalMediaOptions?)null);
+
+            var result = pattern.Evaluate(value);
+            Assert.IsType<MatchResult.Success>(result);
+        });
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void NullableNestedPattern_ValuePatternExactNull_MatchesNull()
+    {
+        var value = new ExternalFieldOptions.Video(
+            Name: "clip",
+            Options: null);
+
+        var pattern = new ExternalFieldOptionsPattern.Video(
+            Name: "clip",
+            Options: ValuePattern.Exact<ExternalMediaOptions?>(null));
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
+    public void NullableNestedPattern_ValuePatternNull_MatchesNull()
+    {
+        var value = new ExternalFieldOptions.Video(
+            Name: "clip",
+            Options: null);
+
+        var pattern = new ExternalFieldOptionsPattern.Video(
+            Name: "clip",
+            Options: ValuePattern.Null());
+
+        var result = pattern.Evaluate(value);
+
+        Assert.IsType<MatchResult.Success>(result);
     }
 }

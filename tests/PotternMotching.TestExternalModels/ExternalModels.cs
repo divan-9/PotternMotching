@@ -55,6 +55,10 @@ public record ExternalCompany(
     string Name,
     List<ExternalJob.Employed> Employees);
 
+public record ExternalJobBoard(
+    string Name,
+    IReadOnlyCollection<ExternalJob> Jobs);
+
 [Union]
 public partial record ExternalContent
 {
@@ -102,3 +106,32 @@ public record ExternalNullableElements(
 public record ExternalNullableSet(
     string Id,
     HashSet<string>? Flags);
+
+public record ExternalNullableScalar(
+    string Id,
+    string? RuleSetId);
+
+public record ExternalNullableUnknown(
+    string Id,
+    ExternalUnknown? Unknown);
+
+public record ExternalMeasurement(
+    string Id,
+    double Value);
+
+public record ExternalMediaOptions(
+    long Width,
+    long Height,
+    long MaxSizeInBytes);
+
+[Union]
+public partial record ExternalFieldOptions
+{
+    public partial record Image(
+        string Name,
+        ExternalMediaOptions? Options);
+
+    public partial record Video(
+        string Name,
+        ExternalMediaOptions? Options);
+}

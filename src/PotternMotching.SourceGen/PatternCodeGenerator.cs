@@ -547,6 +547,14 @@ internal static class PatternCodeGenerator
         sb.AppendLine("    }");
         sb.AppendLine();
 
+        // Add implicit conversion operator from union root type to base pattern
+        sb.AppendLine($"    public static implicit operator {patternName}(");
+        sb.AppendLine($"        {unionFullType} value)");
+        sb.AppendLine("    {");
+        sb.AppendLine($"        return ({patternName})From(value);");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+
         // Add implicit conversion operators from each variant type to base pattern
         foreach (var variant in analysis.Variants)
         {

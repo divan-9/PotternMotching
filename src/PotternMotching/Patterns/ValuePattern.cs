@@ -18,7 +18,11 @@ public partial record ValuePattern<T> : IPattern<T>, IPatternConstructor<T>
         T value,
         string path = "")
     {
-        return this.Match(exact => exact.EvaluateExact(value, path));
+        return this.Match(
+            exact => exact.EvaluateExact(value, path),
+            lt => lt.EvaluateLt(value, path),
+            gt => gt.EvaluateGt(value, path),
+            between => between.EvaluateBetween(value, path));
     }
 
     public static IPattern<T> Create(
@@ -37,6 +41,16 @@ public partial record ValuePattern<T> : IPattern<T>, IPatternConstructor<T>
     public partial record Exact(
         T Value) : IPattern<T>;
 
+    public partial record Lt(
+        T Value) : IPattern<T>;
+
+    public partial record Gt(
+        T Value) : IPattern<T>;
+
+    public partial record Between(
+        T Min,
+        T Max) : IPattern<T>;
+
     public static implicit operator PatternDefault<T, Exact>(
         ValuePattern<T> matcher)
     {
@@ -46,9 +60,38 @@ public partial record ValuePattern<T> : IPattern<T>, IPatternConstructor<T>
 
 public static class ValuePattern
 {
+    public readonly record struct NullPatternToken;
+
     public static ValuePattern<T>.Exact Exact<T>(
         T value)
     {
         return new ValuePattern<T>.Exact(value);
+    }
+
+    public static ValuePattern<T>.Lt Lt<T>(
+        T value)
+        where T : System.Numerics.INumber<T>
+    {
+        return new ValuePattern<T>.Lt(value);
+    }
+
+    public static ValuePattern<T>.Gt Gt<T>(
+        T value)
+        where T : System.Numerics.INumber<T>
+    {
+        return new ValuePattern<T>.Gt(value);
+    }
+
+    public static ValuePattern<T>.Between Between<T>(
+        T min,
+        T max)
+        where T : System.Numerics.INumber<T>
+    {
+        return new ValuePattern<T>.Between(min, max);
+    }
+
+    public static NullPatternToken Null()
+    {
+        return default;
     }
 }
