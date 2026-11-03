@@ -1,6 +1,6 @@
 namespace PotternMotching.SourceGen.Models;
 
-public enum PatternWrapperKind
+internal enum PatternWrapperKind
 {
     Value,
     Set,

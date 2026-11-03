@@ -37,6 +37,22 @@ public class MatchAllTests
     }
 
     [Fact]
+    public void EvaluateMatchAll_NullDictionary_ReturnsFailureWithPath()
+    {
+        var matcher = DictionaryPattern.Items(new Dictionary<string, IPattern<int>>
+        {
+            ["key1"] = ValuePattern.Exact(42)
+        });
+
+        var result = matcher.Evaluate(null!, ".Config");
+
+        var failure = Assert.IsType<MatchResult.Failure>(result);
+        Assert.Single(failure.Reasons);
+        Assert.Contains(".Config", failure.Reasons[0]);
+        Assert.Contains("Actual dictionary is null", failure.Reasons[0]);
+    }
+
+    [Fact]
     public void EvaluateMatchAll_MultipleKeyValuePairsAllMatch_ReturnsSuccess()
     {
         var matcher = DictionaryPattern.Items(new Dictionary<string, IPattern<string>>

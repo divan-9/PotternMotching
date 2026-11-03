@@ -8,11 +8,15 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using PotternMotching.SourceGen.Models;
 
+/// <summary>
+/// Generates pattern types for targets declared with <c>AutoPatternForAttribute</c>.
+/// </summary>
 [Generator]
 public class AutoPatternGenerator : IIncrementalGenerator
 {
     private const string AutoPatternForAttributeName = "PotternMotching.AutoPatternForAttribute";
 
+    /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // Create syntax provider to find candidate types

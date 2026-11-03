@@ -64,6 +64,19 @@ public class SubsetTests
     }
 
     [Fact]
+    public void EvaluateAnyOrder_OverlappingPatterns_UsesNonGreedyAssignment_ReturnsSuccess()
+    {
+        var matcher = CollectionPattern.Subset<int>([
+            ValuePattern.Gt(0),
+            ValuePattern.Exact(1)
+        ]);
+
+        var result = matcher.Evaluate([1, 2]);
+
+        Assert.IsType<MatchResult.Success>(result);
+    }
+
+    [Fact]
     public void EvaluateAnyOrder_PatternNotFound_ReturnsFailureWithPatternDetails()
     {
         var matcher = CollectionPattern.Subset([ValuePattern.Exact(99)]);
@@ -74,12 +87,12 @@ public class SubsetTests
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items", failure.Reasons[0]);
         Assert.Contains("[CollectionPattern.Subset]", failure.Reasons[0]);
-        Assert.Contains("pattern[0]", failure.Reasons[0]);
-        Assert.Contains("1 pattern(s)", failure.Reasons[0]);
+        Assert.Contains("Could not match pattern[0]", failure.Reasons[0]);
+        Assert.Contains("unused item", failure.Reasons[0]);
     }
 
     [Fact]
-    public void EvaluateAnyOrder_MultiplePatternsMissing_ReturnsFailureWithAllMissingPatterns()
+    public void EvaluateAnyOrder_MultiplePatternsMissing_ReturnsFailureWithFirstUnmatchedPattern()
     {
         var matcher = CollectionPattern.Subset([
             ValuePattern.Exact(1),
@@ -94,9 +107,8 @@ public class SubsetTests
         Assert.Single(failure.Reasons);
         Assert.Contains(".Items", failure.Reasons[0]);
         Assert.Contains("[CollectionPattern.Subset]", failure.Reasons[0]);
-        Assert.Contains("2 pattern(s)", failure.Reasons[0]);
-        Assert.Contains("pattern[1]", failure.Reasons[0]);
-        Assert.Contains("pattern[3]", failure.Reasons[0]);
+        Assert.Contains("Could not match pattern[1]", failure.Reasons[0]);
+        Assert.Contains("unused item", failure.Reasons[0]);
     }
 
     [Fact]
@@ -111,9 +123,8 @@ public class SubsetTests
 
         var failure = Assert.IsType<MatchResult.Failure>(result);
         Assert.Single(failure.Reasons);
-        Assert.Contains("2 pattern(s)", failure.Reasons[0]);
-        Assert.Contains("pattern[0]", failure.Reasons[0]);
-        Assert.Contains("pattern[1]", failure.Reasons[0]);
+        Assert.Contains("Could not match pattern[0]", failure.Reasons[0]);
+        Assert.Contains("unused item", failure.Reasons[0]);
     }
 
     [Fact]
@@ -156,32 +167,4 @@ public class SubsetTests
         Assert.Equal(3, enumerationCount);
     }
 
-    [Fact]
-    public void EvaluateAnyOrder_PatternsRemovedAsMatched_EarlyExitWhenAllMatched()
-    {
-        var enumerationCount = 0;
-        IEnumerable<int> GetNumbers()
-        {
-            enumerationCount++;
-            yield return 1;
-            enumerationCount++;
-            yield return 2;
-            enumerationCount++;
-            yield return 3;
-            enumerationCount++;
-            yield return 4;
-            enumerationCount++;
-            yield return 5;
-        }
-
-        var matcher = CollectionPattern.Subset([
-            ValuePattern.Exact(1),
-            ValuePattern.Exact(2)
-        ]);
-
-        var result = matcher.Evaluate(GetNumbers());
-
-        Assert.IsType<MatchResult.Success>(result);
-        Assert.Equal(2, enumerationCount); // Should stop after finding both patterns
-    }
 }

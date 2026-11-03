@@ -45,10 +45,15 @@ public static class Ossertions
     /// </code>
     /// </example>
     public static void AssertPattern<T>(
-        this T target,
+        this T? target,
         IPattern<T> pattern,
         [CallerArgumentExpression(nameof(target))] string? path = null)
     {
+        if (target is null)
+        {
+            throw new AssertionFailedException($"\n\t\tFAILURE: {(path ?? string.Empty)}: Actual value is null");
+        }
+
         var result = pattern.Evaluate(
             value: target,
             path: path ?? string.Empty);
@@ -93,6 +98,42 @@ public static class Ossertions
         [CallerArgumentExpression(nameof(target))] string? path = null)
     {
         target.AssertPattern(ValuePattern.Exact(example), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target reference value is null.
+    /// </summary>
+    /// <typeparam name="T">The reference type being asserted.</typeparam>
+    /// <param name="target">The actual value being asserted.</param>
+    /// <param name="path">The expression path of the target value.</param>
+    /// <exception cref="AssertionFailedException">Thrown when the target value is not null.</exception>
+    public static void AssertNull<T>(
+        this T? target,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+        where T : class
+    {
+        if (target is not null)
+        {
+            throw new AssertionFailedException($"\n\t\tFAILURE: {(path ?? string.Empty)}: Expected null but got {target}");
+        }
+    }
+
+    /// <summary>
+    /// Asserts that the target nullable value is null.
+    /// </summary>
+    /// <typeparam name="T">The underlying value type being asserted.</typeparam>
+    /// <param name="target">The actual value being asserted.</param>
+    /// <param name="path">The expression path of the target value.</param>
+    /// <exception cref="AssertionFailedException">Thrown when the target value is not null.</exception>
+    public static void AssertNull<T>(
+        this T? target,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+        where T : struct
+    {
+        if (target is not null)
+        {
+            throw new AssertionFailedException($"\n\t\tFAILURE: {(path ?? string.Empty)}: Expected null but got {target}");
+        }
     }
 
     /// <summary>
@@ -152,6 +193,57 @@ public static class Ossertions
         [CallerArgumentExpression(nameof(target))] string? path = null)
     {
         target.AssertPattern(CollectionPattern.Subset([.. example]), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target collection contains exactly the specified patterns in any order.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The expected item patterns.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not contain exactly the expected items.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.ExactItems{T}(IPattern{T}[])"/>.
+    /// It is useful when you want to assert exact unordered collection contents.
+    /// </remarks>
+    [OverloadResolutionPriority(1)]
+    public static void AssertExactItems<T>(
+        this IEnumerable<T> target,
+        IPattern<T>[] example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.ExactItems(example), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target collection contains exactly the specified values in any order.
+    /// </summary>
+    /// <typeparam name="T">The type of the collection elements.</typeparam>
+    /// <param name="target">The actual collection being asserted.</param>
+    /// <param name="example">The expected items.</param>
+    /// <param name="path">
+    /// The expression path of the target value. This is automatically captured from the caller's code
+    /// using <see cref="CallerArgumentExpressionAttribute"/> and is used in error messages.
+    /// </param>
+    /// <exception cref="AssertionFailedException">
+    /// Thrown when the target collection does not contain exactly the expected items.
+    /// </exception>
+    /// <remarks>
+    /// This is a convenience wrapper over <see cref="CollectionPattern.ExactItems{T}(T[])"/>.
+    /// It is useful when you want to assert exact unordered collection contents.
+    /// </remarks>
+    public static void AssertExactItems<T>(
+        this IEnumerable<T> target,
+        IEnumerable<T> example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertPattern(CollectionPattern.ExactItems([.. example]), path);
     }
 
     /// <summary>

@@ -18,45 +18,128 @@ internal static class CollectionPatternExtensions
         string path)
     {
         var patterns = anyOrder.Patterns;
-        var matchedPatterns = new HashSet<int>();
 
-        foreach (var item in values)
+        if (patterns.Length == 0)
         {
-            // Try to match against any unmatched pattern
-            for (int i = 0; i < patterns.Length; i++)
-            {
-                if (matchedPatterns.Contains(i))
-                    continue;
+            return new MatchResult.Success();
+        }
 
-                if (patterns[i].Evaluate(item, $"{path}[?]") is MatchResult.Success)
-                {
-                    matchedPatterns.Add(i);
-                    break;
-                }
-            }
+        var items = values.Select((item, index) => (item, index)).ToArray();
 
-            // Early exit when all patterns matched
-            if (matchedPatterns.Count == patterns.Length)
+        return MatchPattern(
+            patternIndex: 0,
+            matchedItemsAcc: []);
+
+        MatchResult MatchPattern(
+            int patternIndex,
+            HashSet<int> matchedItemsAcc)
+        {
+            if (patternIndex >= patterns.Length)
             {
                 return new MatchResult.Success();
             }
+
+            var pattern = patterns[patternIndex];
+
+            var matchingItems = items
+                .Where(x => !matchedItemsAcc.Contains(x.index))
+                .Where(x => pattern.Evaluate(x.item, $"{path}[?]").IsSuccess())
+                .Select(x => x.index)
+                .ToArray();
+
+            if (matchingItems.Length == 0)
+            {
+                return new MatchResult.Failure([
+                    $"{path}: [CollectionPattern.Subset] Could not match pattern[{patternIndex}] ({pattern}) to an unused item"
+                ]);
+            }
+
+            MatchResult result = new MatchResult.Success();
+
+            foreach (var item in matchingItems)
+            {
+                matchedItemsAcc.Add(item);
+                result = MatchPattern(patternIndex + 1, matchedItemsAcc);
+
+                if (result.IsSuccess())
+                {
+                    return result;
+                }
+
+                matchedItemsAcc.Remove(item);
+            }
+
+            return result;
         }
+    }
 
-        // Build error message with unmatched pattern indices
-        if (matchedPatterns.Count < patterns.Length)
+    /// <summary>
+    /// Evaluates an exact-items pattern against a collection.
+    /// </summary>
+    /// <remarks>
+    /// All patterns must be matched to distinct collection items, order doesn't matter,
+    /// and the collection must not contain extra or missing items.
+    /// </remarks>
+    internal static MatchResult EvaluateExactItems<T>(
+        this CollectionPattern<T>.ExactItems exactItems,
+        IEnumerable<T> values,
+        string path)
+    {
+        var patterns = exactItems.Patterns;
+        var items = values.Select((item, index) => (item, index)).ToArray();
+
+        if (items.Length != patterns.Length)
         {
-            var unmatchedIndices = Enumerable.Range(0, patterns.Length)
-                .Where(i => !matchedPatterns.Contains(i))
-                .ToList();
-
-            var patternList = string.Join(", ", unmatchedIndices.Select(i => $"pattern[{i}] ({patterns[i]})"));
-
             return new MatchResult.Failure([
-                $"{path}: [CollectionPattern.Subset] Could not match {unmatchedIndices.Count} pattern(s): {patternList}"
+                $"{path}: [CollectionPattern.ExactItems] Expected {patterns.Length} item(s), got {items.Length}"
             ]);
         }
 
-        return new MatchResult.Success();
+        return MatchPattern(
+            patternIndex: 0,
+            matchedItemsAcc: []);
+
+        MatchResult MatchPattern(
+            int patternIndex,
+            HashSet<int> matchedItemsAcc)
+        {
+            if (patternIndex >= patterns.Length)
+            {
+                return new MatchResult.Success();
+            }
+
+            var pattern = patterns[patternIndex];
+
+            var matchingItems = items
+                .Where(x => !matchedItemsAcc.Contains(x.index))
+                .Where(x => pattern.Evaluate(x.item, $"{path}[?]").IsSuccess())
+                .Select(x => x.index)
+                .ToArray();
+
+            if (matchingItems.Length == 0)
+            {
+                return new MatchResult.Failure([
+                    $"{path}: [CollectionPattern.ExactItems] Could not match pattern[{patternIndex}] ({pattern}) to an unused item"
+                ]);
+            }
+
+            MatchResult result = new MatchResult.Success();
+
+            foreach (var item in matchingItems)
+            {
+                matchedItemsAcc.Add(item);
+                result = MatchPattern(patternIndex + 1, matchedItemsAcc);
+
+                if (result.IsSuccess())
+                {
+                    return result;
+                }
+
+                matchedItemsAcc.Remove(item);
+            }
+
+            return result;
+        }
     }
 
     /// <summary>

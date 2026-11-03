@@ -36,6 +36,37 @@ public class AssertionTests
     }
 
     [Fact]
+    public void AssertExactItems_WhenTargetContainsExactlyExpectedItemsInAnyOrder_DoesNotThrow()
+    {
+        var values = new[] { "alpha", "beta", "gamma" };
+
+        values.AssertExactItems(["gamma", "alpha", "beta"]);
+    }
+
+    [Fact]
+    public void AssertExactItems_WhenTargetContainsExtraItem_ThrowsWithPath()
+    {
+        var values = new[] { "alpha", "beta", "gamma" };
+
+        var exception = Assert.Throws<AssertionFailedException>(() => values.AssertExactItems(["alpha", "beta"]));
+
+        Assert.Contains("values", exception.Message);
+        Assert.Contains("CollectionPattern.ExactItems", exception.Message);
+    }
+
+    [Fact]
+    public void AssertExactItems_WhenUsingPatternArray_DoesNotThrow()
+    {
+        var values = new[] { 1, 2, 3 };
+
+        values.AssertExactItems([
+            ValuePattern.Exact(3),
+            ValuePattern.Exact(1),
+            ValuePattern.Exact(2)
+        ]);
+    }
+
+    [Fact]
     public void AssertSequence_WhenTargetMatchesExpectedSequence_DoesNotThrow()
     {
         var values = new[] { 1, 2, 3 };

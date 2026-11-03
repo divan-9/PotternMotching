@@ -1,6 +1,6 @@
 # PotternMotching
 
-A fluent pattern matching library for .NET that provides powerful patterns for values, collections, and dictionaries with automatic pattern generation from records and external types.
+A fluent pattern matching library for .NET that provides powerful patterns for values, collections, and dictionaries with automatic pattern generation from records, structs, and external types.
 
 [![NuGet](https://img.shields.io/nuget/v/PotternMotching.svg)](https://www.nuget.org/packages/PotternMotching/)
 [![Build](https://github.com/divan-9/PotternMotching/actions/workflows/build.yml/badge.svg)](https://github.com/divan-9/PotternMotching/actions/workflows/build.yml)
@@ -34,6 +34,11 @@ pattern.Evaluate(["banana", "cherry", "apple"]);  // Success - all patterns foun
 var sequence = CollectionPattern.Sequence(["a", "b", "c"]);
 sequence.Evaluate(["a", "b", "c"]);  // Success
 sequence.Evaluate(["a", "b"]);       // Failure: wrong length
+
+// Match exact items in any order (no extra or missing items)
+var exactItems = CollectionPattern.ExactItems(["admin", "editor"]);
+exactItems.Evaluate(["editor", "admin"]);  // Success
+exactItems.Evaluate(["admin", "editor", "owner"]);  // Failure: wrong length
 
 // Match prefix
 var prefix = CollectionPattern.StartsWith(["hello", "world"]);
@@ -184,15 +189,23 @@ var pattern = new Result_StringPattern(
 );
 ```
 
-Notes:
-- `[AutoPatternFor]` supports **records**, **classes**, **closed generic constructed types**, and **Dunet unions**
+### Generation Rules & Limitations
+
+- `[AutoPatternFor]` supports **records**, **classes**, **structs**, **closed generic constructed types**, and **Dunet unions**
+- struct targets, including external structs such as `MongoDB.Bson.BsonElement`, are matched through public readable instance properties
 - open generic targets such as `typeof(Result<>)` are not supported
+- private, protected, and private-protected target types are not supported
+- generated pattern accessibility follows the target type: public targets generate public patterns; internal targets generate internal patterns
 - for classes, all public instance properties with a public getter may be matched
-- Dunet union roots generate variant-aware patterns
+- records with inheritance are not supported, except normal `object` inheritance
+- Dunet union roots generate variant-aware patterns, including closed generic union roots
 - non-generic generated type names use `{TypeName}Pattern`
 - closed generic generated type names use `{TypeName}_{TypeArg1}_{TypeArg2}...Pattern`
 - the generated type is emitted into the **marker type namespace**
+- generated pattern constructor parameter names are based on target property names, capitalized and escaped when needed
 - nested types are matched as nested patterns only when a pattern is already known; otherwise they fall back to exact value matching
+- generated pattern type-name collisions report `PM0009` and must be resolved by changing marker namespaces or target selection
+- generated pattern parameter-name collisions report `PM0012`; for example `record Thing(string id, string Id)` cannot generate a valid pattern constructor because both parameters would become `Id`
 
 ### Flexible Matching with Defaults
 
@@ -206,6 +219,40 @@ var flexiblePattern = new CompanyPattern(
     // Branches and Tags not specified - will match any value
 );
 ```
+
+### Null & Nullable Matching
+
+Generated pattern defaults distinguish between **unspecified** and **exact null**:
+
+```csharp
+public record MediaOptions(long Width, long Height);
+public record FieldOptions(string Name, MediaOptions? Options);
+
+[AutoPatternFor(typeof(MediaOptions))]
+[AutoPatternFor(typeof(FieldOptions))]
+internal static class PatternMarkers;
+```
+
+```csharp
+// Options omitted: matches null or non-null values
+var anyOptions = new FieldOptionsPattern(Name: "hero");
+
+// Exact null: prefer ValuePattern.Null()
+var nullOptions = new FieldOptionsPattern(
+    Name: "hero",
+    Options: ValuePattern.Null());
+
+// Nullable nested pattern: actual Options must be non-null, then Width is checked
+var nonNullOptions = new FieldOptionsPattern(
+    Options: new MediaOptionsPattern(Width: 100));
+```
+
+Semantics:
+- omitted property = match anything
+- `ValuePattern.Null()` = exact null matching
+- `(T?)null` also works for nullable generated defaults, but `PM0011` suggests `ValuePattern.Null()` for clarity
+- nullable nested reference-type properties use `NullablePatternDefault<T, TPattern>`; nullable nested value-type properties use `NullableValuePatternDefault<T, TPattern>`; nested patterns require a non-null actual value
+- null collections or dictionaries fail with a normal `MatchResult.Failure` when a collection/dictionary pattern is explicitly specified
 
 ### Collection Expressions & Implicit Conversions
 
@@ -232,8 +279,27 @@ The source generator automatically maps types to appropriate pattern wrappers:
 | `T[]`, `List<T>`, `IEnumerable<T>` | `SequencePatternDefault<T, ...>` | Exact sequence (order + length) |
 | `HashSet<T>`, `ISet<T>` | `SetPatternDefault<T, ...>` | Subset (unordered, allows extras) |
 | `Dictionary<K,V>`, `IDictionary<K,V>` | `DictionaryPatternDefault<K,V, ...>` | Key-value pairs (allows extra keys) |
-| Nested pattern-capable types targeted with `[AutoPatternFor]` | `RecordNamePattern?` / `Record_TypeArgPattern?` | Nested pattern matching |
+| Nested pattern-capable types targeted with `[AutoPatternFor]` | `PatternDefault<T, TypePattern>` | Nested pattern matching |
+| Nullable nested pattern-capable reference types | `NullablePatternDefault<T, TypePattern>` | Match anything by default; nested patterns require non-null actual values; `ValuePattern.Null()` matches null |
+| Nullable nested pattern-capable value types | `NullableValuePatternDefault<T, TypePattern>` | Match anything by default; nested patterns require non-null actual values; `ValuePattern.Null()` matches null |
 | Discriminated unions ([Dunet](https://github.com/domn1995/dunet)) | Variant-specific patterns | Variant-aware matching |
+
+## Source Generator Diagnostics
+
+| Diagnostic | Severity | Meaning | Typical fix |
+|------------|----------|---------|-------------|
+| `PM0001` | Error | Legacy record-only target validation | Use a supported record, class, or struct target through `[AutoPatternFor]` |
+| `PM0002` | Error | Record inheritance is not supported | Use a record without a custom base type |
+| `PM0003` | Error | Legacy primary-constructor validation | Use a supported positional record, class properties, or struct properties |
+| `PM0004` | Warning | Nested type pattern was not found | Add `[AutoPatternFor(typeof(NestedType))]` if nested pattern matching is desired |
+| `PM0005` | Error | Dunet union root must be partial | Mark the union root `partial` |
+| `PM0006` | Error | Dunet union root has no variants | Add nested record variants |
+| `PM0007` | Error | `[AutoPatternFor]` target could not be resolved | Check the `typeof(...)` target |
+| `PM0008` | Error | External target is not a class, struct, or record | Use a supported class, struct, record, or Dunet union target |
+| `PM0009` | Error | Generated pattern type name collision | Change marker namespace or remove one colliding target |
+| `PM0010` | Error | Unsupported target, such as open generic or less-than-internal type | Use a closed generic/public/internal target |
+| `PM0011` | Warning | Null literal/cast used for exact null matching | Prefer `ValuePattern.Null()` |
+| `PM0012` | Error | Generated pattern constructor parameter name collision | Rename target properties so capitalized pattern parameter names are unique |
 
 ## Pattern Types Reference
 
@@ -254,6 +320,9 @@ CollectionPattern.Subset(items)
 
 // Exact sequence - same order and length
 CollectionPattern.Sequence(items)
+
+// Exact items - same length, any order
+CollectionPattern.ExactItems(items)
 
 // Collection must start with these items
 CollectionPattern.StartsWith(items)
@@ -350,6 +419,14 @@ For subset assertions on collections, use `AssertSubset`:
 var tags = new[] { "important", "backend", "urgent" };
 
 tags.AssertSubset(["important", "urgent"]);
+```
+
+For exact unordered assertions on collections, use `AssertExactItems`:
+
+```csharp
+var values = new[] { 1, 2, 3 };
+
+values.AssertExactItems([3, 1, 2]);
 ```
 
 For exact sequence assertions on collections, use `AssertSequence`:

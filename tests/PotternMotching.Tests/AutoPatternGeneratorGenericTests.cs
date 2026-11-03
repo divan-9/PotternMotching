@@ -48,4 +48,40 @@ public class AutoPatternGeneratorGenericTests
         Assert.DoesNotContain(result.OutputDiagnostics, d => d.Severity == DiagnosticSeverity.Error);
         Assert.Contains(result.GeneratedSources, source => source.HintName.Contains("GenericBox_StringPattern"));
     }
+
+    [Fact]
+    public void ConstructedGenericUnionTarget_GeneratesVariantPatternsWithConcreteRootPatternName()
+    {
+        var result = SourceGeneratorTestHelper.RunGenerator("""
+            using Dunet;
+            using PotternMotching;
+
+            namespace GenericPatternTests;
+
+            [Union]
+            public abstract partial record Maybe<T>
+            {
+                public partial record Some(T Value);
+                public partial record None;
+            }
+
+            [AutoPatternFor(typeof(Maybe<string>))]
+            internal static class PatternMarkers;
+
+            public static class Usage
+            {
+                public static Maybe_StringPattern CreateRoot() => new Maybe_StringPattern.Some(Value: "hello");
+
+                public static MatchResult Evaluate() =>
+                    new Maybe_StringPattern.Some(Value: "hello").Evaluate(new Maybe<string>.Some("hello"));
+            }
+            """);
+
+        Assert.DoesNotContain(result.GeneratorDiagnostics, d => d.Id == "PM0010");
+
+        var generated = Assert.Single(result.GeneratedSources, source => source.HintName.Contains("Maybe_StringPattern"));
+        Assert.Contains("public abstract partial record Maybe_StringPattern", generated.SourceText.ToString());
+        Assert.Contains(": Maybe_StringPattern, IPattern<", generated.SourceText.ToString());
+        Assert.DoesNotContain(": MaybePattern, IPattern<", generated.SourceText.ToString());
+    }
 }
