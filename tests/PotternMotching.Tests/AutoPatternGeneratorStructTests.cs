@@ -128,6 +128,58 @@ public class AutoPatternGeneratorStructTests
     }
 
     [Fact]
+    public void NullableNestedStructProperty_AcceptsNegatedNestedPattern()
+    {
+        var result = SourceGeneratorTestHelper.RunGenerator("""
+            using PotternMotching;
+            using PotternMotching.Patterns;
+
+            namespace StructPatternTests;
+
+            public readonly record struct Point(int X, int Y);
+            public record Shape(Point? Center);
+
+            [AutoPatternFor(typeof(Point))]
+            [AutoPatternFor(typeof(Shape))]
+            internal static class PatternMarkers;
+
+            public static class Usage
+            {
+                public static ShapePattern ExcludePoint() =>
+                    new(Center: Pattern.Not(new PointPattern(X: 1)));
+            }
+            """);
+
+        Assert.DoesNotContain(result.OutputDiagnostics, d => d.Severity == DiagnosticSeverity.Error);
+    }
+
+    [Fact]
+    public void NullableNestedStructProperty_AcceptsNegatedExactNull()
+    {
+        var result = SourceGeneratorTestHelper.RunGenerator("""
+            using PotternMotching;
+            using PotternMotching.Patterns;
+
+            namespace StructPatternTests;
+
+            public readonly record struct Point(int X, int Y);
+            public record Shape(Point? Center);
+
+            [AutoPatternFor(typeof(Point))]
+            [AutoPatternFor(typeof(Shape))]
+            internal static class PatternMarkers;
+
+            public static class Usage
+            {
+                public static ShapePattern RequirePoint() =>
+                    new(Center: Pattern.Not(ValuePattern.Exact<Point?>(null)));
+            }
+            """);
+
+        Assert.DoesNotContain(result.OutputDiagnostics, d => d.Severity == DiagnosticSeverity.Error);
+    }
+
+    [Fact]
     public void BsonElementTarget_GeneratesPatternFromStructProperties()
     {
         var result = SourceGeneratorTestHelper.RunGenerator("""

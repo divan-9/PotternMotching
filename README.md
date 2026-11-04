@@ -336,6 +336,15 @@ CollectionPattern.AnyElement(pattern)
 
 All collection pattern factory methods accept either arrays of values or arrays of patterns.
 
+### Negation
+```csharp
+Pattern.Not(ValuePattern.Exact("admin"))
+Pattern.Not(CollectionPattern.AnyElement("forbidden"))
+Pattern.Not(new PersonPattern(Name: "Alice"))
+```
+
+`Pattern.Not(inner)` succeeds if `inner` fails. For example, negating a collection pattern accepts a null collection because collection patterns reject null; to reject only null, use `Pattern.Not(ValuePattern.Exact<IEnumerable<string>?>(null))`. Inner patterns must be able to evaluate the supplied value (generated object patterns may not accept null). For nullable nested objects, adapt the inner pattern *before* negating it: `Pattern.Not(new NullablePattern<Address>(new AddressPattern(City: "London")))`. When negating a dictionary pattern for a read-only property, specify `Pattern.Not<IReadOnlyDictionary<string, int>>(DictionaryPattern.Items(...))`.
+
 ### Dictionary Patterns
 ```csharp
 using PotternMotching.Patterns;
@@ -406,6 +415,24 @@ person.AssertPattern(pattern);  // Throws AssertionFailedException if no match
 // On failure, automatically includes the variable name in the error:
 // FAILURE: person.Age: [ValuePattern.Exact] Expected 25, got 30
 ```
+
+Use `AssertNotPattern` for negative assertions, or `AssertNotExact` and `AssertNotNull` for common cases. `AssertNotPattern` evaluates null inputs, unlike `AssertPattern`, which rejects them before evaluation:
+
+```csharp
+person.AssertNotPattern(new PersonPattern(Name: "Bob"));
+person.Name.AssertNotExact("Bob");
+person.Name.AssertNotNull();
+```
+
+`AssertContainsNone` ensures no collection item matches **any** forbidden value or pattern; failures report the matching index:
+
+```csharp
+var names = new[] { "Alice" };
+names.AssertContainsNone(["Bob", "Charlie"]); // Passes
+names.AssertContainsNone(["Bob", "Alice"]);   // Throws
+```
+
+A null collection passes `AssertContainsNone`, since it contains no matching items. Use `AssertNotNull` as well if null should fail.
 
 For exact value comparison without explicitly constructing a pattern, use `AssertExact`:
 

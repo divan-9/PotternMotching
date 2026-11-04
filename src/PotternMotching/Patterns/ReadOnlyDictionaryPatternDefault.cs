@@ -60,4 +60,14 @@ public readonly struct ReadOnlyDictionaryPatternDefault<TKey, TValue, TDefaultVa
     {
         return new ReadOnlyDictionaryPatternDefault<TKey, TValue, TDefaultValuePattern>(pattern);
     }
+
+    /// <summary>
+    /// Implicitly converts a negated dictionary pattern to a read-only dictionary pattern default.
+    /// </summary>
+    /// <param name="pattern">The negated pattern to convert.</param>
+    public static implicit operator ReadOnlyDictionaryPatternDefault<TKey, TValue, TDefaultValuePattern>(
+        NotPattern<IReadOnlyDictionary<TKey, TValue>> pattern)
+    {
+        return new(pattern);
+    }
 }

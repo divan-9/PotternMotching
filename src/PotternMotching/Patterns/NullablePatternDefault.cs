@@ -113,6 +113,16 @@ public readonly struct NullablePatternDefault<T, TPatternDefault> : IPattern<T?>
         return new NullablePatternDefault<T, TPatternDefault>(pattern);
     }
 
+    /// <summary>
+    /// Implicitly converts a negated nullable pattern to a nullable pattern default.
+    /// For nested patterns, adapt the inner pattern to nullable values before negating it.
+    /// </summary>
+    /// <param name="pattern">The negated pattern to convert.</param>
+    public static implicit operator NullablePatternDefault<T, TPatternDefault>(
+        NotPattern<T?> pattern)
+    {
+        return new NullablePatternDefault<T, TPatternDefault>(pattern);
+    }
 
     /// <summary>
     /// Implicitly converts a null marker to a nullable pattern default.
@@ -256,6 +266,27 @@ public readonly struct NullableValuePatternDefault<T, TPatternDefault> : IPatter
         ValuePattern<T>.Exact pattern)
     {
         return new NullableValuePatternDefault<T, TPatternDefault>(new NullableValuePattern<T>(pattern));
+    }
+
+    /// <summary>
+    /// Implicitly converts a negated nullable pattern to a nullable pattern default.
+    /// </summary>
+    /// <param name="pattern">The negated pattern to convert.</param>
+    public static implicit operator NullableValuePatternDefault<T, TPatternDefault>(
+        NotPattern<T?> pattern)
+    {
+        return new NullableValuePatternDefault<T, TPatternDefault>(pattern);
+    }
+
+    /// <summary>
+    /// Implicitly converts a negated non-null pattern to a nullable pattern default.
+    /// </summary>
+    /// <param name="pattern">The negated pattern to convert.</param>
+    public static implicit operator NullableValuePatternDefault<T, TPatternDefault>(
+        NotPattern<T> pattern)
+    {
+        return new NullableValuePatternDefault<T, TPatternDefault>(
+            new NotPattern<T?>(new NullableValuePattern<T>(pattern.Inner)));
     }
 
     /// <summary>

@@ -104,6 +104,16 @@ public readonly struct PatternDefault<T, TPatternDefault> : IPattern<T>, IPatter
     }
 
     /// <summary>
+    /// Implicitly converts a negated pattern to a pattern default.
+    /// </summary>
+    /// <param name="pattern">The negated pattern to convert.</param>
+    public static implicit operator PatternDefault<T, TPatternDefault>(
+        NotPattern<T> pattern)
+    {
+        return new PatternDefault<T, TPatternDefault>(pattern);
+    }
+
+    /// <summary>
     /// Implicitly converts a null marker to a pattern default.
     /// </summary>
     /// <param name="value">The null marker to convert.</param>

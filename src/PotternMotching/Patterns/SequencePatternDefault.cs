@@ -90,6 +90,16 @@ public readonly struct SequencePatternDefault<T, TDefaultItemMatcher> : IPattern
     }
 
     /// <summary>
+    /// Implicitly converts a negated collection pattern to a sequence pattern default.
+    /// </summary>
+    /// <param name="pattern">The negated pattern to convert.</param>
+    public static implicit operator SequencePatternDefault<T, TDefaultItemMatcher>(
+        NotPattern<IEnumerable<T>> pattern)
+    {
+        return new(pattern);
+    }
+
+    /// <summary>
     /// Implicitly converts an array to a sequence pattern default.
     /// </summary>
     /// <param name="items">The array of items to convert to a sequence pattern.</param>
