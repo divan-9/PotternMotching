@@ -82,42 +82,6 @@ public class NegativeAssertionTests
     }
 
     [Fact]
-    public void AssertNotNull_WhenReferenceIsNull_ThrowsWithPath()
-    {
-        string? role = null;
-
-        var exception = Assert.Throws<AssertionFailedException>(() => role.AssertNotNull());
-
-        Assert.Contains("role: Expected non-null value", exception.Message);
-    }
-
-    [Fact]
-    public void AssertNotNull_WhenReferenceIsNonNull_DoesNotThrow()
-    {
-        string? role = "guest";
-
-        role.AssertNotNull();
-    }
-
-    [Fact]
-    public void AssertNotNull_WhenNullableValueIsNull_ThrowsWithPath()
-    {
-        int? count = null;
-
-        var exception = Assert.Throws<AssertionFailedException>(() => count.AssertNotNull());
-
-        Assert.Contains("count: Expected non-null value", exception.Message);
-    }
-
-    [Fact]
-    public void AssertNotNull_WhenNullableValueIsNonNull_DoesNotThrow()
-    {
-        int? count = 1;
-
-        count.AssertNotNull();
-    }
-
-    [Fact]
     public void AssertContainsNone_WhenNoForbiddenValuesOccur_DoesNotThrow()
     {
         string[] items = ["a"];

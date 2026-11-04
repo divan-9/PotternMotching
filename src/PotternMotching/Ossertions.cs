@@ -442,34 +442,6 @@ public static class Ossertions
     }
 
     /// <summary>
-    /// Asserts that a reference value is not null.
-    /// </summary>
-    public static void AssertNotNull<T>(
-        this T? target,
-        [CallerArgumentExpression(nameof(target))] string? path = null)
-        where T : class
-    {
-        if (target is null)
-        {
-            throw new AssertionFailedException($"\n\t\tFAILURE: {(path ?? string.Empty)}: Expected non-null value");
-        }
-    }
-
-    /// <summary>
-    /// Asserts that a nullable value type is not null.
-    /// </summary>
-    public static void AssertNotNull<T>(
-        this T? target,
-        [CallerArgumentExpression(nameof(target))] string? path = null)
-        where T : struct
-    {
-        if (target is null)
-        {
-            throw new AssertionFailedException($"\n\t\tFAILURE: {(path ?? string.Empty)}: Expected non-null value");
-        }
-    }
-
-    /// <summary>
     /// Asserts that no collection item equals any of the forbidden values.
     /// A null collection contains no matching items.
     /// </summary>

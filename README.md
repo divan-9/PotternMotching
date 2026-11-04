@@ -416,12 +416,11 @@ person.AssertPattern(pattern);  // Throws AssertionFailedException if no match
 // FAILURE: person.Age: [ValuePattern.Exact] Expected 25, got 30
 ```
 
-Use `AssertNotPattern` for negative assertions, or `AssertNotExact` and `AssertNotNull` for common cases. `AssertNotPattern` evaluates null inputs, unlike `AssertPattern`, which rejects them before evaluation:
+Use `AssertNotPattern` for negative assertions, or `AssertNotExact` for unequal values. `AssertNotPattern` evaluates null inputs, unlike `AssertPattern`, which rejects them before evaluation:
 
 ```csharp
 person.AssertNotPattern(new PersonPattern(Name: "Bob"));
 person.Name.AssertNotExact("Bob");
-person.Name.AssertNotNull();
 ```
 
 `AssertContainsNone` ensures no collection item matches **any** forbidden value or pattern; failures report the matching index:
@@ -432,7 +431,7 @@ names.AssertContainsNone(["Bob", "Charlie"]); // Passes
 names.AssertContainsNone(["Bob", "Alice"]);   // Throws
 ```
 
-A null collection passes `AssertContainsNone`, since it contains no matching items. Use `AssertNotNull` as well if null should fail.
+A null collection passes `AssertContainsNone`, since it contains no matching items. To also reject null, assert the negation of an exact-null pattern: `names.AssertNotPattern(ValuePattern.Exact<string[]?>(null))`.
 
 For exact value comparison without explicitly constructing a pattern, use `AssertExact`:
 
