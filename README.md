@@ -101,7 +101,7 @@ public record Company(
 [AutoPatternFor(typeof(Person))]
 [AutoPatternFor(typeof(Address))]
 [AutoPatternFor(typeof(Company))]
-internal static class PatternMarkers;
+internal static class Patterns;
 ```
 
 The source generator creates pattern classes you can use immediately:
@@ -155,7 +155,7 @@ using Shared.Contracts;
 namespace MyProject.Tests.Patterns;
 
 [AutoPatternFor(typeof(ExternalUserDto))]
-internal static class ExternalPatterns;
+internal static class Patterns;
 ```
 
 This generates a top-level pattern type in the marker namespace:
@@ -178,7 +178,7 @@ using Shared.Contracts;
 namespace MyProject.Tests.Patterns;
 
 [AutoPatternFor(typeof(Result<string>))]
-internal static class GenericPatterns;
+internal static class Patterns;
 ```
 
 ```csharp
@@ -230,7 +230,7 @@ public record FieldOptions(string Name, MediaOptions? Options);
 
 [AutoPatternFor(typeof(MediaOptions))]
 [AutoPatternFor(typeof(FieldOptions))]
-internal static class PatternMarkers;
+internal static class Patterns;
 ```
 
 ```csharp
@@ -250,9 +250,30 @@ var nonNullOptions = new FieldOptionsPattern(
 Semantics:
 - omitted property = match anything
 - `ValuePattern.Null()` = exact null matching
-- `(T?)null` also works for nullable generated defaults, but `PM0011` suggests `ValuePattern.Null()` for clarity
+- `(T?)null` also works for nullable scalar and nested-object defaults, but `PM0011` suggests `ValuePattern.Null()` for clarity
 - nullable nested reference-type properties use `NullablePatternDefault<T, TPattern>`; nullable nested value-type properties use `NullableValuePatternDefault<T, TPattern>`; nested patterns require a non-null actual value
 - null collections or dictionaries fail with a normal `MatchResult.Failure` when a collection/dictionary pattern is explicitly specified
+- `ValuePattern.Null()` also works for sequence, set, dictionary, and read-only dictionary properties; it matches only null, not an empty collection
+
+```csharp
+public record CollectionOptions(
+    string[]? Items,
+    HashSet<string>? Tags,
+    Dictionary<string, int>? Limits,
+    IReadOnlyDictionary<string, int>? ReadOnlyLimits);
+
+[AutoPatternFor(typeof(CollectionOptions))]
+internal static class Patterns;
+
+var nullCollections = new CollectionOptionsPattern(
+    Items: ValuePattern.Null(),
+    Tags: ValuePattern.Null(),
+    Limits: ValuePattern.Null(),
+    ReadOnlyLimits: ValuePattern.Null());
+
+var emptyItems = new CollectionOptionsPattern(Items: []); // Empty, non-null sequence
+var anyItems = new CollectionOptionsPattern();           // Null or non-null
+```
 
 ### Collection Expressions & Implicit Conversions
 
@@ -489,7 +510,7 @@ public record Person(string Name, Job Job);
 
 [AutoPatternFor(typeof(Job))]
 [AutoPatternFor(typeof(Person))]
-internal static class PatternMarkers;
+internal static class Patterns;
 ```
 
 Generated patterns are variant-aware:

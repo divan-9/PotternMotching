@@ -17,7 +17,7 @@ public class AutoPatternGeneratorGenericTests
             public record GenericBox<T>(T Value);
 
             [AutoPatternFor(typeof(GenericBox<>))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
             """);
 
         var diagnostic = Assert.Single(result.GeneratorDiagnostics.Where(d => d.Id == "PM0010"));
@@ -36,7 +36,7 @@ public class AutoPatternGeneratorGenericTests
             public record GenericBox<T>(T Value);
 
             [AutoPatternFor(typeof(GenericBox<string>))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -66,7 +66,7 @@ public class AutoPatternGeneratorGenericTests
             }
 
             [AutoPatternFor(typeof(Maybe<string>))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {

@@ -97,6 +97,16 @@ public readonly struct SetPatternDefault<T, TDefaultItemMatcher> : IPattern<IEnu
     {
         return new(pattern);
     }
+
+    /// <summary>
+    /// Implicitly converts a null marker to an exact-null collection pattern.
+    /// </summary>
+    /// <param name="value">The null marker to convert.</param>
+    public static implicit operator SetPatternDefault<T, TDefaultItemMatcher>(
+        ValuePattern.NullPatternToken value)
+    {
+        return new(ValuePattern.Exact<IEnumerable<T>?>(null));
+    }
 }
 
 /// <summary>

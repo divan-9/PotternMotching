@@ -100,6 +100,16 @@ public readonly struct SequencePatternDefault<T, TDefaultItemMatcher> : IPattern
     }
 
     /// <summary>
+    /// Implicitly converts a null marker to an exact-null collection pattern.
+    /// </summary>
+    /// <param name="value">The null marker to convert.</param>
+    public static implicit operator SequencePatternDefault<T, TDefaultItemMatcher>(
+        ValuePattern.NullPatternToken value)
+    {
+        return new(ValuePattern.Exact<IEnumerable<T>?>(null));
+    }
+
+    /// <summary>
     /// Implicitly converts an array to a sequence pattern default.
     /// </summary>
     /// <param name="items">The array of items to convert to a sequence pattern.</param>

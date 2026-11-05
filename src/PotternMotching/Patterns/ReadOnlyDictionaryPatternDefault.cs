@@ -70,4 +70,14 @@ public readonly struct ReadOnlyDictionaryPatternDefault<TKey, TValue, TDefaultVa
     {
         return new(pattern);
     }
+
+    /// <summary>
+    /// Implicitly converts a null marker to an exact-null dictionary pattern.
+    /// </summary>
+    /// <param name="value">The null marker to convert.</param>
+    public static implicit operator ReadOnlyDictionaryPatternDefault<TKey, TValue, TDefaultValuePattern>(
+        ValuePattern.NullPatternToken value)
+    {
+        return new(ValuePattern.Exact<IReadOnlyDictionary<TKey, TValue>?>(null));
+    }
 }

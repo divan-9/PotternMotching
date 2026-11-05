@@ -17,7 +17,7 @@ public class AutoPatternGeneratorAccessibilityTests
             internal record Thing(string Id);
 
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             internal static class Usage
             {
@@ -45,7 +45,7 @@ public class AutoPatternGeneratorAccessibilityTests
             }
 
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             internal static class Usage
             {
@@ -70,7 +70,7 @@ public class AutoPatternGeneratorAccessibilityTests
             public record Thing(string Id);
 
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
             """);
 
         Assert.DoesNotContain(result.OutputDiagnostics, d => d.Severity == DiagnosticSeverity.Error);
@@ -92,7 +92,7 @@ public class AutoPatternGeneratorAccessibilityTests
                 private record Secret(string Id);
 
                 [AutoPatternFor(typeof(Secret))]
-                internal static class PatternMarkers;
+                internal static class Patterns;
             }
             """);
 

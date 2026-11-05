@@ -256,4 +256,4 @@ public partial record ImpressionContent
 [AutoPatternFor(typeof(JobApplication))]
 [AutoPatternFor(typeof(Company))]
 [AutoPatternFor(typeof(ImpressionContent))]
-internal static class PatternMarkers;
+internal static class Patterns;

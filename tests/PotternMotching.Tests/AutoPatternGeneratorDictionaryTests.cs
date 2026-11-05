@@ -18,7 +18,7 @@ public class AutoPatternGeneratorDictionaryTests
             public record HealthCheckResult(IReadOnlyDictionary<string, object> Data);
 
             [AutoPatternFor(typeof(HealthCheckResult))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -56,7 +56,7 @@ public class AutoPatternGeneratorDictionaryTests
             public record HealthCheckResult(IReadOnlyDictionary<string, object> Data);
 
             [AutoPatternFor(typeof(HealthCheckResult))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {

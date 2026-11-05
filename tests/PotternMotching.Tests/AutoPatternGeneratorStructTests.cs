@@ -26,7 +26,7 @@ public class AutoPatternGeneratorStructTests
             }
 
             [AutoPatternFor(typeof(Point))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -50,7 +50,7 @@ public class AutoPatternGeneratorStructTests
             public readonly record struct Size(int Width, int Height);
 
             [AutoPatternFor(typeof(Size))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -76,7 +76,7 @@ public class AutoPatternGeneratorStructTests
 
             [AutoPatternFor(typeof(Point))]
             [AutoPatternFor(typeof(Shape))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -103,7 +103,7 @@ public class AutoPatternGeneratorStructTests
 
             [AutoPatternFor(typeof(Point))]
             [AutoPatternFor(typeof(Shape))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -141,7 +141,7 @@ public class AutoPatternGeneratorStructTests
 
             [AutoPatternFor(typeof(Point))]
             [AutoPatternFor(typeof(Shape))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -167,7 +167,7 @@ public class AutoPatternGeneratorStructTests
 
             [AutoPatternFor(typeof(Point))]
             [AutoPatternFor(typeof(Shape))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -189,7 +189,7 @@ public class AutoPatternGeneratorStructTests
             namespace StructPatternTests;
 
             [AutoPatternFor(typeof(BsonElement))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {

@@ -22,4 +22,4 @@ using PotternMotching.TestExternalModels;
 [AutoPatternFor(typeof(ExternalMeasurement))]
 [AutoPatternFor(typeof(ExternalMediaOptions))]
 [AutoPatternFor(typeof(ExternalFieldOptions))]
-internal static class ExternalPatternMarkers;
+internal static class Patterns;

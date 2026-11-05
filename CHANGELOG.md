@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Public documentation now describes null semantics, source-generator limitations, diagnostics, and release behavior.
 
 ### Fixed
+- Generated sequence, set, dictionary, and read-only dictionary properties now accept `ValuePattern.Null()` for exact null matching.
 - Collection and dictionary patterns now return `MatchResult.Failure` instead of throwing when explicitly evaluated against null actual values.
 - Generated patterns now preserve original source property names for property access while keeping capitalized pattern constructor parameter names.
 - Closed generic Dunet union variants now inherit from the generated closed generic root pattern type.
