@@ -18,7 +18,7 @@ public class AutoPatternGeneratorDictionaryTests
             public record HealthCheckResult(IReadOnlyDictionary<string, object> Data);
 
             [AutoPatternFor(typeof(HealthCheckResult))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -41,5 +41,34 @@ public class AutoPatternGeneratorDictionaryTests
         Assert.Contains(
             "ReadOnlyDictionaryPatternDefault<string, object, ValuePattern<object>> Data = default",
             generated.SourceText.ToString());
+    }
+
+    [Fact]
+    public void IReadOnlyDictionaryProperty_AcceptsNegatedDictionaryPattern()
+    {
+        var result = SourceGeneratorTestHelper.RunGenerator("""
+            using System.Collections.Generic;
+            using PotternMotching;
+            using PotternMotching.Patterns;
+
+            namespace DictionaryPatternTests;
+
+            public record HealthCheckResult(IReadOnlyDictionary<string, object> Data);
+
+            [AutoPatternFor(typeof(HealthCheckResult))]
+            internal static class Patterns;
+
+            public static class Usage
+            {
+                public static HealthCheckResultPattern ExcludeFailedStatus() =>
+                    new(Data: Pattern.Not<IReadOnlyDictionary<string, object>>(
+                        DictionaryPattern.Items(new Dictionary<string, object>
+                        {
+                            ["status"] = "failed"
+                        })));
+            }
+            """);
+
+        Assert.DoesNotContain(result.OutputDiagnostics, d => d.Severity == DiagnosticSeverity.Error);
     }
 }

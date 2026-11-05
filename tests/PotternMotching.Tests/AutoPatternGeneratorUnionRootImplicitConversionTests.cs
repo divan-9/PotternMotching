@@ -36,7 +36,7 @@ public class AutoPatternGeneratorUnionRootImplicitConversionTests
             [AutoPatternFor(typeof(FieldOptions))]
             [AutoPatternFor(typeof(SharingOptions))]
             [AutoPatternFor(typeof(FormatOptions))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {

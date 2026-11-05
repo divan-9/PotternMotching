@@ -17,7 +17,7 @@ public class AutoPatternGeneratorNullablePropertyTests
             public record Thing(string? RuleSetId);
 
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -49,7 +49,7 @@ public class AutoPatternGeneratorNullablePropertyTests
                 where TCondition : ICondition<TContext>;
 
             [AutoPatternFor(typeof(ImpressionRuleV2<AnyContext, AnyCondition>))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -75,7 +75,7 @@ public class AutoPatternGeneratorNullablePropertyTests
 
             [AutoPatternFor(typeof(Options))]
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -113,7 +113,7 @@ public class AutoPatternGeneratorNullablePropertyTests
             public record Thing(string? RuleSetId);
 
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -137,7 +137,7 @@ public class AutoPatternGeneratorNullablePropertyTests
             public record Thing(string? RuleSetId);
 
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {

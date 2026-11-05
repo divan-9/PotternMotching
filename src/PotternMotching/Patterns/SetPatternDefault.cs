@@ -87,6 +87,26 @@ public readonly struct SetPatternDefault<T, TDefaultItemMatcher> : IPattern<IEnu
     {
         return new(pattern);
     }
+
+    /// <summary>
+    /// Implicitly converts a negated collection pattern to a set pattern default.
+    /// </summary>
+    /// <param name="pattern">The negated pattern to convert.</param>
+    public static implicit operator SetPatternDefault<T, TDefaultItemMatcher>(
+        NotPattern<IEnumerable<T>> pattern)
+    {
+        return new(pattern);
+    }
+
+    /// <summary>
+    /// Implicitly converts a null marker to an exact-null collection pattern.
+    /// </summary>
+    /// <param name="value">The null marker to convert.</param>
+    public static implicit operator SetPatternDefault<T, TDefaultItemMatcher>(
+        ValuePattern.NullPatternToken value)
+    {
+        return new(ValuePattern.Exact<IEnumerable<T>?>(null));
+    }
 }
 
 /// <summary>

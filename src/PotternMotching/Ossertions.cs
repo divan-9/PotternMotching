@@ -58,13 +58,7 @@ public static class Ossertions
             value: target,
             path: path ?? string.Empty);
 
-        result.Match(
-            success: _ => { },
-            failure: failure =>
-            {
-                var message = string.Join("\n", failure.Reasons.Select(x => $"\t\tFAILURE: {x}"));
-                throw new AssertionFailedException($"\n{message}");
-            });
+        ThrowIfFailed(result);
     }
 
     /// <summary>
@@ -421,5 +415,82 @@ public static class Ossertions
         [CallerArgumentExpression(nameof(target))] string? path = null)
     {
         target.AssertPattern(CollectionPattern.StartsWith([.. example]), path);
+    }
+
+    /// <summary>
+    /// Asserts that the target does not match the specified pattern, including when the target is null.
+    /// The inner pattern must support evaluating null if null is a possible target.
+    /// </summary>
+    public static void AssertNotPattern<T>(
+        this T? target,
+        IPattern<T> pattern,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        var result = Pattern.Not(pattern).Evaluate(target!, path ?? string.Empty);
+        ThrowIfFailed(result);
+    }
+
+    /// <summary>
+    /// Asserts that the target does not equal the specified value.
+    /// </summary>
+    public static void AssertNotExact<T>(
+        this T? target,
+        T example,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        target.AssertNotPattern(ValuePattern.Exact(example), path);
+    }
+
+    /// <summary>
+    /// Asserts that no collection item equals any of the forbidden values.
+    /// A null collection contains no matching items.
+    /// </summary>
+    [OverloadResolutionPriority(1)]
+    public static void AssertContainsNone<T>(
+        this IEnumerable<T>? target,
+        T[] forbidden,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        IPattern<T>[] patterns = [.. forbidden.Select(ValuePattern.Exact)];
+        target.AssertContainsNone(patterns, path);
+    }
+
+    /// <summary>
+    /// Asserts that no collection item matches any of the forbidden patterns.
+    /// A null collection contains no matching items.
+    /// </summary>
+    public static void AssertContainsNone<T>(
+        this IEnumerable<T>? target,
+        IPattern<T>[] forbidden,
+        [CallerArgumentExpression(nameof(target))] string? path = null)
+    {
+        if (target is null)
+        {
+            return;
+        }
+
+        var index = 0;
+        foreach (var item in target)
+        {
+            foreach (var pattern in forbidden)
+            {
+                if (pattern.Evaluate(item, $"{path}[{index}]") is MatchResult.Success)
+                {
+                    throw new AssertionFailedException(
+                        $"\n\t\tFAILURE: {path}[{index}]: [AssertContainsNone] Forbidden pattern {pattern} matched {item}");
+                }
+            }
+
+            index++;
+        }
+    }
+
+    private static void ThrowIfFailed(MatchResult result)
+    {
+        if (result is MatchResult.Failure failure)
+        {
+            var message = string.Join("\n", failure.Reasons.Select(x => $"\t\tFAILURE: {x}"));
+            throw new AssertionFailedException($"\n{message}");
+        }
     }
 }

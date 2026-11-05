@@ -88,4 +88,24 @@ public readonly struct DictionaryPatternDefault<TKey, TValue, TDefaultValuePatte
     {
         return new(pattern);
     }
+
+    /// <summary>
+    /// Implicitly converts a negated dictionary pattern to a dictionary pattern default.
+    /// </summary>
+    /// <param name="pattern">The negated pattern to convert.</param>
+    public static implicit operator DictionaryPatternDefault<TKey, TValue, TDefaultValuePattern>(
+        NotPattern<IDictionary<TKey, TValue>> pattern)
+    {
+        return new(pattern);
+    }
+
+    /// <summary>
+    /// Implicitly converts a null marker to an exact-null dictionary pattern.
+    /// </summary>
+    /// <param name="value">The null marker to convert.</param>
+    public static implicit operator DictionaryPatternDefault<TKey, TValue, TDefaultValuePattern>(
+        ValuePattern.NullPatternToken value)
+    {
+        return new(ValuePattern.Exact<IDictionary<TKey, TValue>?>(null));
+    }
 }

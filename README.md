@@ -101,7 +101,7 @@ public record Company(
 [AutoPatternFor(typeof(Person))]
 [AutoPatternFor(typeof(Address))]
 [AutoPatternFor(typeof(Company))]
-internal static class PatternMarkers;
+internal static class Patterns;
 ```
 
 The source generator creates pattern classes you can use immediately:
@@ -155,7 +155,7 @@ using Shared.Contracts;
 namespace MyProject.Tests.Patterns;
 
 [AutoPatternFor(typeof(ExternalUserDto))]
-internal static class ExternalPatterns;
+internal static class Patterns;
 ```
 
 This generates a top-level pattern type in the marker namespace:
@@ -178,7 +178,7 @@ using Shared.Contracts;
 namespace MyProject.Tests.Patterns;
 
 [AutoPatternFor(typeof(Result<string>))]
-internal static class GenericPatterns;
+internal static class Patterns;
 ```
 
 ```csharp
@@ -230,7 +230,7 @@ public record FieldOptions(string Name, MediaOptions? Options);
 
 [AutoPatternFor(typeof(MediaOptions))]
 [AutoPatternFor(typeof(FieldOptions))]
-internal static class PatternMarkers;
+internal static class Patterns;
 ```
 
 ```csharp
@@ -250,9 +250,30 @@ var nonNullOptions = new FieldOptionsPattern(
 Semantics:
 - omitted property = match anything
 - `ValuePattern.Null()` = exact null matching
-- `(T?)null` also works for nullable generated defaults, but `PM0011` suggests `ValuePattern.Null()` for clarity
+- `(T?)null` also works for nullable scalar and nested-object defaults, but `PM0011` suggests `ValuePattern.Null()` for clarity
 - nullable nested reference-type properties use `NullablePatternDefault<T, TPattern>`; nullable nested value-type properties use `NullableValuePatternDefault<T, TPattern>`; nested patterns require a non-null actual value
 - null collections or dictionaries fail with a normal `MatchResult.Failure` when a collection/dictionary pattern is explicitly specified
+- `ValuePattern.Null()` also works for sequence, set, dictionary, and read-only dictionary properties; it matches only null, not an empty collection
+
+```csharp
+public record CollectionOptions(
+    string[]? Items,
+    HashSet<string>? Tags,
+    Dictionary<string, int>? Limits,
+    IReadOnlyDictionary<string, int>? ReadOnlyLimits);
+
+[AutoPatternFor(typeof(CollectionOptions))]
+internal static class Patterns;
+
+var nullCollections = new CollectionOptionsPattern(
+    Items: ValuePattern.Null(),
+    Tags: ValuePattern.Null(),
+    Limits: ValuePattern.Null(),
+    ReadOnlyLimits: ValuePattern.Null());
+
+var emptyItems = new CollectionOptionsPattern(Items: []); // Empty, non-null sequence
+var anyItems = new CollectionOptionsPattern();           // Null or non-null
+```
 
 ### Collection Expressions & Implicit Conversions
 
@@ -336,6 +357,15 @@ CollectionPattern.AnyElement(pattern)
 
 All collection pattern factory methods accept either arrays of values or arrays of patterns.
 
+### Negation
+```csharp
+Pattern.Not(ValuePattern.Exact("admin"))
+Pattern.Not(CollectionPattern.AnyElement("forbidden"))
+Pattern.Not(new PersonPattern(Name: "Alice"))
+```
+
+`Pattern.Not(inner)` succeeds if `inner` fails. For example, negating a collection pattern accepts a null collection because collection patterns reject null; to reject only null, use `Pattern.Not(ValuePattern.Exact<IEnumerable<string>?>(null))`. Inner patterns must be able to evaluate the supplied value (generated object patterns may not accept null). For nullable nested objects, adapt the inner pattern *before* negating it: `Pattern.Not(new NullablePattern<Address>(new AddressPattern(City: "London")))`. When negating a dictionary pattern for a read-only property, specify `Pattern.Not<IReadOnlyDictionary<string, int>>(DictionaryPattern.Items(...))`.
+
 ### Dictionary Patterns
 ```csharp
 using PotternMotching.Patterns;
@@ -407,6 +437,23 @@ person.AssertPattern(pattern);  // Throws AssertionFailedException if no match
 // FAILURE: person.Age: [ValuePattern.Exact] Expected 25, got 30
 ```
 
+Use `AssertNotPattern` for negative assertions, or `AssertNotExact` for unequal values. `AssertNotPattern` evaluates null inputs, unlike `AssertPattern`, which rejects them before evaluation:
+
+```csharp
+person.AssertNotPattern(new PersonPattern(Name: "Bob"));
+person.Name.AssertNotExact("Bob");
+```
+
+`AssertContainsNone` ensures no collection item matches **any** forbidden value or pattern; failures report the matching index:
+
+```csharp
+var names = new[] { "Alice" };
+names.AssertContainsNone(["Bob", "Charlie"]); // Passes
+names.AssertContainsNone(["Bob", "Alice"]);   // Throws
+```
+
+A null collection passes `AssertContainsNone`, since it contains no matching items. To also reject null, assert the negation of an exact-null pattern: `names.AssertNotPattern(ValuePattern.Exact<string[]?>(null))`.
+
 For exact value comparison without explicitly constructing a pattern, use `AssertExact`:
 
 ```csharp
@@ -463,7 +510,7 @@ public record Person(string Name, Job Job);
 
 [AutoPatternFor(typeof(Job))]
 [AutoPatternFor(typeof(Person))]
-internal static class PatternMarkers;
+internal static class Patterns;
 ```
 
 Generated patterns are variant-aware:

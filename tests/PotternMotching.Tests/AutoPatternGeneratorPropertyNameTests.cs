@@ -16,7 +16,7 @@ public class AutoPatternGeneratorPropertyNameTests
             public record Thing(string id);
 
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -42,7 +42,7 @@ public class AutoPatternGeneratorPropertyNameTests
             }
 
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
@@ -65,7 +65,7 @@ public class AutoPatternGeneratorPropertyNameTests
             public record Thing(string id, string Id);
 
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
             """);
 
         var diagnostic = Assert.Single(result.GeneratorDiagnostics.Where(d => d.Id == "PM0012"));
@@ -89,7 +89,7 @@ public class AutoPatternGeneratorPropertyNameTests
             }
 
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
             """);
 
         var diagnostic = Assert.Single(result.GeneratorDiagnostics.Where(d => d.Id == "PM0012"));
@@ -109,7 +109,7 @@ public class AutoPatternGeneratorPropertyNameTests
             public record Thing(string @class);
 
             [AutoPatternFor(typeof(Thing))]
-            internal static class PatternMarkers;
+            internal static class Patterns;
 
             public static class Usage
             {
